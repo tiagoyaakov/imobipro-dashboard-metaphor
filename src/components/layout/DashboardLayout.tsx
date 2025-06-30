@@ -7,7 +7,7 @@ import { DashboardHeader } from "./DashboardHeader";
 const DashboardLayout = () => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50/50">
+      <div className="min-h-screen flex w-full bg-gray-900">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <DashboardHeader />
