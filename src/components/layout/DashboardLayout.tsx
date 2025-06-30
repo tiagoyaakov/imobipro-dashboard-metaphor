@@ -6,7 +6,7 @@ import { DashboardHeader } from "./DashboardHeader";
 
 const DashboardLayout = () => {
   return (
-    <SidebarProvider collapsedWidth={80}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50/50">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">

@@ -52,10 +52,11 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMainGroupOpen, setIsMainGroupOpen] = useState(true);
+  const isCollapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -66,11 +67,11 @@ export function AppSidebar() {
     }`;
 
   return (
-    <Sidebar className={`${collapsed ? "w-20" : "w-64"} border-r bg-white`}>
+    <Sidebar className={`${isCollapsed ? "w-20" : "w-64"} border-r bg-white`}>
       <SidebarContent className="p-4">
         {/* Logo */}
         <div className="mb-8 px-2">
-          {!collapsed ? (
+          {!isCollapsed ? (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
                 <Home className="w-5 h-5 text-white" />
@@ -90,7 +91,7 @@ export function AppSidebar() {
           className="w-full"
         >
           <SidebarGroup>
-            {!collapsed && (
+            {!isCollapsed && (
               <CollapsibleTrigger asChild>
                 <SidebarGroupLabel className="group/label text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3 flex items-center justify-between hover:text-gray-700 cursor-pointer">
                   Menu Principal
@@ -111,7 +112,7 @@ export function AppSidebar() {
                           className={getNavCls}
                         >
                           <item.icon className="h-5 w-5 flex-shrink-0" />
-                          {!collapsed && (
+                          {!isCollapsed && (
                             <span className="truncate">{item.title}</span>
                           )}
                         </NavLink>
@@ -125,7 +126,7 @@ export function AppSidebar() {
         </Collapsible>
 
         {/* Quick Actions - apenas quando não colapsado */}
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="mt-8 p-4 bg-gradient-to-r from-imobipro-blue/10 to-imobipro-blue-dark/10 rounded-xl">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Ações Rápidas</h3>
             <p className="text-xs text-gray-600 mb-3">
