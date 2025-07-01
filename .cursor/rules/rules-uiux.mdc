@@ -1,0 +1,54 @@
+---
+description: Ao trabalhar na interface do ImobiPRO Dashboard, o agente de IA deve focar na construção de UI com shadcn/ui e estilização exclusiva via Tailwind CSS 3.4.11. Ícones são de Lucide React. O dark mode é o tema principal, gerenciado por Next Themes, com adesão rigorosa ao design system de cores e tipografia. Assegurar responsividade e boa UX.
+globs: 
+alwaysApply: false
+---
+Regras de Desenvolvimento UI/UX (shadcn/ui, Tailwind CSS 3.4.11, Lucide React, Next Themes)
+Framework UI Principal (shadcn/ui):
+
+Todos os componentes da interface do usuário devem ser construídos utilizando a base de componentes da shadcn/ui.
+
+A customização dos componentes shadcn/ui deve ser feita de forma a manter a consistência com o design system do ImobiPRO Dashboard.
+
+Os componentes shadcn/ui devem residir e ser customizados a partir de src/components/ui/.
+
+Framework de Estilização (Tailwind CSS 3.4.11):
+
+A estilização de toda a aplicação deve ser realizada exclusivamente com Tailwind CSS 3.4.11, aplicando classes utilitárias diretamente nos elementos HTML e componentes React.
+
+Evitar a criação de CSS customizado desnecessário fora do ecossistema Tailwind.
+
+Utilizar Autoprefixer 10.4.20 e PostCSS 8.4.47 para processamento CSS, conforme configurado no projeto.
+
+Biblioteca de Ícones (Lucide React):
+
+Todos os ícones utilizados na aplicação devem ser importados da biblioteca Lucide React.
+
+Garantir que os ícones mantenham a consistência visual e o tamanho adequado dentro do design.
+
+Sistema de Temas (Next Themes):
+
+A aplicação deve suportar e priorizar o dark mode como tema principal.
+
+A gestão de temas (dark/light mode) deve ser implementada utilizando Next Themes.
+
+As cores customizadas definidas no design system (imobipro-blue, imobipro-blue-light, imobipro-blue-dark, imobipro-gray) devem ser aplicadas consistentemente em ambos os modos de tema.
+
+Design System e Estilos Customizados:
+
+Aderir estritamente ao design system do ImobiPRO, utilizando a fonte Inter como fonte principal com as features rlig e calt ativadas.
+
+Aplicar os estilos de componentes customizados definidos, como imobipro-card (com efeito glassmorphism) e imobipro-gradient.
+
+Incorporar animações suaves com transition-smooth e efeitos de hover com transformações.
+
+Responsividade:
+
+Garantir que todos os elementos da interface sejam responsivos e se adaptem fluidamente a diferentes tamanhos de tela (desktop, tablet, mobile), seguindo as diretrizes do Tailwind CSS para breakpoints.
+
+Experiência do Usuário (UX):
+
+Implementar feedback visual aprimorado e micro-interações para melhorar a experiência do usuário.
+
+
+Priorizar a usabilidade e a consistência em todos os fluxos de interação.

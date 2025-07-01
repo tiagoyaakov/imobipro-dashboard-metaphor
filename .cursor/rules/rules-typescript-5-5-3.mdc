@@ -1,0 +1,42 @@
+---
+description: Para o desenvolvimento em TypeScript no ImobiPRO Dashboard, o agente de IA deve garantir tipagem estrita com TypeScript 5.5.3, definindo interfaces e tipos claros para robustez. A validação de dados em formulários e APIs deve ser feita com Zod 3.23.8. Atenção à utilização consistente de enums ou union types e à aderência às configurações do tsconfig.json e regras de ESLint específicas para TypeScript.
+globs: 
+alwaysApply: false
+---
+Regras de Desenvolvimento TypeScript (TypeScript 5.5.3)
+Tipagem Estrita Obrigatória: Todo o código desenvolvido para o ImobiPRO Dashboard deve ser fortemente tipado utilizando TypeScript 5.5.3. Não é permitida a utilização de any salvo em cenários muito específicos e com justificativa explícita (e.g., integração com bibliotecas de terceiros sem tipagem adequada).
+
+Definição Clara de Interfaces e Tipos:
+
+Definir interfaces (interface) e tipos (type) explícitos para props de componentes React, estados, parâmetros de funções, retornos de funções e dados recebidos/enviados para APIs.
+
+As interfaces devem ser declaradas em arquivos separados (.d.ts ou arquivos de módulo com exportações de interface) ou no mesmo arquivo do componente/função quando pequenas e específicas.
+
+Validação de Esquemas com Zod:
+
+Utilizar Zod 3.23.8 para a validação de esquemas em dados de formulários e dados de API recebidos.
+
+Os esquemas Zod devem ser definidos para garantir que os dados sigam a estrutura e os tipos esperados antes de serem processados ou persistidos.
+
+Uso Consistente de Enums e Union Types:
+
+Para valores discretos e pré-definidos (e.g., status de propriedade, tipo de agendamento, categoria de contato), preferir o uso de enums ou union types em vez de strings literais soltas.
+
+Configuração de tsconfig.json:
+
+Manter a configuração do tsconfig.json conforme definido no projeto, garantindo as melhores práticas de tipagem e otimização.
+
+Atentar para as regras de strict mode (noImplicitAny, strictNullChecks, etc.) para manter a robustez do código.
+
+Qualidade de Código com ESLint e TypeScript ESLint:
+
+O código TypeScript deve aderir rigorosamente às regras de linting configuradas com ESLint 9.9.0 e TypeScript ESLint 8.0.1.
+
+Corrigir avisos e erros de lint para garantir a consistência e a qualidade do código.
+
+Módulos e Importações:
+
+Utilizar importações explícitas e evitar importações * (wildcard) para manter a clareza do código.
+
+
+Manter a organização de módulos e aliases de caminho (@/) para src/.

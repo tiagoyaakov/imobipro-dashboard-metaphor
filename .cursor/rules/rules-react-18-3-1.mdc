@@ -1,0 +1,45 @@
+---
+description: Este conjunto de regras orienta o desenvolvimento frontend com React 18.3.1 no projeto ImobiPRO Dashboard. Enfatiza o uso de TypeScript 5.5.3 para tipagem estrita e uma arquitetura de componentes modularizada (src/components/, src/pages/). Para gerenciamento de estado, utiliza TanStack React Query 5.56.2 para dados de servidor e React Hook Form 7.53.0 com Zod 3.23.8 para formulários. A estilização é feita exclusivamente com Tailwind CSS 3.4.11, construindo sobre shadcn/ui e aderindo ao design system com foco em dark mode e cores customizadas. O roteamento é via React Router DOM 6.26.2, e a qualidade de código é assegurada por ESLint e TypeScript ESLint.
+globs: 
+alwaysApply: false
+---
+Com base no relatório do projeto, as seguintes regras devem ser aplicadas ao desenvolver o frontend do ImobiPRO Dashboard usando React:
+
+### Regras de Desenvolvimento React (React 18.3.1)
+
+1.  **Princípio Geral**: O ImobiPRO Dashboard é uma aplicação web construída com React 18.3.1, focando em componentes funcionais e uma arquitetura modular para a interface do usuário.
+2.  **Tipagem Estrita (TypeScript)**:
+    * Todo o código React deve ser fortemente tipado usando TypeScript 5.5.3.
+    * Definir interfaces e tipos explícitos para `props`, `state` e retornos de funções é mandatório para garantir a robustez e a manutenibilidade do código.
+3.  **Estrutura e Organização de Componentes**:
+    * Componentes devem ser organizados hierarquicamente dentro de `src/components/`.
+    * Componentes de UI genéricos (baseados em `shadcn/ui`) devem residir em `src/components/ui/`.
+    * Componentes de layout principais (e.g., `DashboardLayout`, `AppSidebar`, `DashboardHeader`) devem ser definidos em `src/components/layout/`.
+    * Componentes reutilizáveis comuns, não específicos de UI ou layout, devem estar em `src/components/common/`.
+    * Cada página da aplicação deve ter seu componente principal definido em `src/pages/`.
+    * Priorizar a criação de componentes pequenos, focados em uma única responsabilidade e altamente reutilizáveis.
+4.  **Gerenciamento de Estado**:
+    * Para o gerenciamento de estado assíncrono, cache de dados e sincronização com o backend (Supabase), deve-se utilizar `TanStack React Query 5.56.2`.
+    * Para o gerenciamento de estado de formulários, validação e submissão, deve-se empregar `React Hook Form 7.53.0`.
+    * A validação de esquemas para formulários deve ser feita com `Zod 3.23.8`.
+    * Evitar o uso de estados globais excessivos; preferir estados locais de componente ou passar dados via `props` quando apropriado.
+5.  **Estilização e Design System**:
+    * Toda a estilização da aplicação deve ser implementada utilizando `Tailwind CSS 3.4.11`, aplicando classes utilitárias diretamente nos componentes.
+    * Os componentes base da interface devem ser construídos a partir da biblioteca `shadcn/ui`.
+    * A biblioteca `Lucide React` deve ser utilizada para todos os ícones.
+    * A aplicação deve aderir estritamente ao design system definido no projeto, utilizando as cores customizadas (`imobipro-blue`, `imobipro-gray`, etc.) e a fonte `Inter`.
+    * O sistema de temas deve ser configurado para suportar e priorizar o `dark mode` através de `Next Themes`.
+6.  **Roteamento e Navegação**:
+    * A navegação e o roteamento da Single Page Application (SPA) devem ser gerenciados exclusivamente pelo `React Router DOM 6.26.2`, utilizando rotas aninhadas para estruturas de layout complexas.
+    * A navegação deve ser consistente, preferencialmente via `AppSidebar` e `DashboardHeader`.
+7.  **Qualidade e Boas Práticas de Código**:
+    * O código deve seguir rigorosamente as regras de linting configuradas com `ESLint 9.9.0` e `TypeScript ESLint 8.0.1`.
+    * Manter o código limpo, legível, modularizado e com comentários claros quando necessário.
+    * Utilizar aliases de caminho `@/` para `src/` para todas as importações internas.
+8.  **Performance**:
+    * Implementar `lazy loading` para páginas e componentes que não são essenciais no carregamento inicial para otimizar a performance.
+    * Considerar o uso de `React.memo`, `useCallback` e `useMemo` para evitar re-renderizações desnecessárias de componentes, especialmente em listas grandes ou componentes que recebem muitas props.
+9.  **Responsividade e Acessibilidade**:
+    * Todos os componentes devem ser projetados com responsividade em mente para garantir uma experiência consistente em diferentes tamanhos de tela.
+
+    * Priorizar a acessibilidade (ARIA attributes, semântica HTML) na construção da interface.

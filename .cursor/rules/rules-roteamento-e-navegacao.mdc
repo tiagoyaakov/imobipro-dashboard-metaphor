@@ -1,0 +1,58 @@
+---
+description: Para roteamento e navegação no ImobiPRO Dashboard, o agente de IA deve usar React Router DOM 6.26.2. Priorizar rotas aninhadas com DashboardLayout e seguir a estrutura de rotas definida. A página 404 está implementada, e a navegação programática deve usar useNavigate.
+globs: 
+alwaysApply: false
+---
+Regras de Roteamento e Navegação (React Router DOM 6.26.2)
+Gerenciamento de Roteamento Centralizado: React Router DOM 6.26.2 é a única biblioteca permitida para gerenciar o roteamento e a navegação da Single Page Application (SPA) do ImobiPRO Dashboard.
+
+Estrutura de Rotas Aninhadas:
+
+Utilizar a funcionalidade de rotas aninhadas (<Outlet /> e configurações de rotas no BrowserRouter ou createBrowserRouter) para estruturar o layout da aplicação.
+
+O DashboardLayout deve servir como o layout principal para a maioria das rotas autenticadas.
+
+Definição de Rotas:
+
+As rotas principais da aplicação devem seguir a estrutura definida no projeto:
+
+/ (Dashboard)
+
+/propriedades
+
+/contatos
+
+/agenda
+
+/clientes
+
+/pipeline
+
+/crm
+
+/relatorios
+
+/conexoes
+
+/usuarios
+
+/chats
+
+/lei-inquilino
+
+/configuracoes
+
+A navegação consistente deve ser garantida via AppSidebar e outras áreas de navegação.
+
+Tratamento de Rotas Não Encontradas (404):
+
+Uma página de erro 404 (* rota) já está implementada e deve ser mantida para lidar com URLs não reconhecidas.
+
+Navegação Programática:
+
+Utilizar o useNavigate hook para navegação programática entre as rotas quando necessário, seguindo as melhores práticas do React Router DOM.
+
+Proteção de Rotas (Futuro):
+
+
+Embora a autenticação ainda esteja pendente, as rotas que exigem autenticação devem ser projetadas para futura proteção, utilizando componentes de guarda de rota ou loaders/actions que verifiquem o estado de autenticação.

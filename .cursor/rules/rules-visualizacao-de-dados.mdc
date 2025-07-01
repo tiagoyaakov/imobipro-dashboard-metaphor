@@ -1,0 +1,35 @@
+---
+description: Ao criar visualizações de dados no ImobiPRO Dashboard, o agente de IA deve utilizar Recharts 2.12.7. Focar na exibição de métricas e performance, aderindo ao design system e tema dark mode do projeto. Os dados para os gráficos devem vir do backend via TanStack React Query.
+globs: 
+alwaysApply: false
+---
+Regras de Visualização de Dados (Recharts 2.12.7)
+Biblioteca Padrão de Gráficos: Recharts 2.12.7 é a biblioteca padrão e exclusiva para a criação de gráficos e visualização de dados no ImobiPRO Dashboard.
+
+Uso para Métricas e Performance:
+
+Utilizar Recharts para exibir métricas de performance, como vendas e propriedades, no Dashboard Principal e em futuras páginas de Relatórios.
+
+Embora alguns gráficos sejam atualmente placeholders, a implementação futura deve utilizar Recharts para renderizar dados reais.
+
+Consistência de Design:
+
+Os gráficos devem aderir ao design system do ImobiPRO Dashboard, incluindo as cores customizadas (imobipro-blue, imobipro-gray, etc.) e o tema dark mode.
+
+Garantir a legibilidade e a clareza das informações apresentadas nos gráficos.
+
+Dados e Integração:
+
+Os dados para os gráficos devem ser obtidos através de requisições gerenciadas pelo TanStack React Query, garantindo que venham do Supabase ou de fontes de dados processadas pelo backend.
+
+Estruturar os dados para Recharts de forma otimizada para a renderização eficiente dos gráficos.
+
+Interatividade (Opcional):
+
+Se aplicável e benéfico para a UX, implementar funcionalidades interativas básicas nos gráficos, como tooltips, zoom ou filtros, utilizando os recursos do Recharts.
+
+Responsividade:
+
+Os gráficos devem ser responsivos e se adaptar a diferentes tamanhos de tela, mantendo a proporção e a legibilidade em ambientes desktop e mobile.
+
+

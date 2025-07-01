@@ -1,0 +1,32 @@
+---
+description: Para tarefas relacionadas à build e ao ambiente de desenvolvimento do ImobiPRO Dashboard, o agente de IA deve se basear no Vite 5.4.1. Utilizar o Hot Reload do Vite para desenvolvimento ágil, manter os aliases de caminho @/ para src/, e garantir que a configuração de build para produção esteja otimizada para performance.
+globs: 
+alwaysApply: false
+---
+Regras de Desenvolvimento Vite (Vite 5.4.1)
+Ferramenta de Build Padrão: Vite 5.4.1 é a ferramenta de build padrão e exclusiva para o desenvolvimento do ImobiPRO Dashboard. Nenhuma outra ferramenta de build (e.g., Webpack, Parcel) deve ser configurada ou utilizada.
+
+Configuração de Desenvolvimento Rápida:
+
+O ambiente de desenvolvimento deve aproveitar o Hot Reload configurado via Vite para uma experiência de desenvolvimento ágil e responsiva.
+
+As otimizações de HMR (Hot Module Replacement) do Vite devem ser mantidas e, se possível, aprimoradas.
+
+Aliases de Caminho:
+
+Utilizar os aliases de caminho configurados no Vite, especificamente @/ para src/, para importações. Isso melhora a legibilidade e a manutenção do código.
+
+Otimização de Build para Produção:
+
+A configuração do Vite deve garantir um bundle de produção otimizado para performance, incluindo minificação de código (HTML, CSS, JS) e tree-shaking automático.
+
+Explorar e aplicar as melhores práticas de build do Vite para garantir o menor tamanho de bundle e o carregamento mais rápido possível da aplicação em produção.
+
+Configuração de Plugins:
+
+Utilizar os plugins de Vite necessários para React e TypeScript, conforme a configuração existente do projeto. Evitar adicionar plugins desnecessários que possam impactar a performance do build.
+
+Variáveis de Ambiente:
+
+
+Gerenciar variáveis de ambiente de forma segura e consistente, utilizando o sistema de carregamento de variáveis de ambiente do Vite (prefixando com VITE_).

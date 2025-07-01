@@ -1,0 +1,37 @@
+---
+description: Ao desenvolver o ImobiPRO Dashboard, o agente de IA deve garantir a qualidade do código utilizando ESLint 9.9.0 para validação geral e TypeScript ESLint 8.0.1 para regras específicas de TypeScript. Para CSS, Autoprefixer 10.4.20 e PostCSS 8.4.47 gerenciam prefixos e processamento automaticamente. Aderir estritamente às regras de linting é fundamental.
+globs: 
+alwaysApply: false
+---
+Regras de Desenvolvimento e Qualidade (ESLint, TypeScript ESLint, Autoprefixer, PostCSS)
+Qualidade de Código com ESLint:
+
+Todos os arquivos JavaScript e TypeScript no projeto ImobiPRO Dashboard devem ser validados e aderir rigorosamente às regras de linting configuradas com ESLint 9.9.0.
+
+Corrigir todos os erros e avisos de linting é mandatório antes de qualquer commit ou pull request.
+
+Linting Específico para TypeScript:
+
+Para arquivos TypeScript, as regras específicas de linting fornecidas por TypeScript ESLint 8.0.1 devem ser aplicadas e respeitadas.
+
+Priorizar a correção de problemas relacionados à tipagem, consistência e boas práticas de TypeScript.
+
+Processamento Automático de CSS (Autoprefixer e PostCSS):
+
+Autoprefixer 10.4.20 deve ser utilizado para adicionar automaticamente prefixos de fornecedor (-webkit-, -moz-, etc.) ao CSS gerado, garantindo a compatibilidade com diferentes navegadores.
+
+PostCSS 8.4.47 atua como o processador CSS subjacente para o Tailwind CSS e outras transformações, e sua configuração deve ser mantida.
+
+Nenhuma adição manual de prefixos CSS é necessária ou permitida, pois o processo é automatizado.
+
+Consistência de Formato e Estilo:
+
+As regras de formatação de código (indentação, aspas, quebras de linha, etc.) definidas no .eslintrc devem ser seguidas consistentemente por toda a base de código.
+
+A formatação automática via ESLint (e integração com IDEs) é incentivada.
+
+Revisão de Código:
+
+Além das ferramentas automatizadas, todas as mudanças de código devem passar por uma revisão de código por um colega, focando não apenas na funcionalidade, mas também na aderência a estas regras de qualidade e desenvolvimento.
+
+

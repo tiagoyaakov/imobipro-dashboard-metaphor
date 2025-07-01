@@ -1,0 +1,40 @@
+---
+description: Ao lidar com o gerenciamento de estado no ImobiPRO Dashboard, o agente de IA deve utilizar TanStack React Query 5.56.2 para estado de servidor e cache de dados de API. React Hook Form 7.53.0 é obrigatório para gerenciamento de formulários, com Zod 3.23.8 para validação de esquemas. Manter a separação clara entre estado de servidor e formulário.
+globs: 
+alwaysApply: false
+---
+Regras de Gerenciamento de Estado (TanStack React Query 5.56.2, React Hook Form 7.53.0, Zod 3.23.8)
+Gerenciamento de Estado de Servidor (TanStack React Query):
+
+TanStack React Query 5.56.2 deve ser a ferramenta exclusiva para gerenciamento de estado assíncrono (dados do servidor), cache de requisições, sincronização de dados e gerenciamento de mutações no ImobiPRO Dashboard.
+
+Todas as operações de fetch, cache, update e invalidation de dados que interagem com o backend (Supabase) devem ser realizadas através do React Query.
+
+Utilizar useQuery para buscar dados, useMutation para operações que modificam dados (CRUD), e queryClient.invalidateQueries para manter o cache atualizado após mutações.
+
+Gerenciamento de Estado de Formulários (React Hook Form):
+
+React Hook Form 7.53.0 deve ser utilizado para gerenciar o estado de todos os formulários da aplicação.
+
+Preferir o uso de register para inputs e control para componentes controlados de UI (como os de shadcn/ui) para integração com React Hook Form.
+
+Otimizar o desempenho de formulários aproveitando os recursos de re-renderização otimizada do React Hook Form.
+
+Validação de Esquemas (Zod):
+
+Zod 3.23.8 é a biblioteca padrão para validação de esquemas de dados, tanto para formulários (integrado com React Hook Form) quanto para dados recebidos de APIs.
+
+Definir esquemas Zod claros e robustos para todas as entradas de dados e validações, garantindo a integridade dos dados.
+
+O uso de tipagem inferida a partir dos esquemas Zod é encorajado para garantir a consistência de tipos em todo o projeto.
+
+Separação de Preocupações:
+
+Distinguir claramente o uso de React Query para estado de servidor e React Hook Form para estado de formulário. Não misturar suas responsabilidades.
+
+Evitar o uso de useState para gerenciamento de estado de formulário complexo que poderia ser tratado de forma mais eficiente pelo React Hook Form.
+
+Dados Mockados vs. Dados Reais:
+
+
+Durante o desenvolvimento e na fase atual de "dados mockados", garantir que as chamadas a React Query estejam prontas para integração com dados reais do Supabase. As estruturas de dados devem refletir o esquema Prisma planejado.
