@@ -38,7 +38,7 @@ O **ImobiPRO Dashboard** é um sistema de gestão imobiliária (CRM) desenvolvid
 
 ### **Backend & Database**
 - **Supabase 2.50.2** - Backend-as-a-Service (PostgreSQL)
-- **URL:** `https://yjbhxbinpknarctyzevm.supabase.co`
+- **URL:** `https://eeceyvenrnyyqvilezgr.supabase.co`
 
 ### **Roteamento & Navegação**
 - **React Router DOM 6.26.2** - Roteamento SPA

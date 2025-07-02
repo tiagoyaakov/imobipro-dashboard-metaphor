@@ -2,16 +2,39 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://wsphwrxgacbuzyztmhnb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndzcGh3cnhnYWNidXp5enRtaG5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMTY5OTAsImV4cCI6MjA2Njg5Mjk5MH0.tOV8SNv3zrp0B0cgTBPvRFle1nJ1Cmcn0LASaKe9EE0";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Validação das variáveis de ambiente
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Variáveis de ambiente do Supabase não configuradas. ' +
+    'Verifique se VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão definidas no arquivo .env'
+  );
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    detectSessionInUrl: true,
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'imobipro-dashboard@1.0.0',
+    },
+  },
 });
+
+// Log de configuração para desenvolvimento (apenas em dev)
+if (import.meta.env.DEV) {
+  console.log('🔗 Supabase Client configurado:', {
+    url: SUPABASE_URL,
+    project: 'ImobPRO',
+    anon_key_prefix: SUPABASE_ANON_KEY.substring(0, 20) + '...',
+  });
+}
