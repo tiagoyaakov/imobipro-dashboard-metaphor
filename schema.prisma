@@ -1,84 +1,71 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // Supabase utiliza PostgreSQL
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------
-// Enums para Tipagens e Status
+// Enums
 // -----------------------------------------------------------
 
-/// Representa os diferentes papéis que um usuário pode ter no sistema.
 enum UserRole {
-  ADMIN    // Administrador do sistema
-  AGENT    // Agente imobiliário (padrão para profissionais)
-  MANAGER  // Gerente de equipe
-  VIEWER   // Usuário com acesso somente leitura (para futuras expansões)
+  CREATOR   // Dono do sistema (Fernando)
+  ADMIN     // Dono da imobiliária
+  AGENT     // Corretor
 }
 
-/// Representa os tipos de propriedades suportados.
 enum PropertyType {
-  APARTMENT   // Apartamento
-  HOUSE       // Casa
-  COMMERCIAL  // Imóvel comercial
-  LAND        // Terreno
-  OTHER       // Outros tipos de imóveis
+  APARTMENT
+  HOUSE
+  COMMERCIAL
+  LAND
+  OTHER
 }
 
-/// Representa o status atual de uma propriedade.
 enum PropertyStatus {
-  AVAILABLE // Disponível para venda/locação
-  SOLD      // Vendido
-  RESERVED  // Reservado
+  AVAILABLE
+  SOLD
+  RESERVED
 }
 
-/// Representa as categorias de contatos.
 enum ContactCategory {
-  CLIENT  // Cliente já estabelecido
-  LEAD    // Potencial cliente
-  PARTNER // Parceiro de negócios (para futuras expansões)
+  CLIENT
+  LEAD
+  PARTNER
 }
 
-/// Representa o status de um contato no CRM.
 enum ContactStatus {
-  ACTIVE   // Contato ativo
-  NEW      // Novo contato/lead
-  INACTIVE // Contato inativo
+  ACTIVE
+  NEW
+  INACTIVE
 }
 
-/// Representa os tipos de agendamentos.
 enum AppointmentType {
-  VISIT   // Visita a propriedade
-  MEETING // Reunião
-  CALL    // Chamada telefônica
-  OTHER   // Outros tipos de agendamento
+  VISIT
+  MEETING
+  CALL
+  OTHER
 }
 
-/// Representa o status de um agendamento.
 enum AppointmentStatus {
-  CONFIRMED // Agendamento confirmado
-  PENDING   // Agendamento pendente
-  COMPLETED // Agendamento concluído
-  CANCELED  // Agendamento cancelado
+  CONFIRMED
+  PENDING
+  COMPLETED
+  CANCELED
 }
 
-/// Representa os estágios no pipeline de vendas.
 enum DealStage {
-  LEAD_IN       // Entrada de lead
-  QUALIFICATION // Qualificação do lead
-  PROPOSAL      // Proposta enviada
-  NEGOTIATION   // Negociação em andamento
-  WON           // Negócio fechado (ganho)
-  LOST          // Negócio perdido
+  LEAD_IN
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
 }
 
-/// Representa o tipo de atividade registrada no log.
 enum ActivityType {
   USER_CREATED
   PROPERTY_CREATED
@@ -93,134 +80,166 @@ enum ActivityType {
   DEAL_CREATED
   DEAL_UPDATED
   DEAL_CLOSED
-  // Podem ser adicionados mais tipos conforme as funcionalidades avançam
+  CHAT_MESSAGE_SENT
 }
 
 // -----------------------------------------------------------
-// Modelos (Tabelas do Banco de Dados)
+// Models
 // -----------------------------------------------------------
 
-/// Modelo para representar os usuários do sistema.
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
-  id           String        @id @default(uuid()) // ID único do usuário
-  email        String        @unique               // Email para login (único)
-  password     String                               // Senha hashed do usuário
-  name         String                               // Nome completo do usuário
-  role         UserRole      @default(AGENT)      // Papel do usuário no sistema
-  createdAt    DateTime      @default(now())      // Data de criação do registro
-  updatedAt    DateTime      @updatedAt           // Última atualização do registro
+  id           String     @id @default(uuid())
+  email        String     @unique
+  password     String
+  name         String
+  role         UserRole   @default(AGENT)
+  isActive     Boolean    @default(true)
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
-  properties   Property[]                          // Propriedades gerenciadas por este usuário
-  contacts     Contact[]                           // Contatos atribuídos a este usuário
-  appointments Appointment[]                       // Agendamentos criados por este usuário
-  deals        Deal[]                              // Negócios gerenciados por este usuário
-  activities   Activity[]                          // Atividades realizadas por este usuário
+  properties   Property[]
+  contacts     Contact[]
+  appointments Appointment[]
+  deals        Deal[]
+  activities   Activity[]
+  messages     Message[]
+  chats        Chat[]     @relation("ChatOwner")
 }
 
-/// Modelo para representar as propriedades imobiliárias.
 model Property {
-  id             String         @id @default(uuid()) // ID único da propriedade
-  title          String                               // Título descritivo da propriedade
-  description    String?                              // Descrição detalhada da propriedade
-  address        String                               // Endereço completo
-  city           String                               // Cidade
-  state          String                               // Estado
-  zipCode        String                               // CEP
-  price          Decimal                              // Preço da propriedade
-  area           Float                                // Área da propriedade (e.g., m²)
-  bedrooms       Int?                                 // Número de quartos
-  bathrooms      Int?                                 // Número de banheiros
-  type           PropertyType   @default(HOUSE)      // Tipo da propriedade (ex: Casa, Apartamento)
-  status         PropertyStatus @default(AVAILABLE)  // Status atual da propriedade (Disponível, Vendida, Reservada)
-  characteristics Json?                               // Características da propriedade (ex: ["garagem", "piscina"])
-  images         String[]                             // URLs das imagens da propriedade
+  id             String         @id @default(uuid())
+  title          String
+  description    String?
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  price          Decimal
+  area           Float
+  bedrooms       Int?
+  bathrooms      Int?
+  type           PropertyType   @default(HOUSE)
+  status         PropertyStatus @default(AVAILABLE)
+  characteristics Json?
+  images         String[]
 
-  agentId        String                               // ID do agente responsável pela propriedade
-  agent          User           @relation(fields: [agentId], references: [id]) // Relação com o modelo User
+  agentId        String
+  agent          User           @relation(fields: [agentId], references: [id])
 
-  appointments   Appointment[]                       // Agendamentos relacionados a esta propriedade
-  deals          Deal[]                              // Negócios/vendas relacionados a esta propriedade
+  appointments   Appointment[]
+  deals          Deal[]
 
-  createdAt      DateTime       @default(now())      // Data de criação do registro
-  updatedAt      DateTime       @updatedAt           // Última atualização do registro
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
-/// Modelo para representar contatos (clientes, leads).
 model Contact {
-  id            String          @id @default(uuid()) // ID único do contato
-  name          String                                 // Nome do contato
-  email         String?         @unique                // Email do contato (pode ser opcional para leads, mas único se presente)
-  phone         String?                                // Telefone do contato
-  category      ContactCategory @default(LEAD)         // Categoria do contato (Cliente, Lead)
-  status        ContactStatus   @default(NEW)          // Status do contato (Ativo, Novo, Inativo)
-  lastContactAt DateTime?                              // Data do último contato
-  avatarUrl     String?                                // URL do avatar do contato
+  id            String          @id @default(uuid())
+  name          String
+  email         String?         @unique
+  phone         String?
+  category      ContactCategory @default(LEAD)
+  status        ContactStatus   @default(NEW)
+  lastContactAt DateTime?
+  avatarUrl     String?
 
-  agentId       String                                 // ID do agente responsável pelo contato
-  agent         User            @relation(fields: [agentId], references: [id]) // Relação com o modelo User
+  agentId       String
+  agent         User            @relation(fields: [agentId], references: [id])
 
-  appointments  Appointment[]                          // Agendamentos com este contato
-  deals         Deal[]                                 // Negócios relacionados a este contato
+  appointments  Appointment[]
+  deals         Deal[]
+  chats         Chat[]          @relation("ContactChat")
 
-  createdAt     DateTime        @default(now())      // Data de criação do registro
-  updatedAt     DateTime        @updatedAt           // Última atualização do registro
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
-/// Modelo para representar agendamentos (visitas, reuniões).
 model Appointment {
-  id          String           @id @default(uuid()) // ID único do agendamento
-  title       String                                 // Título breve do agendamento
-  description String?                                // Descrição detalhada do agendamento
-  date        DateTime                               // Data e hora do agendamento
-  type        AppointmentType  @default(VISIT)      // Tipo do agendamento (Visita, Reunião)
-  status      AppointmentStatus @default(PENDING)   // Status do agendamento (Confirmado, Pendente)
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  type        AppointmentType  @default(VISIT)
+  status      AppointmentStatus @default(PENDING)
 
-  agentId     String                                 // ID do agente que agendou
-  agent       User             @relation(fields: [agentId], references: [id]) // Relação com o modelo User
+  agentId     String
+  agent       User             @relation(fields: [agentId], references: [id])
 
-  contactId   String                                 // ID do contato envolvido no agendamento
-  contact     Contact          @relation(fields: [contactId], references: [id]) // Relação com o modelo Contact
+  contactId   String
+  contact     Contact          @relation(fields: [contactId], references: [id])
 
-  propertyId  String?                                // ID da propriedade (opcional, para visitas)
-  property    Property?        @relation(fields: [propertyId], references: [id]) // Relação com o modelo Property
+  propertyId  String?
+  property    Property?        @relation(fields: [propertyId], references: [id])
 
-  createdAt   DateTime         @default(now())      // Data de criação do registro
-  updatedAt   DateTime         @updatedAt           // Última atualização do registro
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
-/// Modelo para representar negociações ou oportunidades de vendas.
 model Deal {
-  id                String    @id @default(uuid()) // ID único do negócio
-  title             String                           // Título do negócio (ex: "Venda de Apartamento X")
-  value             Decimal                          // Valor estimado ou final do negócio
-  stage             DealStage @default(LEAD_IN)      // Estágio atual no pipeline de vendas
-  status            String    @default("ACTIVE")     // Status geral do negócio (ativo, arquivado)
-  expectedCloseDate DateTime?                        // Data esperada para fechamento
-  closedAt          DateTime?                        // Data real de fechamento (se ganho/perdido)
+  id                String    @id @default(uuid())
+  title             String
+  value             Decimal
+  stage             DealStage @default(LEAD_IN)
+  status            String    @default("ACTIVE")
+  expectedCloseDate DateTime?
+  closedAt          DateTime?
 
-  propertyId        String                           // ID da propriedade associada ao negócio
-  property          Property  @relation(fields: [propertyId], references: [id]) // Relação com o modelo Property
+  propertyId        String
+  property          Property  @relation(fields: [propertyId], references: [id])
 
-  clientId          String                           // ID do cliente/contato envolvido no negócio
-  client            Contact   @relation(fields: [clientId], references: [id]) // Relação com o modelo Contact
+  clientId          String
+  client            Contact   @relation(fields: [clientId], references: [id])
 
-  agentId           String                           // ID do agente responsável pelo negócio
-  agent             User      @relation(fields: [agentId], references: [id]) // Relação com o modelo User
+  agentId           String
+  agent             User      @relation(fields: [agentId], references: [id])
 
-  createdAt         DateTime  @default(now())      // Data de criação do registro
-  updatedAt         DateTime  @updatedAt           // Última atualização do registro
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
-/// Modelo para registrar atividades no sistema (log de atividades).
 model Activity {
-  id          String       @id @default(uuid()) // ID único da atividade
-  type        ActivityType                     // Tipo de atividade (ex: PROPERTY_CREATED)
-  description String                           // Descrição detalhada da atividade
-  entityId    String?                          // ID da entidade relacionada (ex: ID da propriedade criada)
-  entityType  String?                          // Tipo da entidade relacionada (ex: 'PROPERTY', 'CONTACT')
+  id          String       @id @default(uuid())
+  type        ActivityType
+  description String
+  entityId    String?
+  entityType  String?
 
-  userId      String                           // ID do usuário que realizou a atividade
-  user        User         @relation(fields: [userId], references: [id]) // Relação com o modelo User
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
 
-  createdAt   DateTime     @default(now())    // Data e hora da atividade
+  createdAt   DateTime     @default(now())
+}
+
+model Chat {
+  id         String   @id @default(uuid())
+  contactId  String
+  contact    Contact  @relation("ContactChat", fields: [contactId], references: [id])
+
+  agentId    String
+  agent      User     @relation("ChatOwner", fields: [agentId], references: [id])
+
+  messages   Message[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  sentAt    DateTime @default(now())
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
 }
