@@ -66,11 +66,5 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false,
-  "functions": {
-    "app/**/*": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  }
+  "trailingSlash": false
 } 
