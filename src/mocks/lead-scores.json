@@ -1,0 +1,102 @@
+[
+  {
+    "contactId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "score": 75,
+    "factors": {
+      "interactionCount": 5,
+      "lastActivityDays": 3,
+      "engagement": 80
+    },
+    "lastCalculatedAt": "2024-06-29T10:30:00.000Z"
+  },
+  {
+    "contactId": "f1e2d3c4-b5a6-9876-5432-10fedcba9876",
+    "score": 92,
+    "factors": {
+      "interactionCount": 20,
+      "lastActivityDays": 1,
+      "engagement": 95
+    },
+    "lastCalculatedAt": "2024-06-29T11:00:00.000Z"
+  },
+  {
+    "contactId": "c3d4e5f6-g7h8-9012-3456-789012345678",
+    "score": 68,
+    "factors": {
+      "interactionCount": 8,
+      "lastActivityDays": 4,
+      "engagement": 70
+    },
+    "lastCalculatedAt": "2024-06-29T09:15:00.000Z"
+  },
+  {
+    "contactId": "d5e6f7g8-h9i0-1234-5678-901234567890",
+    "score": 88,
+    "factors": {
+      "interactionCount": 15,
+      "lastActivityDays": 2,
+      "engagement": 90
+    },
+    "lastCalculatedAt": "2024-06-29T14:20:00.000Z"
+  },
+  {
+    "contactId": "e7f8g9h0-i1j2-3456-7890-123456789012",
+    "score": 45,
+    "factors": {
+      "interactionCount": 2,
+      "lastActivityDays": 7,
+      "engagement": 40
+    },
+    "lastCalculatedAt": "2024-06-29T08:45:00.000Z"
+  },
+  {
+    "contactId": "f9g0h1i2-j3k4-5678-9012-345678901234",
+    "score": 95,
+    "factors": {
+      "interactionCount": 25,
+      "lastActivityDays": 1,
+      "engagement": 98
+    },
+    "lastCalculatedAt": "2024-06-29T16:30:00.000Z"
+  },
+  {
+    "contactId": "g1h2i3j4-k5l6-7890-1234-567890123456",
+    "score": 62,
+    "factors": {
+      "interactionCount": 6,
+      "lastActivityDays": 5,
+      "engagement": 65
+    },
+    "lastCalculatedAt": "2024-06-29T13:10:00.000Z"
+  },
+  {
+    "contactId": "h3i4j5k6-l7m8-9012-3456-789012345678",
+    "score": 82,
+    "factors": {
+      "interactionCount": 12,
+      "lastActivityDays": 2,
+      "engagement": 85
+    },
+    "lastCalculatedAt": "2024-06-29T15:45:00.000Z"
+  },
+  {
+    "contactId": "i5j6k7l8-m9n0-1234-5678-901234567890",
+    "score": 28,
+    "factors": {
+      "interactionCount": 1,
+      "lastActivityDays": 15,
+      "engagement": 25
+    },
+    "lastCalculatedAt": "2024-06-29T12:00:00.000Z"
+  },
+  {
+    "contactId": "j7k8l9m0-n1o2-3456-7890-123456789012",
+    "score": 90,
+    "factors": {
+      "interactionCount": 18,
+      "lastActivityDays": 1,
+      "engagement": 92
+    },
+    "lastCalculatedAt": "2024-06-29T17:15:00.000Z"
+  }
+] 

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "activity-1a2b3c4d-e5f6-7890-1234-567890abcdef",
+    "type": "CONTACT_CREATED",
+    "description": "Novo lead Ana Silva foi criado no sistema",
+    "entityId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "entityType": "CONTACT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-01T10:00:00.000Z"
+  },
+  {
+    "id": "activity-2f1e2d3c-b5a6-9876-5432-10fedcba9876",
+    "type": "DEAL_CREATED",
+    "description": "Nova oportunidade de venda criada para Bruno Lima",
+    "entityId": "deal-2f1e2d3c-b5a6-9876-5432-10fedcba9876",
+    "entityType": "DEAL",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-05-15T09:00:00.000Z"
+  },
+  {
+    "id": "activity-3c3d4e5f-g7h8-9012-3456-789012345678",
+    "type": "APPOINTMENT_SCHEDULED",
+    "description": "Agendamento de visita marcado com Carla Mendes",
+    "entityId": "appointment-3c3d4e5f-g7h8-9012-3456-789012345678",
+    "entityType": "APPOINTMENT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-05-20T14:30:00.000Z"
+  },
+  {
+    "id": "activity-4d5e6f7g-h9i0-1234-5678-901234567890",
+    "type": "DEAL_CLOSED",
+    "description": "Negócio fechado com sucesso para Diego Santos",
+    "entityId": "deal-4d5e6f7g-h9i0-1234-5678-901234567890",
+    "entityType": "DEAL",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-28T16:30:00.000Z"
+  },
+  {
+    "id": "activity-5e7f8g9h-i1j2-3456-7890-123456789012",
+    "type": "CONTACT_UPDATED",
+    "description": "Informações de contato atualizadas para Eduarda Costa",
+    "entityId": "e7f8g9h0-i1j2-3456-7890-123456789012",
+    "entityType": "CONTACT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-30T08:00:00.000Z"
+  },
+  {
+    "id": "activity-6f9g0h1i-j3k4-5678-9012-345678901234",
+    "type": "DEAL_UPDATED",
+    "description": "Estágio do negócio atualizado para proposta - Fernando Oliveira",
+    "entityId": "deal-6f9g0h1i-j3k4-5678-9012-345678901234",
+    "entityType": "DEAL",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-20T10:15:00.000Z"
+  },
+  {
+    "id": "activity-7g1h2i3j-k5l6-7890-1234-567890123456",
+    "type": "CHAT_MESSAGE_SENT",
+    "description": "Mensagem enviada para Gabriela Ferreira sobre visita",
+    "entityId": "chat-7g1h2i3j-k5l6-7890-1234-567890123456",
+    "entityType": "CHAT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-26T15:10:00.000Z"
+  },
+  {
+    "id": "activity-8h3i4j5k-l7m8-9012-3456-789012345678",
+    "type": "APPOINTMENT_UPDATED",
+    "description": "Horário da visita alterado para Henrique Rodrigues",
+    "entityId": "appointment-8h3i4j5k-l7m8-9012-3456-789012345678",
+    "entityType": "APPOINTMENT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-24T10:30:00.000Z"
+  },
+  {
+    "id": "activity-9i5j6k7l-m9n0-1234-5678-901234567890",
+    "type": "PROPERTY_CREATED",
+    "description": "Nova propriedade cadastrada no sistema",
+    "entityId": "prop-9i5j6k7l-m9n0-1234-5678-901234567890",
+    "entityType": "PROPERTY",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-04-01T09:15:00.000Z"
+  },
+  {
+    "id": "activity-10j7k8l9-n1o2-3456-7890-123456789012",
+    "type": "DEAL_CLOSED",
+    "description": "Venda finalizada com sucesso para João Pereira",
+    "entityId": "deal-10j7k8l9-n1o2-3456-7890-123456789012",
+    "entityType": "DEAL",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-23T15:45:00.000Z"
+  },
+  {
+    "id": "activity-11a1b2c3-d4e5-6789-0123-456789012345",
+    "type": "CONTACT_UPDATED",
+    "description": "Status do lead atualizado para ativo",
+    "entityId": "c3d4e5f6-g7h8-9012-3456-789012345678",
+    "entityType": "CONTACT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-25T16:45:00.000Z"
+  },
+  {
+    "id": "activity-12b2c3d4-e5f6-7890-1234-567890123456",
+    "type": "APPOINTMENT_SCHEDULED",
+    "description": "Reunião de negociação agendada",
+    "entityId": "appointment-12b2c3d4-e5f6-7890-1234-567890123456",
+    "entityType": "APPOINTMENT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-27T13:20:00.000Z"
+  },
+  {
+    "id": "activity-13c3d4e5-f6g7-8901-2345-678901234567",
+    "type": "DEAL_UPDATED",
+    "description": "Valor do negócio atualizado",
+    "entityId": "deal-3c3d4e5f-g7h8-9012-3456-789012345678",
+    "entityType": "DEAL",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-26T15:10:00.000Z"
+  },
+  {
+    "id": "activity-14d4e5f6-g7h8-9012-3456-789012345678",
+    "type": "CHAT_MESSAGE_SENT",
+    "description": "Proposta enviada via chat",
+    "entityId": "chat-14d4e5f6-g7h8-9012-3456-789012345678",
+    "entityType": "CHAT",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-28T14:30:00.000Z"
+  },
+  {
+    "id": "activity-15e5f6g7-h8i9-0123-4567-890123456789",
+    "type": "PROPERTY_UPDATED",
+    "description": "Fotos da propriedade atualizadas",
+    "entityId": "prop-15e5f6g7-h8i9-0123-4567-890123456789",
+    "entityType": "PROPERTY",
+    "userId": "mock-agent-uuid-123",
+    "createdAt": "2024-06-29T11:00:00.000Z"
+  }
+] 

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "mock-agent-uuid-123",
+    "email": "agente@imobipro.com.br",
+    "name": "Fernando Riolo",
+    "role": "AGENT",
+    "isActive": true,
+    "companyId": "mock-company-uuid-456",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "mock-admin-uuid-789",
+    "email": "admin@imobipro.com.br",
+    "name": "Administrador ImobiPRO",
+    "role": "ADMIN",
+    "isActive": true,
+    "companyId": "mock-company-uuid-456",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "mock-creator-uuid-000",
+    "email": "creator@imobipro.com.br",
+    "name": "Fernando Riolo - Creator",
+    "role": "CREATOR",
+    "isActive": true,
+    "companyId": "mock-company-uuid-456",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  }
+] 
