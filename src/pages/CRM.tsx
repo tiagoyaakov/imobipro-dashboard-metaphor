@@ -28,18 +28,18 @@ const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { user } = useAuthMock();
   
-  // Hooks do CRM
+  // Hooks do CRM - usando a estrutura correta
   const { 
-    useContacts, 
-    useDeals, 
-    useLeadScoring, 
-    useActivities 
+    contacts, 
+    deals, 
+    leadScoring, 
+    activities 
   } = useCRMData();
   
-  const { data: contactsData, isLoading: contactsLoading } = useContacts.getContacts();
-  const { data: dealsData, isLoading: dealsLoading } = useDeals.getDeals();
-  const { data: leadScores, isLoading: scoresLoading } = useLeadScoring.getLeadScores();
-  const { data: activitiesData, isLoading: activitiesLoading } = useActivities.getActivities();
+  const { data: contactsData, isLoading: contactsLoading } = contacts.getContacts();
+  const { data: dealsData, isLoading: dealsLoading } = deals.getDeals();
+  const { data: leadScores, isLoading: scoresLoading } = leadScoring.getLeadScores();
+  const { data: activitiesData, isLoading: activitiesLoading } = activities.getActivities();
   
   // Métricas resumidas
   const metrics = useMemo(() => {
@@ -54,8 +54,8 @@ const CRM = () => {
       };
     }
     
-    const contacts = contactsData.data;
-    const deals = dealsData.data;
+    const contactsArray = contactsData.data;
+    const dealsArray = dealsData.data;
     
     const hotLeads = leadScores.filter(score => score.score >= 80).length;
     const avgScore = Math.round(
@@ -63,12 +63,12 @@ const CRM = () => {
     );
     
     return {
-      totalContacts: contacts.length,
+      totalContacts: contactsArray.length,
       hotLeads,
       avgScore,
       activeAutomations: 2, // Simulado
-      totalDeals: deals.length,
-      recentActivities: activitiesData?.data?.length || 0
+      totalDeals: dealsArray.length,
+      recentActivities: activitiesData?.length || 0
     };
   }, [contactsData, leadScores, dealsData, activitiesData]);
   
@@ -232,11 +232,13 @@ const CRM = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {activitiesData?.data?.slice(0, 5).map((activity) => (
+                    {activitiesData?.slice(0, 5).map((activity) => (
                       <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <p className="font-medium">{activity.title}</p>
-                          <p className="text-sm text-muted-foreground">{activity.description}</p>
+                          <p className="font-medium">{activity.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {activity.type} • {activity.entityType || 'Sistema'}
+                          </p>
                         </div>
                         <div className="text-right">
                           <Badge variant="outline">{activity.type}</Badge>
