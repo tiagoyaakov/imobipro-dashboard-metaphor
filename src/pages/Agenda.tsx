@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,8 +27,8 @@ const Agenda = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Agenda</h1>
-          <p className="text-gray-600 mt-1">Gerencie seus compromissos e visitas</p>
+          <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seus compromissos e visitas</p>
         </div>
         <Button className="bg-imobipro-blue hover:bg-imobipro-blue-dark">
           <Plus className="w-4 h-4 mr-2" />
@@ -46,14 +45,14 @@ const Agenda = () => {
           <CardContent>
             <div className="space-y-4">
               {appointments.map((appointment) => (
-                <div key={appointment.id} className="p-4 border border-gray-200 rounded-lg">
+                <div key={appointment.id} className="p-4 border border-border rounded-lg hover:bg-muted/20 transition-colors">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{appointment.title}</h3>
+                    <h3 className="font-semibold text-foreground">{appointment.title}</h3>
                     <Badge variant={appointment.status === "Confirmado" ? "default" : "secondary"}>
                       {appointment.status}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       {appointment.time}
@@ -74,8 +73,8 @@ const Agenda = () => {
             <CardTitle>Calendário</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-50 h-64 rounded-lg flex items-center justify-center">
-              <Calendar className="w-12 h-12 text-gray-400" />
+            <div className="bg-muted/50 h-64 rounded-lg flex items-center justify-center border border-border">
+              <Calendar className="w-12 h-12 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>

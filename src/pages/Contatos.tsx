@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,24 +42,24 @@ const Contatos = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Ativo":
-        return "bg-green-100 text-green-800";
+        return "bg-imobipro-success/20 text-imobipro-success border-imobipro-success/30";
       case "Novo":
-        return "bg-blue-100 text-blue-800";
+        return "bg-imobipro-blue/20 text-imobipro-blue border-imobipro-blue/30";
       case "Inativo":
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground border-border";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "Cliente":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-400/20 text-purple-400 border-purple-400/30";
       case "Lead":
-        return "bg-orange-100 text-orange-800";
+        return "bg-imobipro-warning/20 text-imobipro-warning border-imobipro-warning/30";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -69,8 +68,8 @@ const Contatos = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contatos</h1>
-          <p className="text-gray-600 mt-1">Gerencie seus clientes e leads</p>
+          <h1 className="text-3xl font-bold text-foreground">Contatos</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seus clientes e leads</p>
         </div>
         <Button className="bg-imobipro-blue hover:bg-imobipro-blue-dark">
           <Plus className="w-4 h-4 mr-2" />
@@ -83,7 +82,7 @@ const Contatos = () => {
         <Card className="md:col-span-2 imobipro-card">
           <CardContent className="p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Buscar contatos por nome, email ou telefone..."
                 className="pl-10"
@@ -102,8 +101,8 @@ const Contatos = () => {
                 <stat.icon className="w-5 h-5 text-imobipro-blue" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">{stat.label}</p>
-                <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-xl font-bold text-foreground">{stat.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -121,7 +120,7 @@ const Contatos = () => {
             {contacts.map((contact) => (
               <div
                 key={contact.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-md hover:bg-muted/20 transition-all"
               >
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12">
@@ -133,15 +132,15 @@ const Contatos = () => {
                   
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{contact.name}</h3>
-                      <Badge className={getTypeColor(contact.type)}>
+                      <h3 className="font-semibold text-foreground">{contact.name}</h3>
+                      <Badge className={`${getTypeColor(contact.type)} border`}>
                         {contact.type}
                       </Badge>
-                      <Badge className={getStatusColor(contact.status)}>
+                      <Badge className={`${getStatusColor(contact.status)} border`}>
                         {contact.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
                         {contact.email}
@@ -151,7 +150,7 @@ const Contatos = () => {
                         {contact.phone}
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Último contato: {contact.lastContact}
                     </p>
                   </div>

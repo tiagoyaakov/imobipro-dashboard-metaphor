@@ -1,4 +1,3 @@
-
 import { Bell, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +14,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const DashboardHeader = () => {
   return (
-    <header className="h-16 border-b bg-white/80 backdrop-blur-md flex items-center px-6 gap-4">
+    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="text-gray-600 hover:text-gray-900" />
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
         <div className="hidden md:flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Buscar propriedades, clientes..."
-              className="pl-10 w-80 bg-gray-50/50 border-gray-200 focus:border-imobipro-blue focus:ring-imobipro-blue/20"
+              className="pl-10 w-80 bg-muted/50 border-border focus:border-imobipro-blue focus:ring-imobipro-blue/20"
             />
           </div>
         </div>
@@ -31,8 +30,8 @@ export const DashboardHeader = () => {
 
       <div className="ml-auto flex items-center gap-3">
         <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5 text-gray-600" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs"></span>
+          <Bell className="h-5 w-5 text-muted-foreground" />
+          <span className="absolute -top-1 -right-1 h-3 w-3 bg-imobipro-danger rounded-full text-xs"></span>
         </Button>
 
         <DropdownMenu>
@@ -44,7 +43,7 @@ export const DashboardHeader = () => {
                   AD
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden md:inline text-sm font-medium text-gray-700">
+              <span className="hidden md:inline text-sm font-medium text-foreground">
                 Admin User
               </span>
             </Button>
@@ -60,7 +59,7 @@ export const DashboardHeader = () => {
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-imobipro-danger">
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

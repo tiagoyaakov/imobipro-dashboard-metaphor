@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -63,11 +62,11 @@ export function AppSidebar() {
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       isActive
         ? "bg-imobipro-blue text-white shadow-md"
-        : "text-gray-300 hover:text-white hover:bg-gray-800/80"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
     }`;
 
   return (
-    <Sidebar className={`${isCollapsed ? "w-20" : "w-64"} border-r border-gray-800 bg-gray-900`}>
+    <Sidebar className={`${isCollapsed ? "w-20" : "w-64"} border-r border-border bg-sidebar`}>
       <SidebarContent className="p-4">
         {/* Logo */}
         <div className="mb-8 px-2">
@@ -76,7 +75,7 @@ export function AppSidebar() {
               <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
                 <Home className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-white">ImobiPRO</h1>
+              <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
             </div>
           ) : (
             <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center mx-auto">
@@ -93,7 +92,7 @@ export function AppSidebar() {
           <SidebarGroup>
             {!isCollapsed && (
               <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="group/label text-xs uppercase tracking-wider text-gray-400 font-semibold mb-3 flex items-center justify-between hover:text-gray-300 cursor-pointer">
+                <SidebarGroupLabel className="group/label text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3 flex items-center justify-between hover:text-sidebar-foreground cursor-pointer">
                   Menu Principal
                   <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/label:rotate-180" />
                 </SidebarGroupLabel>
@@ -127,9 +126,9 @@ export function AppSidebar() {
 
         {/* Quick Actions - apenas quando não colapsado */}
         {!isCollapsed && (
-          <div className="mt-8 p-4 bg-gradient-to-r from-imobipro-blue/20 to-imobipro-blue-dark/20 rounded-xl border border-gray-800">
-            <h3 className="text-sm font-semibold text-white mb-2">Ações Rápidas</h3>
-            <p className="text-xs text-gray-400 mb-3">
+          <div className="mt-8 p-4 bg-gradient-to-r from-imobipro-blue/20 to-imobipro-blue-dark/20 rounded-xl border border-sidebar-border">
+            <h3 className="text-sm font-semibold text-sidebar-foreground mb-2">Ações Rápidas</h3>
+            <p className="text-xs text-muted-foreground mb-3">
               Acesse funcionalidades essenciais rapidamente
             </p>
             <button className="w-full bg-imobipro-blue text-white text-sm py-2 px-3 rounded-lg hover:bg-imobipro-blue-dark transition-colors">

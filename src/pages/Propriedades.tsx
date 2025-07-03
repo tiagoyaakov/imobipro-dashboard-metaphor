@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,13 +48,13 @@ const Propriedades = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Disponível":
-        return "bg-green-100 text-green-800";
+        return "bg-imobipro-success/20 text-imobipro-success border-imobipro-success/30";
       case "Vendido":
-        return "bg-red-100 text-red-800";
+        return "bg-imobipro-danger/20 text-imobipro-danger border-imobipro-danger/30";
       case "Reservado":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-imobipro-warning/20 text-imobipro-warning border-imobipro-warning/30";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -64,8 +63,8 @@ const Propriedades = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Propriedades</h1>
-          <p className="text-gray-600 mt-1">Gerencie seu portfólio de imóveis</p>
+          <h1 className="text-3xl font-bold text-foreground">Propriedades</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seu portfólio de imóveis</p>
         </div>
         <Button className="bg-imobipro-blue hover:bg-imobipro-blue-dark">
           <Plus className="w-4 h-4 mr-2" />
@@ -78,7 +77,7 @@ const Propriedades = () => {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Buscar por endereço, tipo ou características..."
                 className="pl-10"
@@ -117,14 +116,14 @@ const Propriedades = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Total", value: "847", color: "text-blue-600" },
-          { label: "Disponíveis", value: "234", color: "text-green-600" },
-          { label: "Vendidas", value: "456", color: "text-red-600" },
-          { label: "Reservadas", value: "157", color: "text-yellow-600" },
+          { label: "Total", value: "847", color: "text-imobipro-blue" },
+          { label: "Disponíveis", value: "234", color: "text-imobipro-success" },
+          { label: "Vendidas", value: "456", color: "text-imobipro-danger" },
+          { label: "Reservadas", value: "157", color: "text-imobipro-warning" },
         ].map((stat, index) => (
           <Card key={index} className="imobipro-card">
             <CardContent className="p-4 text-center">
-              <p className="text-sm text-gray-600">{stat.label}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
               <p className={`text-2xl font-bold ${stat.color} mt-1`}>{stat.value}</p>
             </CardContent>
           </Card>
@@ -135,10 +134,10 @@ const Propriedades = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((property) => (
           <Card key={property.id} className="imobipro-card overflow-hidden">
-            <div className="aspect-video bg-gray-100 relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            <div className="aspect-video bg-muted relative">
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
               <Badge 
-                className={`absolute top-3 right-3 ${getStatusColor(property.status)}`}
+                className={`absolute top-3 right-3 ${getStatusColor(property.status)} border`}
               >
                 {property.status}
               </Badge>
@@ -146,8 +145,8 @@ const Propriedades = () => {
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{property.title}</h3>
-                  <div className="flex items-center text-gray-600 text-sm mt-1">
+                  <h3 className="font-semibold text-foreground text-lg">{property.title}</h3>
+                  <div className="flex items-center text-muted-foreground text-sm mt-1">
                     <MapPin className="w-4 h-4 mr-1" />
                     {property.address}
                   </div>
@@ -158,7 +157,7 @@ const Propriedades = () => {
                   <Badge variant="outline">{property.type}</Badge>
                 </div>
 
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Bed className="w-4 h-4 mr-1" />
                     {property.bedrooms}
