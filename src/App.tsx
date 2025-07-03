@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProviderMock } from "@/contexts/AuthContextMock";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
@@ -40,128 +41,130 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<DashboardLayout />}>
+    <AuthProviderMock>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<DashboardLayout />}>
+              <Route 
+                index 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Dashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="propriedades" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Propriedades />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="contatos" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Contatos />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="agenda" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Agenda />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="clientes" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Clientes />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="pipeline" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Pipeline />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="crm" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <CRM />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="relatorios" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Relatorios />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="conexoes" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Conexoes />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="usuarios" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Usuarios />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="chats" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Chats />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="lei-inquilino" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <LeiInquilino />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="configuracoes" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Configuracoes />
+                  </Suspense>
+                } 
+              />
+            </Route>
             <Route 
-              index 
+              path="*" 
               element={
                 <Suspense fallback={<PageLoadingFallback />}>
-                  <Dashboard />
+                  <NotFound />
                 </Suspense>
               } 
             />
-            <Route 
-              path="propriedades" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Propriedades />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="contatos" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Contatos />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="agenda" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Agenda />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="clientes" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Clientes />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="pipeline" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Pipeline />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="crm" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <CRM />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="relatorios" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Relatorios />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="conexoes" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Conexoes />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="usuarios" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Usuarios />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="chats" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Chats />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="lei-inquilino" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <LeiInquilino />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="configuracoes" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Configuracoes />
-                </Suspense>
-              } 
-            />
-          </Route>
-          <Route 
-            path="*" 
-            element={
-              <Suspense fallback={<PageLoadingFallback />}>
-                <NotFound />
-              </Suspense>
-            } 
-          />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProviderMock>
   </QueryClientProvider>
 );
 
