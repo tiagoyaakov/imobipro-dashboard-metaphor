@@ -5,7 +5,10 @@
     "factors": {
       "interactionCount": 5,
       "lastActivityDays": 3,
-      "engagement": 80
+      "engagement": 80,
+      "demographics": 70,
+      "behavior": 75,
+      "firmographics": 65
     },
     "lastCalculatedAt": "2024-06-29T10:30:00.000Z"
   },
@@ -15,7 +18,10 @@
     "factors": {
       "interactionCount": 20,
       "lastActivityDays": 1,
-      "engagement": 95
+      "engagement": 95,
+      "demographics": 88,
+      "behavior": 90,
+      "firmographics": 85
     },
     "lastCalculatedAt": "2024-06-29T11:00:00.000Z"
   },
@@ -25,7 +31,10 @@
     "factors": {
       "interactionCount": 8,
       "lastActivityDays": 4,
-      "engagement": 70
+      "engagement": 70,
+      "demographics": 65,
+      "behavior": 68,
+      "firmographics": 60
     },
     "lastCalculatedAt": "2024-06-29T09:15:00.000Z"
   },
@@ -35,7 +44,10 @@
     "factors": {
       "interactionCount": 15,
       "lastActivityDays": 2,
-      "engagement": 90
+      "engagement": 90,
+      "demographics": 85,
+      "behavior": 88,
+      "firmographics": 80
     },
     "lastCalculatedAt": "2024-06-29T14:20:00.000Z"
   },
@@ -45,7 +57,10 @@
     "factors": {
       "interactionCount": 2,
       "lastActivityDays": 7,
-      "engagement": 40
+      "engagement": 40,
+      "demographics": 45,
+      "behavior": 42,
+      "firmographics": 38
     },
     "lastCalculatedAt": "2024-06-29T08:45:00.000Z"
   },
@@ -55,7 +70,10 @@
     "factors": {
       "interactionCount": 25,
       "lastActivityDays": 1,
-      "engagement": 98
+      "engagement": 98,
+      "demographics": 92,
+      "behavior": 95,
+      "firmographics": 90
     },
     "lastCalculatedAt": "2024-06-29T16:30:00.000Z"
   },
@@ -65,7 +83,10 @@
     "factors": {
       "interactionCount": 6,
       "lastActivityDays": 5,
-      "engagement": 65
+      "engagement": 65,
+      "demographics": 60,
+      "behavior": 62,
+      "firmographics": 55
     },
     "lastCalculatedAt": "2024-06-29T13:10:00.000Z"
   },
@@ -75,7 +96,10 @@
     "factors": {
       "interactionCount": 12,
       "lastActivityDays": 2,
-      "engagement": 85
+      "engagement": 85,
+      "demographics": 78,
+      "behavior": 82,
+      "firmographics": 75
     },
     "lastCalculatedAt": "2024-06-29T15:45:00.000Z"
   },
@@ -85,7 +109,10 @@
     "factors": {
       "interactionCount": 1,
       "lastActivityDays": 15,
-      "engagement": 25
+      "engagement": 25,
+      "demographics": 30,
+      "behavior": 28,
+      "firmographics": 25
     },
     "lastCalculatedAt": "2024-06-29T12:00:00.000Z"
   },
@@ -95,7 +122,10 @@
     "factors": {
       "interactionCount": 18,
       "lastActivityDays": 1,
-      "engagement": 92
+      "engagement": 92,
+      "demographics": 88,
+      "behavior": 90,
+      "firmographics": 85
     },
     "lastCalculatedAt": "2024-06-29T17:15:00.000Z"
   }

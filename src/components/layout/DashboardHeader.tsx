@@ -38,9 +38,9 @@ export const DashboardHeader = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar-placeholder.jpg" />
+                <AvatarImage src="/avatar-placeholder.svg" />
                 <AvatarFallback className="bg-imobipro-blue text-white text-sm">
-                  AD
+                  {user?.name.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="hidden md:inline text-sm font-medium text-foreground">
