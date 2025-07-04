@@ -227,43 +227,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = useCallback(async (
     email: string, 
     password: string, 
-    userData?: Partial<User>
+    userData?: Partial<ExtendedUser>
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     
     try {
+      console.log('🔐 [Auth] Tentando cadastro para:', email);
+      
+      // Primeiro, tentar cadastro simples sem metadados extras
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: undefined, // Desabilita confirmação por email
-          data: {
-            name: userData?.name || email.split('@')[0],
-            role: userData?.role || 'AGENT',
-          }
-        }
       });
 
       if (error) {
         console.error('🔐 [Auth] Erro no cadastro:', error);
+        
+        // Traduzir mensagens de erro comuns
+        let errorMessage = error.message;
+        if (error.message.includes('Password should be')) {
+          errorMessage = 'A senha deve ter pelo menos 6 caracteres';
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'Email inválido';
+        } else if (error.message.includes('User already registered')) {
+          errorMessage = 'Este email já está cadastrado';
+        }
+        
         return { 
           success: false, 
-          error: error.message 
+          error: errorMessage 
         };
       }
 
-      // Com confirmação desabilitada, usuário deve ter acesso imediato
-      if (data.user && data.session) {
-        console.log('🔐 [Auth] Cadastro realizado com sucesso - Acesso imediato');
-        return { success: true };
+      console.log('🔐 [Auth] Resposta do cadastro:', {
+        user: !!data.user,
+        session: !!data.session,
+        user_id: data.user?.id
+      });
+
+      // Se usuário foi criado mas não há sessão, fazer login automático
+      if (data.user && !data.session) {
+        console.log('🔐 [Auth] Usuário criado, tentando login automático...');
+        const loginResult = await login(email, password);
+        
+        if (loginResult.success) {
+          // Após login bem-sucedido, criar perfil na tabela users
+          await createUserProfile(data.user.id, userData);
+        }
+        
+        return loginResult;
       }
 
-      // Fallback se não houver sessão imediata
-      if (data.user && !data.session) {
-        console.log('🔐 [Auth] Usuário criado, tentando login automático');
-        // Tentar login automático após cadastro
-        const loginResult = await login(email, password);
-        return loginResult;
+      // Se há sessão imediata, criar perfil do usuário
+      if (data.user && data.session) {
+        console.log('🔐 [Auth] Cadastro realizado com sucesso - Acesso imediato');
+        await createUserProfile(data.user.id, userData);
+        return { success: true };
       }
 
       console.log('🔐 [Auth] Cadastro realizado com sucesso');
@@ -273,12 +292,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('🔐 [Auth] Erro inesperado no cadastro:', error);
       return { 
         success: false, 
-        error: 'Erro interno durante cadastro' 
+        error: 'Erro interno durante cadastro. Tente novamente.' 
       };
     } finally {
       setIsLoading(false);
     }
   }, [login]);
+
+  /**
+   * Cria perfil do usuário na tabela users após cadastro
+   */
+  const createUserProfile = async (userId: string, userData?: Partial<ExtendedUser>) => {
+    try {
+      console.log('🔐 [Auth] Criando perfil do usuário no banco...');
+      
+      const { error } = await supabase
+        .from('users')
+        .upsert({
+          id: userId,
+          name: userData?.name || 'Usuário',
+          email: userData?.email || '',
+          role: userData?.role || 'AGENT',
+          phone: userData?.phone || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error('🔐 [Auth] Erro ao criar perfil:', error);
+      } else {
+        console.log('🔐 [Auth] Perfil criado com sucesso');
+      }
+    } catch (error) {
+      console.error('🔐 [Auth] Erro inesperado ao criar perfil:', error);
+    }
+  };
 
   /**
    * Realiza logout

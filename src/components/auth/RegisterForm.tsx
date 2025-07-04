@@ -55,6 +55,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       
       const result = await signup(data.email, data.password, {
         name: data.name,
+        email: data.email,
         phone: data.phone,
         role: 'AGENT', // Padrão para novos usuários
       });
