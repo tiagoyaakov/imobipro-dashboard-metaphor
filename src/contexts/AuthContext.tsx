@@ -393,8 +393,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
+      // Determinar URL de redirecionamento baseada no ambiente
+      const getRedirectUrl = (): string => {
+        // Se estamos em desenvolvimento (localhost), usar window.location.origin
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return `${window.location.origin}/auth/reset-password`;
+        }
+        
+        // Se estamos em produção ou staging, usar o domínio correto
+        // Verificar se é domínio Vercel conhecido
+        if (window.location.hostname.includes('vercel.app')) {
+          return `${window.location.origin}/auth/reset-password`;
+        }
+        
+        // Fallback para domínio de produção conhecido
+        return 'https://imobpro-brown.vercel.app/auth/reset-password';
+      };
+
+      const redirectUrl = getRedirectUrl();
+      console.log('🔐 [Auth] URL de redirecionamento para recuperação:', redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: redirectUrl
       });
 
       if (error) {
@@ -405,6 +425,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
 
+      console.log('🔐 [Auth] Email de recuperação enviado com sucesso');
       return { 
         success: true 
       };

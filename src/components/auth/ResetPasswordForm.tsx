@@ -31,30 +31,57 @@ const ResetPasswordForm: React.FC = () => {
     resolver: zodResolver(ResetPasswordSchema),
   });
 
-  // Verificar se temos access_token e refresh_token na URL
+  // Verificar se temos access_token e refresh_token na URL (tanto em query params quanto em hash)
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    console.log('🔐 [ResetPassword] Verificando tokens na URL...');
+    console.log('🔐 [ResetPassword] Current URL:', window.location.href);
+    console.log('🔐 [ResetPassword] Hash:', window.location.hash);
+    console.log('🔐 [ResetPassword] Search:', window.location.search);
+    
+    let accessToken = searchParams.get('access_token');
+    let refreshToken = searchParams.get('refresh_token');
+    
+    // Se não encontrou nos query params, tentar no hash (formato padrão do Supabase)
+    if (!accessToken || !refreshToken) {
+      const hash = window.location.hash.substring(1); // Remove o #
+      const hashParams = new URLSearchParams(hash);
+      
+      accessToken = hashParams.get('access_token');
+      refreshToken = hashParams.get('refresh_token');
+      
+      console.log('🔐 [ResetPassword] Tokens do hash:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+    }
     
     if (!accessToken || !refreshToken) {
+      console.error('🔐 [ResetPassword] Tokens não encontrados');
       setError('Link de redefinição inválido ou expirado. Solicite um novo link.');
       return;
     }
+    
+    console.log('🔐 [ResetPassword] Tokens encontrados, configurando sessão...');
 
     // Configurar sessão com os tokens da URL
     const setSession = async () => {
       try {
-        const { error } = await supabase.auth.setSession({
+        const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         
         if (error) {
-          console.error('Erro ao configurar sessão:', error);
+          console.error('🔐 [ResetPassword] Erro ao configurar sessão:', error);
           setError('Link de redefinição inválido ou expirado. Solicite um novo link.');
+          return;
         }
+        
+        if (data?.session) {
+          console.log('🔐 [ResetPassword] Sessão configurada com sucesso');
+        } else {
+          console.warn('🔐 [ResetPassword] Sessão configurada mas sem dados de sessão');
+        }
+        
       } catch (error) {
-        console.error('Erro inesperado ao configurar sessão:', error);
+        console.error('🔐 [ResetPassword] Erro inesperado ao configurar sessão:', error);
         setError('Erro inesperado. Tente novamente.');
       }
     };
@@ -69,16 +96,19 @@ const ResetPasswordForm: React.FC = () => {
     setError(null);
 
     try {
+      console.log('🔐 [ResetPassword] Tentando atualizar senha...');
+      
       const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
 
       if (error) {
-        console.error('Erro ao atualizar senha:', error);
+        console.error('🔐 [ResetPassword] Erro ao atualizar senha:', error);
         setError(error.message || 'Erro ao redefinir senha. Tente novamente.');
         return;
       }
 
+      console.log('🔐 [ResetPassword] Senha atualizada com sucesso');
       setSuccess(true);
       
       toast.success('Senha redefinida com sucesso!', {
@@ -87,6 +117,7 @@ const ResetPasswordForm: React.FC = () => {
 
       // Fazer logout para forçar novo login
       await supabase.auth.signOut();
+      console.log('🔐 [ResetPassword] Logout realizado, redirecionando...');
       
       // Redirecionar para login após sucesso
       setTimeout(() => {
@@ -97,7 +128,7 @@ const ResetPasswordForm: React.FC = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Erro inesperado:', error);
+      console.error('🔐 [ResetPassword] Erro inesperado:', error);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setIsLoading(false);

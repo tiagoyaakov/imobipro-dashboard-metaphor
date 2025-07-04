@@ -45,8 +45,14 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
       const result = await resetPassword(data.email);
       
       if (result.success) {
-        setSuccess('Email de recuperação enviado! Verifique sua caixa de entrada.');
+        setSuccess(
+          'Email de recuperação enviado com sucesso! ' +
+          'Verifique sua caixa de entrada (incluindo spam) e clique no link para redefinir sua senha.'
+        );
         onSuccess?.();
+        
+        // Limpar o formulário após sucesso
+        form.reset();
       } else {
         setError(result.error || 'Erro ao enviar email de recuperação');
       }
