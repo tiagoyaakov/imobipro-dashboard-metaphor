@@ -46,20 +46,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   /**
    * Manipula o envio do formulário
    */
-  const handleSubmit = async (data: LoginFormData) => {
+  const handleSubmit = async (data: LoginFormData, event?: React.BaseSyntheticEvent) => {
+    console.log('🔐 [Login] *** HANDLESUBMIT CHAMADO ***', data);
+    
+    // Prevenir reload da página
+    if (event) {
+      event.preventDefault();
+    }
+    
     try {
       setError(null);
       
+      console.log('🔐 [Login] Iniciando login para:', data.email);
+      
       const result = await login(data.email, data.password);
       
+      console.log('🔐 [Login] Resultado do login:', result);
+      
       if (result.success) {
+        console.log('🔐 [Login] Login bem-sucedido, navegando para:', redirectTo);
         onSuccess?.();
-        navigate(redirectTo);
+        navigate(redirectTo, { replace: true });
       } else {
+        console.log('🔐 [Login] Erro no login:', result.error);
         setError(result.error || 'Erro ao fazer login');
       }
     } catch (err) {
-      console.error('Erro inesperado no login:', err);
+      console.error('🔐 [Login] Erro inesperado no login:', err);
       setError('Erro interno. Tente novamente.');
     }
   };

@@ -30,6 +30,18 @@ export const DashboardHeader = () => {
   // Funções de navegação
   const goToProfile = () => navigate('/perfil');
   const goToSettings = () => navigate('/configuracoes');
+  
+  // Função de logout melhorada
+  const handleLogout = async () => {
+    console.log('🔐 [DashboardHeader] *** LOGOUT CHAMADO ***');
+    try {
+      await logout();
+      console.log('🔐 [DashboardHeader] Logout realizado, navegando para login');
+      navigate('/auth/login', { replace: true });
+    } catch (error) {
+      console.error('🔐 [DashboardHeader] Erro no logout:', error);
+    }
+  };
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -86,7 +98,7 @@ export const DashboardHeader = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-imobipro-danger cursor-pointer"
-              onClick={() => logout()}
+              onClick={handleLogout}
             >
               <span>Sair</span>
             </DropdownMenuItem>

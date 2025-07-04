@@ -246,12 +246,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Realiza login com email e senha
    */
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    console.log('🔐 [Auth] *** LOGIN INICIADO ***', { email, ambiente: window.location.hostname });
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+      });
+
+      console.log('🔐 [Auth] Resposta do Supabase:', { 
+        hasData: !!data, 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session, 
+        error: error?.message 
       });
 
       if (error) {
@@ -389,16 +397,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Realiza logout
    */
   const logout = useCallback(async (): Promise<void> => {
+    console.log('🔐 [Auth] *** LOGOUT INICIADO ***');
     try {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('🔐 [Auth] Erro no logout:', error);
+        throw error;
       } else {
         console.log('🔐 [Auth] Logout realizado com sucesso');
       }
     } catch (error) {
       console.error('🔐 [Auth] Erro inesperado no logout:', error);
+      throw error;
     }
   }, []);
 
