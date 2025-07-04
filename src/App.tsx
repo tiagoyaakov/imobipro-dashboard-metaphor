@@ -4,11 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProviderMock } from "@/contexts/AuthContextMock";
+import { AuthProvider } from "@/contexts/AuthContext";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
-// Lazy loading das páginas para melhor performance
+// Lazy loading das páginas principais para melhor performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
 const Contatos = lazy(() => import("./pages/Contatos"));
@@ -23,6 +23,11 @@ const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Lazy loading das páginas de autenticação
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -41,15 +46,50 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProviderMock>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Rotas de autenticação (públicas) */}
+            <Route 
+              path="/auth/login" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <Login />
+                </Suspense>
+              } 
+            />
+            <Route 
+              path="/auth/register" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <Register />
+                </Suspense>
+              } 
+            />
+            <Route 
+              path="/auth/forgot-password" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <ForgotPassword />
+                </Suspense>
+              } 
+            />
+            
+            {/* Rotas protegidas */}
             <Route path="/" element={<DashboardLayout />}>
               <Route 
                 index 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Dashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="dashboard" 
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Dashboard />
@@ -164,7 +204,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProviderMock>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

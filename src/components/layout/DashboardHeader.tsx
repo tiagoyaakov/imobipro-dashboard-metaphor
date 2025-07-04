@@ -11,10 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuthMock } from "@/contexts/AuthContextMock";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const DashboardHeader = () => {
-  const { user } = useAuthMock();
+  const { user } = useAuth();
 
   // Valores derivados para melhor legibilidade
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';

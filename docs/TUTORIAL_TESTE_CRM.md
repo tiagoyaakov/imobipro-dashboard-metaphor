@@ -12,10 +12,6 @@ Este tutorial vai te ensinar a testar todas as funcionalidades do sistema CRM (C
 2. Digite na barra de endereço: `https://imobpro-brown.vercel.app`
 3. Aguarde a página carregar completamente
 
-### **Opção 2: Acesso Direto ao CRM**
-1. Digite diretamente: `https://imobpro-brown.vercel.app/crm`
-2. Isso te levará direto para a página do CRM
-
 ---
 
 ## 🏠 **2. Navegação Inicial**
