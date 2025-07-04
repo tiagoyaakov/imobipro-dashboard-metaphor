@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute, PublicRoute } from "@/components/auth";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
@@ -28,6 +29,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+
+// Páginas de erro
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -56,30 +60,53 @@ const App = () => (
             <Route 
               path="/auth/login" 
               element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Login />
-                </Suspense>
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Login />
+                  </Suspense>
+                </PublicRoute>
               } 
             />
             <Route 
               path="/auth/register" 
               element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Register />
-                </Suspense>
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Register />
+                  </Suspense>
+                </PublicRoute>
               } 
             />
             <Route 
               path="/auth/forgot-password" 
               element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <ForgotPassword />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            
+            {/* Página de acesso negado */}
+            <Route 
+              path="/unauthorized" 
+              element={
                 <Suspense fallback={<PageLoadingFallback />}>
-                  <ForgotPassword />
+                  <Unauthorized />
                 </Suspense>
               } 
             />
             
             {/* Rotas protegidas */}
-            <Route path="/" element={<DashboardLayout />}>
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route 
                 index 
                 element={

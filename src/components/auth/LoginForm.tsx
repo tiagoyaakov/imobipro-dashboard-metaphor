@@ -65,12 +65,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-slate-800/80 backdrop-blur-md border-slate-700/50 shadow-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-slate-100">
           Fazer Login
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-slate-300">
           Entre com suas credenciais para acessar o ImobiPRO
         </CardDescription>
       </CardHeader>
@@ -118,7 +118,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                         disabled={isLoading}
                       >
                         {showPassword ? (
@@ -187,17 +187,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         {/* Link para recuperação de senha */}
         <Link 
           to="/auth/forgot-password" 
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
         >
           Esqueceu sua senha?
         </Link>
 
         {/* Link para registro */}
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-slate-400">
           Não tem uma conta?{' '}
           <Link 
             to="/auth/register" 
-            className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
           >
             Criar conta
           </Link>

@@ -18,27 +18,38 @@ const Login: React.FC = () => {
   // Mostra loading se ainda está inicializando
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Logo */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background decorativo */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Container principal */}
+      <div className="relative max-w-md w-full space-y-8">
+        {/* Logo e branding */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            ImobiPRO
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Sistema de gestão imobiliária
-          </p>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              ImobiPRO
+            </h1>
+            <p className="mt-3 text-base text-slate-400">
+              Sistema de gestão imobiliária
+            </p>
+          </div>
         </div>
 
         {/* Formulário de login */}
-        <LoginForm />
+        <div className="backdrop-blur-sm">
+          <LoginForm />
+        </div>
       </div>
     </div>
   );

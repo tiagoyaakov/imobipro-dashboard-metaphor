@@ -72,12 +72,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-slate-800/80 backdrop-blur-md border-slate-700/50 shadow-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-slate-100">
           Criar Conta
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-slate-300">
           Crie sua conta para acessar o ImobiPRO
         </CardDescription>
       </CardHeader>
@@ -167,7 +167,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                         disabled={isLoading}
                       >
                         {showPassword ? (
@@ -202,7 +202,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                         disabled={isLoading}
                       >
                         {showConfirmPassword ? (
@@ -232,11 +232,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                     />
                   </FormControl>
                   <div className="grid gap-1.5 leading-none">
-                    <FormLabel className="text-sm font-normal">
+                    <FormLabel className="text-sm font-normal text-slate-300">
                       Aceito os{' '}
                       <Link
                         to="/termos"
-                        className="text-blue-600 hover:text-blue-800 underline"
+                        className="text-blue-400 hover:text-blue-300 underline"
                         target="_blank"
                       >
                         termos de uso
@@ -244,7 +244,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                       {' '}e{' '}
                       <Link
                         to="/privacidade"
-                        className="text-blue-600 hover:text-blue-800 underline"
+                        className="text-blue-400 hover:text-blue-300 underline"
                         target="_blank"
                       >
                         política de privacidade
@@ -287,11 +287,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
       <CardFooter className="flex flex-col space-y-2">
         {/* Link para login */}
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-slate-400">
           Já tem uma conta?{' '}
           <Link 
             to="/auth/login" 
-            className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
           >
             Fazer login
           </Link>

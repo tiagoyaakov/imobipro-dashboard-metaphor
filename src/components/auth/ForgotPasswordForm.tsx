@@ -57,12 +57,12 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-slate-800/80 backdrop-blur-md border-slate-700/50 shadow-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-slate-100">
           Recuperar Senha
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-slate-300">
           Digite seu email para receber as instruções de recuperação
         </CardDescription>
       </CardHeader>
@@ -100,8 +100,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
 
             {/* Mensagem de sucesso */}
             {success && (
-              <Alert className="border-green-200 bg-green-50">
-                <AlertDescription className="text-green-800">
+              <Alert className="border-green-500/50 bg-green-500/10">
+                <AlertDescription className="text-green-400">
                   {success}
                 </AlertDescription>
               </Alert>
@@ -133,18 +133,18 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
         {/* Link para voltar ao login */}
         <Link 
           to="/auth/login" 
-          className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          className="flex items-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Voltar para o login
         </Link>
 
         {/* Link para registro */}
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-slate-400">
           Não tem uma conta?{' '}
           <Link 
             to="/auth/register" 
-            className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
           >
             Criar conta
           </Link>

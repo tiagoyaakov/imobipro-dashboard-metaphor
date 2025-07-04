@@ -14,11 +14,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const DashboardHeader = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+  // Debug: Log do estado de autenticação
+  if (!isLoading && !isAuthenticated) {
+    console.warn('🔐 [DashboardHeader] Usuário não autenticado acessando dashboard');
+  }
 
   // Valores derivados para melhor legibilidade
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
-  const userName = user?.name || 'Admin User';
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  const userName = user?.name || 'Usuário não autenticado';
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -66,7 +71,10 @@ export const DashboardHeader = () => {
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-imobipro-danger">
+            <DropdownMenuItem 
+              className="text-imobipro-danger cursor-pointer"
+              onClick={() => logout()}
+            >
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

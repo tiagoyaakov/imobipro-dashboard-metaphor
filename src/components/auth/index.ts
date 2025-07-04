@@ -9,4 +9,10 @@ export { ForgotPasswordForm } from './ForgotPasswordForm';
 // Exportações default
 export { default as LoginFormDefault } from './LoginForm';
 export { default as RegisterFormDefault } from './RegisterForm';
-export { default as ForgotPasswordFormDefault } from './ForgotPasswordForm'; 
+export { default as ForgotPasswordFormDefault } from './ForgotPasswordForm';
+
+// Guards de rota
+export { default as ProtectedRoute } from './ProtectedRoute';
+export { default as PublicRoute } from './PublicRoute';
+
+ 
