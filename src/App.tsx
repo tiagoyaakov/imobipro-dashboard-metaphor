@@ -4,8 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute, PublicRoute } from "@/components/auth";
+import { ClerkProvider } from "@clerk/clerk-react";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
@@ -25,17 +24,15 @@ const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Lazy loading das páginas de autenticação
-const Login = lazy(() => import("./pages/auth/Login"));
-const Register = lazy(() => import("./pages/auth/Register"));
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-
 // Página de perfil
 const Profile = lazy(() => import("./pages/Profile"));
 
-// Páginas de erro
-const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+// Configurações do Clerk
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('Adicione sua Clerk Publishable Key no arquivo .env com a variável VITE_CLERK_PUBLISHABLE_KEY');
+}
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -53,74 +50,30 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+  <ClerkProvider
+    publishableKey={PUBLISHABLE_KEY}
+    appearance={{
+      variables: {
+        colorPrimary: '#0EA5E9',
+        colorBackground: '#0F172A',
+        colorInputBackground: '#1E293B',
+        colorInputText: '#F1F5F9',
+        colorText: '#F1F5F9',
+      },
+    }}
+    signInUrl="/sign-in"
+    signUpUrl="/sign-up"
+    afterSignInUrl="/"
+    afterSignUpUrl="/"
+  >
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Rotas de autenticação (públicas) */}
-            <Route 
-              path="/auth/login" 
-              element={
-                <PublicRoute>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Login />
-                  </Suspense>
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/auth/register" 
-              element={
-                <PublicRoute>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Register />
-                  </Suspense>
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/auth/forgot-password" 
-              element={
-                <PublicRoute>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <ForgotPassword />
-                  </Suspense>
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/auth/reset-password" 
-              element={
-                <PublicRoute>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <ResetPassword />
-                  </Suspense>
-                </PublicRoute>
-              } 
-            />
-            
-            {/* Página de acesso negado */}
-            <Route 
-              path="/unauthorized" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <Unauthorized />
-                </Suspense>
-              } 
-            />
-            
-            {/* Rotas protegidas */}
-            <Route 
-              path="/" 
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            {/* Rotas principais protegidas */}
+            <Route path="/" element={<DashboardLayout />}>
               <Route 
                 index 
                 element={
@@ -226,14 +179,6 @@ const App = () => (
                 } 
               />
               <Route 
-                path="perfil" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Profile />
-                  </Suspense>
-                } 
-              />
-              <Route 
                 path="configuracoes" 
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
@@ -241,7 +186,17 @@ const App = () => (
                   </Suspense>
                 } 
               />
+              <Route 
+                path="profile" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Profile />
+                  </Suspense>
+                } 
+              />
             </Route>
+            
+            {/* Página 404 */}
             <Route 
               path="*" 
               element={
@@ -253,8 +208,8 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </ClerkProvider>
 );
 
 export default App;

@@ -1,7 +1,6 @@
-import { Bell, Search, User, Settings } from "lucide-react";
+import { Search, Bell, Settings, LogOut, User, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,100 +10,164 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { useUser, useClerk } from "@clerk/clerk-react";
+import { Link, useNavigate } from "react-router-dom";
 
-export const DashboardHeader = () => {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+export default function DashboardHeader() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
 
-  // Debug: Log do estado de autenticação
-  if (!isLoading && !isAuthenticated) {
-    console.warn('🔐 [DashboardHeader] Usuário não autenticado acessando dashboard');
-  }
+  // Sistema inteligente de fallbacks para o nome do usuário
+  const getUserDisplayName = (): string => {
+    if (!user) return "Usuário";
 
-  // Valores derivados para melhor legibilidade
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-  const userName = user?.name || 'Usuário não autenticado';
+    // 1. Nome dos metadados personalizados (nome completo salvo)
+    const customName = user.unsafeMetadata?.nome as string;
+    if (customName?.trim()) {
+      return customName;
+    }
 
-  // Funções de navegação
-  const goToProfile = () => navigate('/perfil');
-  const goToSettings = () => navigate('/configuracoes');
-  
-  // Função de logout melhorada
-  const handleLogout = async () => {
-    console.log('🔐 [DashboardHeader] *** LOGOUT CHAMADO ***');
+    // 2. Nome completo do Clerk
+    if (user.fullName?.trim()) {
+      return user.fullName;
+    }
+
+    // 3. Combinação firstName + lastName
+    const firstName = user.firstName?.trim();
+    const lastName = user.lastName?.trim();
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    }
+
+    // 4. Apenas firstName
+    if (firstName) {
+      return firstName;
+    }
+
+    // 5. Apenas lastName
+    if (lastName) {
+      return lastName;
+    }
+
+    // 6. Nome extraído do email
+    if (user.primaryEmailAddress?.emailAddress) {
+      const emailName = user.primaryEmailAddress.emailAddress.split('@')[0];
+      return emailName.charAt(0).toUpperCase() + emailName.slice(1);
+    }
+
+    // 7. Fallback final
+    return "Usuário";
+  };
+
+  // Obter telefone dos metadados
+  const getUserPhone = (): string | null => {
+    return user?.unsafeMetadata?.telefone as string || null;
+  };
+
+  const handleSignOut = async () => {
     try {
-      await logout();
-      console.log('🔐 [DashboardHeader] Logout realizado, navegando para login');
-      navigate('/auth/login', { replace: true });
+      await signOut();
+      navigate('/sign-in');
     } catch (error) {
-      console.error('🔐 [DashboardHeader] Erro no logout:', error);
+      console.error('Erro ao fazer logout:', error);
     }
   };
 
+  const displayName = getUserDisplayName();
+  const userPhone = getUserPhone();
+
   return (
-    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-        <div className="hidden md:flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar propriedades, clientes..."
-              className="pl-10 w-80 bg-muted/50 border-border focus:border-imobipro-blue focus:ring-imobipro-blue/20"
-            />
-          </div>
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link to="/" className="mr-6 flex items-center space-x-2">
+            <span className="hidden font-bold sm:inline-block">
+              ImobiPRO
+            </span>
+          </Link>
         </div>
-      </div>
 
-      <div className="ml-auto flex items-center gap-3">
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-imobipro-danger rounded-full text-xs"></span>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar-placeholder.svg" />
-                <AvatarFallback className="bg-imobipro-blue text-white text-sm">
-                  {userInitial}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden md:inline text-sm font-medium text-foreground">
-                {userName}
-              </span>
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar propriedades, clientes..."
+                className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[400px]"
+              />
+            </div>
+          </div>
+          <nav className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Notificações</span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="cursor-pointer"
-              onClick={goToProfile}
-            >
-              <User className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="cursor-pointer"
-              onClick={goToSettings}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-imobipro-danger cursor-pointer"
-              onClick={handleLogout}
-            >
-              <span>Sair</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={user?.imageUrl} 
+                      alt={displayName}
+                    />
+                    <AvatarFallback className="bg-sky-500 text-white">
+                      {displayName
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {displayName}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.primaryEmailAddress?.emailAddress}
+                    </p>
+                    {userPhone && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {userPhone}
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/configuracoes" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
+        </div>
       </div>
     </header>
   );
-};
+}

@@ -1,24 +1,41 @@
 import { Outlet } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "./AppSidebar";
-import { DashboardHeader } from "./DashboardHeader";
+import { useUser } from "@clerk/clerk-react";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import DashboardHeader from "@/components/layout/DashboardHeader";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
-const DashboardLayout = () => {
+export default function DashboardLayout() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  // Mostra loading enquanto carrega os dados do usuário
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Redireciona para login se não estiver autenticado
+  if (!isSignedIn) {
+    window.location.href = '/sign-in';
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader />
-          <main className="flex-1 overflow-auto p-6">
-            <div className="max-w-7xl mx-auto">
-              <Outlet />
-            </div>
-          </main>
-        </div>
-      </div>
+      <AppSidebar />
+      <SidebarInset>
+        <DashboardHeader />
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </SidebarInset>
     </SidebarProvider>
   );
-};
-
-export default DashboardLayout;
+}
