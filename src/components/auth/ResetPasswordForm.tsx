@@ -31,6 +31,25 @@ const ResetPasswordForm: React.FC = () => {
     resolver: zodResolver(ResetPasswordSchema),
   });
 
+    // Função para processar tokens de reset de senha
+  const processTokens = (accessToken: string, refreshToken: string) => {
+    console.log('🔐 [ResetPassword] Processando tokens...');
+    
+    // Configurar sessão com os tokens
+    supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    }).then(({ data, error }) => {
+      if (error) {
+        console.error('🔐 [ResetPassword] Erro ao configurar sessão:', error);
+        setError('Erro ao processar link de redefinição. Solicite um novo link.');
+      } else {
+        console.log('🔐 [ResetPassword] Sessão configurada com sucesso');
+        setError(null);
+      }
+    });
+  };
+
   // Verificar se temos access_token e refresh_token na URL (tanto em query params quanto em hash)
   useEffect(() => {
     console.log('🔐 [ResetPassword] Verificando tokens na URL...');
@@ -41,24 +60,57 @@ const ResetPasswordForm: React.FC = () => {
     let accessToken = searchParams.get('access_token');
     let refreshToken = searchParams.get('refresh_token');
     
+    console.log('🔐 [ResetPassword] Tokens dos query params:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+    
     // Se não encontrou nos query params, tentar no hash (formato padrão do Supabase)
     if (!accessToken || !refreshToken) {
       const hash = window.location.hash.substring(1); // Remove o #
-      const hashParams = new URLSearchParams(hash);
+      console.log('🔐 [ResetPassword] Hash sem #:', hash);
       
-      accessToken = hashParams.get('access_token');
-      refreshToken = hashParams.get('refresh_token');
-      
-      console.log('🔐 [ResetPassword] Tokens do hash:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+      if (hash) {
+        const hashParams = new URLSearchParams(hash);
+        
+        accessToken = hashParams.get('access_token');
+        refreshToken = hashParams.get('refresh_token');
+        
+        console.log('🔐 [ResetPassword] Tokens extraídos do hash:', { 
+          accessToken: accessToken ? `${accessToken.slice(0, 20)}...` : null, 
+          refreshToken: refreshToken ? `${refreshToken.slice(0, 20)}...` : null 
+        });
+      } else {
+        console.log('🔐 [ResetPassword] Hash está vazio');
+      }
     }
     
+    // Aguardar um pouco se os tokens não estiverem disponíveis imediatamente
     if (!accessToken || !refreshToken) {
-      console.error('🔐 [ResetPassword] Tokens não encontrados');
-      setError('Link de redefinição inválido ou expirado. Solicite um novo link.');
-      return;
+      console.log('🔐 [ResetPassword] Tokens não encontrados imediatamente, aguardando...');
+      
+      // Aguardar 1 segundo e tentar novamente (às vezes o hash demora para carregar)
+      const timeoutId = setTimeout(() => {
+        const currentHash = window.location.hash.substring(1);
+        if (currentHash) {
+          const hashParams = new URLSearchParams(currentHash);
+          const retryAccessToken = hashParams.get('access_token');
+          const retryRefreshToken = hashParams.get('refresh_token');
+          
+          if (retryAccessToken && retryRefreshToken) {
+            console.log('🔐 [ResetPassword] Tokens encontrados na segunda tentativa, processando...');
+            // Processar os tokens sem reload
+            processTokens(retryAccessToken, retryRefreshToken);
+            return;
+          }
+        }
+        
+        console.error('🔐 [ResetPassword] Tokens não encontrados após retry');
+        setError('Link de redefinição inválido ou expirado. Solicite um novo link.');
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
     }
     
     console.log('🔐 [ResetPassword] Tokens encontrados, configurando sessão...');
+    processTokens(accessToken, refreshToken);
 
     // Configurar sessão com os tokens da URL
     const setSession = async () => {

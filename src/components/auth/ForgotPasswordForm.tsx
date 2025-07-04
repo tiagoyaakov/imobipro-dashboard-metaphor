@@ -26,6 +26,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Debug: componente renderizado
+  console.log('🔐 [ForgotPassword] Componente renderizado, isLoading:', isLoading);
+
   // Configuração do formulário
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(ForgotPasswordSchema),
@@ -37,7 +40,14 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
   /**
    * Manipula o envio do formulário
    */
-  const handleSubmit = async (data: ForgotPasswordFormData) => {
+  const handleSubmit = async (data: ForgotPasswordFormData, event?: React.BaseSyntheticEvent) => {
+    console.log('🔐 [ForgotPassword] *** HANDLESUBMIT CHAMADO ***', data);
+    
+    // Prevenir reload da página
+    if (event) {
+      event.preventDefault();
+    }
+    
     try {
       setError(null);
       setSuccess(null);
@@ -49,16 +59,26 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
       console.log('🔐 [ForgotPassword] Resultado da recuperação:', result);
       
       if (result.success) {
-        setSuccess(
-          'Email de recuperação enviado com sucesso! ' +
-          'Verifique sua caixa de entrada (incluindo spam) e clique no link para redefinir sua senha.'
-        );
+        const successMessage = 'Email de recuperação enviado com sucesso! ' +
+          'Verifique sua caixa de entrada (incluindo spam) e clique no link para redefinir sua senha.';
+        
+        console.log('🔐 [ForgotPassword] *** DEFININDO SUCCESS MESSAGE ***');
+        setSuccess(successMessage);
         onSuccess?.();
         
         // Limpar o formulário após sucesso
         form.reset();
       } else {
-        setError(result.error || 'Erro ao enviar email de recuperação');
+        // Tratar rate limit de forma mais amigável
+        let errorMessage = result.error || 'Erro ao enviar email de recuperação';
+        
+        if (result.error?.includes('only request this after')) {
+          errorMessage = 'Aguarde alguns segundos antes de solicitar novamente. ' +
+                        'Para sua segurança, existe um limite de tempo entre as tentativas.';
+        }
+        
+        console.log('🔐 [ForgotPassword] *** DEFININDO ERROR MESSAGE ***');
+        setError(errorMessage);
       }
     } catch (err) {
       console.error('🔐 [ForgotPassword] Erro inesperado na recuperação:', err);

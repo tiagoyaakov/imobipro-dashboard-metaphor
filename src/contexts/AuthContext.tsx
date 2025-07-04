@@ -196,12 +196,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 [Auth] Estado alterado:', event);
+        console.log('🔐 [Auth] URL atual:', window.location.href);
+        
+        // Detectar se estamos em fluxo de recuperação de senha
+        const isPasswordRecovery = window.location.pathname === '/auth/reset-password' || 
+                                  window.location.hash.includes('type=recovery') ||
+                                  window.location.search.includes('type=recovery');
+        
+        console.log('🔐 [Auth] Fluxo de recuperação detectado:', isPasswordRecovery);
         
         if (mounted && isInitialized) {
+          // Se estamos em recuperação de senha, não atualizar sessão normalmente
+          if (isPasswordRecovery && (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN')) {
+            console.log('🔐 [Auth] Ignorando atualização de sessão durante recuperação de senha');
+            // Definir sessão mas não considerar como autenticado completamente
+            setSession(session);
+            setSupabaseUser(session?.user || null);
+            // NÃO buscar perfil nem marcar como autenticado
+            return;
+          }
+          
           await updateSession(session);
           
-          // Atualizar último login no banco
-          if (event === 'SIGNED_IN' && session?.user) {
+          // Atualizar último login no banco (apenas para login normal)
+          if (event === 'SIGNED_IN' && session?.user && !isPasswordRecovery) {
             try {
               await supabase
                 .from('users')
@@ -518,9 +536,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.warn('🔐 [Auth] switchUser não implementado no contexto real');
   }, []);
 
+  // Verificar se estamos em fluxo de recuperação de senha
+  const isInPasswordRecovery = typeof window !== 'undefined' && (
+    window.location.pathname === '/auth/reset-password' || 
+    window.location.hash.includes('type=recovery') ||
+    window.location.search.includes('type=recovery')
+  );
+
   // Valor do contexto
   const contextValue: AuthContextType = {
-    isAuthenticated: !!session && !!supabaseUser, // Mudança: usar supabaseUser em vez de user para autenticação básica
+    // Durante recuperação de senha, não considerar como autenticado mesmo com sessão
+    isAuthenticated: !!session && !!supabaseUser && !isInPasswordRecovery,
     user,
     session,
     supabaseUser,
