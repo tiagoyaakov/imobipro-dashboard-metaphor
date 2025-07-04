@@ -1,4 +1,4 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -11,14 +11,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuthMock } from "@/contexts/AuthContextMock";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const DashboardHeader = () => {
-  const { user } = useAuthMock();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Debug: Log do estado de autenticação
+  if (!isLoading && !isAuthenticated) {
+    console.warn('🔐 [DashboardHeader] Usuário não autenticado acessando dashboard');
+  }
 
   // Valores derivados para melhor legibilidade
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
-  const userName = user?.name || 'Admin User';
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+  const userName = user?.name || 'Usuário não autenticado';
+
+  // Funções de navegação
+  const goToProfile = () => navigate('/perfil');
+  const goToSettings = () => navigate('/configuracoes');
+  
+  // Função de logout melhorada
+  const handleLogout = async () => {
+    console.log('🔐 [DashboardHeader] *** LOGOUT CHAMADO ***');
+    try {
+      await logout();
+      console.log('🔐 [DashboardHeader] Logout realizado, navegando para login');
+      navigate('/auth/login', { replace: true });
+    } catch (error) {
+      console.error('🔐 [DashboardHeader] Erro no logout:', error);
+    }
+  };
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -58,15 +81,25 @@ export const DashboardHeader = () => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={goToProfile}
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={goToSettings}
+            >
+              <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-imobipro-danger">
+            <DropdownMenuItem 
+              className="text-imobipro-danger cursor-pointer"
+              onClick={handleLogout}
+            >
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

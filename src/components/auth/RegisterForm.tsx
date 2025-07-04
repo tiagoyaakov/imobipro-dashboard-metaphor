@@ -1,0 +1,350 @@
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, UserPlus, Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { RegisterSchema, type RegisterFormData } from '@/schemas/auth/auth';
+
+// -----------------------------------------------------------
+// Componente de formulário de registro
+// -----------------------------------------------------------
+
+interface RegisterFormProps {
+  onSuccess?: () => void;
+  redirectTo?: string;
+}
+
+export const RegisterForm: React.FC<RegisterFormProps> = ({ 
+  onSuccess, 
+  redirectTo = '/dashboard' 
+}) => {
+  const navigate = useNavigate();
+  const { signup, isLoading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Configuração do formulário
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(RegisterSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+      acceptTerms: false,
+    },
+  });
+
+  /**
+   * Manipula o envio do formulário
+   */
+  const handleSubmit = async (data: RegisterFormData) => {
+    try {
+      setError(null);
+      
+      const result = await signup(data.email, data.password, {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: 'AGENT', // Padrão para novos usuários
+      });
+      
+      if (result.success) {
+        onSuccess?.();
+        navigate(redirectTo);
+      } else {
+        // Tratar mensagem específica de confirmação de email
+        if (result.error?.includes('Por favor, verifique seu email')) {
+          // Mostrar mensagem de sucesso em vez de erro usando toast
+          console.log('✅ [RegisterForm] Conta criada com sucesso - Email enviado');
+          
+          // Usar toast em vez de alert (mais moderno e confiável)
+          if (typeof window !== 'undefined') {
+            // Criar notificação customizada
+            const notification = document.createElement('div');
+            notification.innerHTML = `
+              <div style="
+                position: fixed; 
+                top: 20px; 
+                right: 20px; 
+                background: #10b981; 
+                color: white; 
+                padding: 20px; 
+                border-radius: 8px; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 9999;
+                max-width: 400px;
+                font-family: system-ui;
+              ">
+                <h3 style="margin: 0 0 10px 0;">✅ Conta criada com sucesso!</h3>
+                <p style="margin: 0;">📧 Enviamos um email de confirmação. Verifique sua caixa de entrada e clique no link antes de fazer login.</p>
+              </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Remover após 7 segundos
+            setTimeout(() => {
+              if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+              }
+            }, 7000);
+          }
+          
+          // Aguardar um pouco e redirecionar
+          setTimeout(() => navigate('/auth/login'), 2000);
+        } else {
+          setError(result.error || 'Erro ao criar conta');
+        }
+      }
+    } catch (err) {
+      console.error('Erro inesperado no registro:', err);
+      setError('Erro interno. Tente novamente.');
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto bg-slate-800/80 backdrop-blur-md border-slate-700/50 shadow-2xl">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center text-slate-100">
+          Criar Conta
+        </CardTitle>
+        <CardDescription className="text-center text-slate-300">
+          Crie sua conta para acessar o ImobiPRO
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Campo Nome */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome completo</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder="Seu nome completo"
+                      disabled={isLoading}
+                      className="transition-colors"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      placeholder="seu.email@exemplo.com"
+                      disabled={isLoading}
+                      className="transition-colors"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Telefone */}
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone (opcional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="tel"
+                      placeholder="(11) 99999-9999"
+                      disabled={isLoading}
+                      className="transition-colors"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Senha */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Sua senha"
+                        disabled={isLoading}
+                        className="pr-10 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                        disabled={isLoading}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo Confirmar Senha */}
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirmar senha</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirme sua senha"
+                        disabled={isLoading}
+                        className="pr-10 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                        disabled={isLoading}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Termos de uso */}
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem className="flex items-start space-x-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <div className="grid gap-1.5 leading-none">
+                    <FormLabel className="text-sm font-normal text-slate-300">
+                      Aceito os{' '}
+                      <Link
+                        to="/termos"
+                        className="text-blue-400 hover:text-blue-300 underline"
+                        target="_blank"
+                      >
+                        termos de uso
+                      </Link>
+                      {' '}e{' '}
+                      <Link
+                        to="/privacidade"
+                        className="text-blue-400 hover:text-blue-300 underline"
+                        target="_blank"
+                      >
+                        política de privacidade
+                      </Link>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Mensagem de erro */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Botão de registro */}
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando conta...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Criar conta
+                </>
+              )}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+
+      <CardFooter className="flex flex-col space-y-2">
+        {/* Link para login */}
+        <div className="text-sm text-slate-400">
+          Já tem uma conta?{' '}
+          <Link 
+            to="/auth/login" 
+            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+          >
+            Fazer login
+          </Link>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
+
+// -----------------------------------------------------------
+// Exportações
+// -----------------------------------------------------------
+
+export default RegisterForm; 

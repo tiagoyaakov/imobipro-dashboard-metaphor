@@ -22,11 +22,11 @@ import {
   AutomationBuilder 
 } from '@/components/crm';
 import { useCRMData } from '@/hooks/useCRMData';
-import { useAuthMock, AuthDebugPanel } from '@/contexts/AuthContextMock';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user } = useAuthMock();
+  const { user } = useAuth();
   
   // Hooks do CRM - usando a estrutura correta
   const { 
@@ -96,12 +96,7 @@ const CRM = () => {
         </div>
       </div>
       
-      {/* Debug Panel (apenas em desenvolvimento) */}
-      {user && (
-        <div className="mb-4">
-          <AuthDebugPanel />
-        </div>
-      )}
+      {/* Debug Panel removido - usando AuthContext real */}
       
       {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -4,11 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProviderMock } from "@/contexts/AuthContextMock";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute, PublicRoute } from "@/components/auth";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
-// Lazy loading das páginas para melhor performance
+// Lazy loading das páginas principais para melhor performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
 const Contatos = lazy(() => import("./pages/Contatos"));
@@ -23,6 +24,18 @@ const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Lazy loading das páginas de autenticação
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+
+// Página de perfil
+const Profile = lazy(() => import("./pages/Profile"));
+
+// Páginas de erro
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -41,15 +54,83 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProviderMock>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<DashboardLayout />}>
+            {/* Rotas de autenticação (públicas) */}
+            <Route 
+              path="/auth/login" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Login />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/register" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Register />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/forgot-password" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <ForgotPassword />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/reset-password" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <ResetPassword />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            
+            {/* Página de acesso negado */}
+            <Route 
+              path="/unauthorized" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <Unauthorized />
+                </Suspense>
+              } 
+            />
+            
+            {/* Rotas protegidas */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route 
                 index 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Dashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="dashboard" 
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Dashboard />
@@ -145,6 +226,14 @@ const App = () => (
                 } 
               />
               <Route 
+                path="perfil" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Profile />
+                  </Suspense>
+                } 
+              />
+              <Route 
                 path="configuracoes" 
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
@@ -164,7 +253,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProviderMock>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
