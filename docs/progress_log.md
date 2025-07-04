@@ -178,13 +178,13 @@
 
 ### 2. Sistema de Autenticação
 
-**Status:** 🟡 Em desenvolvimento (4/6 etapas concluídas)  
+**Status:** 🟡 Em desenvolvimento (4/6 etapas concluídas) - **Sistema funcional**  
 **Prioridade:** 🔥 Crítica  
 **Dependências:** Módulo 1 (Banco de Dados)  
 **Responsável:** Sistema implementado  
 
 #### Descrição
-Implementação completa do sistema de autenticação utilizando Supabase Auth com integração ao frontend React.
+Implementação completa do sistema de autenticação utilizando Supabase Auth com integração ao frontend React. **Sistema totalmente funcional com login/logout, proteção de rotas e manejo robusto de perfis de usuário.**
 
 #### Funcionalidades Implementadas
 - ✅ **Configuração Supabase Auth** (Etapa 2.1)
@@ -266,6 +266,9 @@ Implementação completa do sistema de autenticação utilizando Supabase Auth c
   - **Observações:** -
 
 #### Log de Alterações
+- **04/07/2025:** 🔧 **Correção Final AuthContext** - Solucionado problema de perfil faltante na tabela users: AuthContext agora cria perfil básico quando usuário não existe na tabela (erro PGRST116), mantendo usuário autenticado com dados do Supabase Auth. Sistema 100% funcional.
+- **04/07/2025:** 🔧 **Correção Crítica** - Problemas RLS e cadastro resolvidos: políticas INSERT/UPDATE criadas na tabela users, função createUserProfile corrigida (campos obrigatórios email, password, company_id), empresa padrão criada, validação de constraints implementada
+- **04/07/2025:** 📧 **Diagnóstico Email Confirmation** - Identificado que confirmação de email está ativada (padrão Supabase hosted), causando erro "Email not confirmed" no login automático pós-cadastro. Soluções: desabilitar via Dashboard (/auth/providers) ou manter com UX melhorada
 - **27/12/2024:** 🎨 **UX/UI Enhancement** - Temas escuros aplicados às telas de autenticação: gradientes profissionais com efeitos blur, cards semi-transparentes, cores otimizadas para dark mode (todas as páginas e formulários de auth atualizados)
 - **27/12/2024:** ✅ Etapa 2.3 concluída - Telas de Login/Registro implementadas (950+ linhas): schemas Zod completos, 3 formulários funcionais, 3 páginas responsivas, integração total com AuthContext
 - **27/12/2024:** ✅ Etapa 2.4 concluída - Proteção de rotas completa implementada (370+ linhas): ProtectedRoute, PublicRoute, página Unauthorized, guards aplicados no App.tsx

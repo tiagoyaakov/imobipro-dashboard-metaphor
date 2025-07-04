@@ -64,7 +64,48 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         onSuccess?.();
         navigate(redirectTo);
       } else {
-        setError(result.error || 'Erro ao criar conta');
+        // Tratar mensagem específica de confirmação de email
+        if (result.error?.includes('Por favor, verifique seu email')) {
+          // Mostrar mensagem de sucesso em vez de erro usando toast
+          console.log('✅ [RegisterForm] Conta criada com sucesso - Email enviado');
+          
+          // Usar toast em vez de alert (mais moderno e confiável)
+          if (typeof window !== 'undefined') {
+            // Criar notificação customizada
+            const notification = document.createElement('div');
+            notification.innerHTML = `
+              <div style="
+                position: fixed; 
+                top: 20px; 
+                right: 20px; 
+                background: #10b981; 
+                color: white; 
+                padding: 20px; 
+                border-radius: 8px; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 9999;
+                max-width: 400px;
+                font-family: system-ui;
+              ">
+                <h3 style="margin: 0 0 10px 0;">✅ Conta criada com sucesso!</h3>
+                <p style="margin: 0;">📧 Enviamos um email de confirmação. Verifique sua caixa de entrada e clique no link antes de fazer login.</p>
+              </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Remover após 7 segundos
+            setTimeout(() => {
+              if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+              }
+            }, 7000);
+          }
+          
+          // Aguardar um pouco e redirecionar
+          setTimeout(() => navigate('/auth/login'), 2000);
+        } else {
+          setError(result.error || 'Erro ao criar conta');
+        }
       }
     } catch (err) {
       console.error('Erro inesperado no registro:', err);

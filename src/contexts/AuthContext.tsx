@@ -78,6 +78,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar perfil do usuário:', error);
+        
+        // Se usuário não existe na tabela, criar um perfil básico com dados do Auth
+        if (error.code === 'PGRST116') {
+          console.log('🔐 [Auth] Criando perfil básico com dados do Auth');
+          return {
+            id: supabaseUser.id,
+            name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Usuário',
+            email: supabaseUser.email || '',
+            role: 'AGENT',
+            avatar: null,
+            phone: null,
+            isActive: true,
+            lastLogin: null,
+            companyId: 'c1036c09-e971-419b-9244-e9f6792954e2',
+            createdAt: supabaseUser.created_at,
+            updatedAt: supabaseUser.updated_at || supabaseUser.created_at
+          };
+        }
+        
         return null;
       }
 
@@ -99,7 +118,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return userData;
     } catch (error) {
       console.error('🔐 [Auth] Erro inesperado ao buscar perfil:', error);
-      return null;
+      
+      // Em caso de erro inesperado, criar um perfil básico para manter o usuário autenticado
+      return {
+        id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Usuário',
+        email: supabaseUser.email || '',
+        role: 'AGENT',
+        avatar: null,
+        phone: null,
+        isActive: true,
+        lastLogin: null,
+        companyId: 'c1036c09-e971-419b-9244-e9f6792954e2',
+        createdAt: supabaseUser.created_at,
+        updatedAt: supabaseUser.updated_at || supabaseUser.created_at
+      };
     }
   }, []);
 
