@@ -42,7 +42,11 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
       setError(null);
       setSuccess(null);
       
+      console.log('🔐 [ForgotPassword] Iniciando recuperação para:', data.email);
+      
       const result = await resetPassword(data.email);
+      
+      console.log('🔐 [ForgotPassword] Resultado da recuperação:', result);
       
       if (result.success) {
         setSuccess(
@@ -57,7 +61,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSucces
         setError(result.error || 'Erro ao enviar email de recuperação');
       }
     } catch (err) {
-      console.error('Erro inesperado na recuperação:', err);
+      console.error('🔐 [ForgotPassword] Erro inesperado na recuperação:', err);
       setError('Erro interno. Tente novamente.');
     }
   };
