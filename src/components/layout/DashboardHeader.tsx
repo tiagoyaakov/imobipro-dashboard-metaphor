@@ -1,4 +1,4 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,9 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const DashboardHeader = () => {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Debug: Log do estado de autenticação
   if (!isLoading && !isAuthenticated) {
@@ -24,6 +26,10 @@ export const DashboardHeader = () => {
   // Valores derivados para melhor legibilidade
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
   const userName = user?.name || 'Usuário não autenticado';
+
+  // Funções de navegação
+  const goToProfile = () => navigate('/perfil');
+  const goToSettings = () => navigate('/configuracoes');
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -63,11 +69,18 @@ export const DashboardHeader = () => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={goToProfile}
+            >
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={goToSettings}
+            >
+              <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

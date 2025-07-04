@@ -140,24 +140,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Atualiza dados da sessão e usuário
    */
   const updateSession = useCallback(async (session: Session | null) => {
+    console.log('🔐 [Auth] Atualizando sessão:', !!session);
+    
     setSession(session);
     setSupabaseUser(session?.user || null);
 
     if (session?.user) {
-      setIsLoading(true);
+      console.log('🔐 [Auth] Buscando perfil do usuário...');
       try {
         const userProfile = await fetchUserProfile(session.user);
         setUser(userProfile);
+        console.log('🔐 [Auth] Perfil carregado com sucesso');
       } catch (error) {
         console.error('🔐 [Auth] Erro ao atualizar sessão:', error);
         setUser(null);
-      } finally {
-        setIsLoading(false);
       }
     } else {
       setUser(null);
     }
-  }, [fetchUserProfile]);
+  }, []); // Removemos a dependência fetchUserProfile
 
   /**
    * Inicialização do contexto de autenticação
@@ -166,6 +167,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     let mounted = true;
 
     const initializeAuth = async () => {
+      setIsLoading(true);
+      console.log('🔐 [Auth] Iniciando processo de autenticação...');
+      
       try {
         // Buscar sessão atual
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -176,12 +180,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (mounted) {
           await updateSession(session);
-          setIsInitialized(true);
         }
       } catch (error) {
         console.error('🔐 [Auth] Erro na inicialização:', error);
+      } finally {
         if (mounted) {
+          setIsLoading(false);
           setIsInitialized(true);
+          console.log('🔐 [Auth] Inicialização concluída');
         }
       }
     };
@@ -191,7 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       async (event, session) => {
         console.log('🔐 [Auth] Estado alterado:', event);
         
-        if (mounted) {
+        if (mounted && isInitialized) {
           await updateSession(session);
           
           // Atualizar último login no banco
@@ -493,7 +499,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Valor do contexto
   const contextValue: AuthContextType = {
-    isAuthenticated: !!session && !!user,
+    isAuthenticated: !!session && !!supabaseUser, // Mudança: usar supabaseUser em vez de user para autenticação básica
     user,
     session,
     supabaseUser,

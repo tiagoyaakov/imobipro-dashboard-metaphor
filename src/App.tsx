@@ -29,6 +29,10 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+
+// Página de perfil
+const Profile = lazy(() => import("./pages/Profile"));
 
 // Páginas de erro
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
@@ -83,6 +87,16 @@ const App = () => (
                 <PublicRoute>
                   <Suspense fallback={<PageLoadingFallback />}>
                     <ForgotPassword />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/reset-password" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <ResetPassword />
                   </Suspense>
                 </PublicRoute>
               } 
@@ -208,6 +222,14 @@ const App = () => (
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <LeiInquilino />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="perfil" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Profile />
                   </Suspense>
                 } 
               />

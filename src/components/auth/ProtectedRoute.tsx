@@ -45,7 +45,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Redirecionar para login se não autenticado
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated) {
     console.log('🔐 [ProtectedRoute] Redirecionando para login - usuário não autenticado');
     return (
       <Navigate 
@@ -53,6 +53,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         state={{ from: location }} 
         replace 
       />
+    );
+  }
+
+  // Se está autenticado mas perfil ainda está carregando, mostrar loading
+  if (!user && isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" />
+          <p className="text-muted-foreground">Carregando perfil do usuário...</p>
+        </div>
+      </div>
     );
   }
 
