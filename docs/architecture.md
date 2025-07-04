@@ -623,3 +623,45 @@ O projeto está completamente configurado e otimizado para deploy na Vercel com 
 ---
 
 *Relatório gerado automaticamente através de análise de código estática - Janeiro 2025* 
+
+---
+
+## 🔄 Histórico de Decisões Técnicas (SECURE-VIBE)
+
+### **Decisão: Reversão do Sistema de Autenticação - Janeiro 2025**
+
+**Data:** 02/01/2025  
+**Contexto:** Após implementação completa do sistema de autenticação personalizado com Supabase Auth, foi tomada a decisão de reverter para implementar com Clerk.
+
+**Rationale:**
+- Sistema de autenticação personalizado se mostrou complexo demais para o escopo do projeto
+- Clerk oferece funcionalidades mais robustas e prontas para produção
+- Melhor experiência do usuário com componentes pré-construídos
+- Redução significativa do tempo de desenvolvimento
+- Maior segurança e conformidade com padrões da indústria
+
+**Ações Tomadas:**
+1. **Backup criado:** Branch `auth-implementation-backup` preserva todo o trabalho anterior
+2. **Reset realizado:** Projeto revertido para commit `fad7aeb` (📖 README de testes: Guia de acesso rápido aos documentos)
+3. **Estado atual:** Pronto para implementação com Clerk
+4. **Arquivos removidos:** Todos os componentes e contextos de autenticação personalizada
+
+**Commits Revertidos:**
+- `c33f3a6` - 🔧 Correção crítica: Problemas de autenticação em produção
+- `8806f28` - 🔐 Adição de melhorias e logs no processo de recuperação de senha
+- `422a362` - 🔐 Adição de logs detalhados no componente ForgotPasswordForm
+- `bed1c4d` - ✨ Melhorias na recuperação de senha e tratamento de erros
+- `56fc0ab` - ✨ Implementação completa do sistema de autenticação e atualização do log de progresso
+- `5cf1718` - 🔧 Atualização das configurações de ambiente e melhorias no sistema de autenticação
+- `352a643` - ✨ Implementação de melhorias no cadastro de usuários
+- `38151f3` - ✨ Atualização do log de progresso e implementação de funcionalidades de autenticação
+- `7733424` - ✨ Atualização do log de progresso e implementação do sistema de autenticação
+
+**Próximos Passos:**
+1. Implementar Clerk para autenticação
+2. Configurar componentes de login/registro com Clerk
+3. Integrar com o sistema de usuários existente
+4. Testar fluxos de autenticação
+5. Atualizar documentação
+
+**Status:** ✅ Reversão concluída com sucesso 
