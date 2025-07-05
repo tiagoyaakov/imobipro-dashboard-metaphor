@@ -195,6 +195,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         signInForceRedirectUrl="/dashboard"
         signUpForceRedirectUrl="/dashboard"
         appearance={clerkAppearance}
+        allowedRedirectOrigins={['https://imobpro-brown.vercel.app', 'http://localhost:8083']}
       >
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
