@@ -7,6 +7,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/login/sso-callback",
+      "destination": "/index.html"
+    },
+    {
       "source": "/auth/(.*)",
       "destination": "/index.html"
     },
