@@ -282,7 +282,17 @@
   - Impacto: Resolve tela preta em produção
   - Commit: `c30bd76` - "fix: resolver erro de variáveis CSS no Clerk que causava tela preta em produção"
 
-### **Progresso Total: 19/30 etapas concluídas - 63% COMPLETO!** 🎉
+- [x] **Melhorias de Design e UX**: Otimização da página de login ✅
+  - Problema: Textos desnecessários na parte superior e baixo contraste no botão Google
+  - Solução: 
+    - Removidos textos "Acesso ao Painel", "Bem-vindo de volta" das páginas Login/Register
+    - Campo de email com fundo preto para melhor destaque
+    - Botão Google com fundo branco e bordas para melhor contraste
+    - Interface mais limpa e focada no Clerk
+  - Impacto: Experiência de usuário significativamente melhorada
+  - Commit: `7713a03` - "feat: melhorar design da página de login - remover textos desnecessários e melhorar contraste"
+
+### **Progresso Total: 20/30 etapas concluídas - 67% COMPLETO!** 🎉
 
 ---
 
