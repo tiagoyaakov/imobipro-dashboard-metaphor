@@ -7,19 +7,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/login/sso-callback",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/auth/(.*)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/login/(.*)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -77,6 +65,6 @@
       ]
     }
   ],
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false
 } 
