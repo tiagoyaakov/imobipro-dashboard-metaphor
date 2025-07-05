@@ -1,8 +1,8 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
+import { ProtectedRoute, PublicRoute } from "./components/auth";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
-import { PublicRoute } from "./components/auth";
 
 // ================================================================
 // LAZY LOADING DAS PÁGINAS PRINCIPAIS PARA MELHOR PERFORMANCE
@@ -33,163 +33,54 @@ const RegisterPage = lazy(() => import("./pages/auth/Register"));
 // COMPONENTE PRINCIPAL DE ROTAS
 // ================================================================
 const App = () => (
-  <Routes>
-    {/* Rotas principais protegidas */}
-    <Route path="/" element={<DashboardLayout />}>
-      <Route 
-        index 
+  <Suspense fallback={<PageLoadingFallback />}>
+    <Routes>
+      {/* Rotas Públicas */}
+      <Route
+        path="/login"
         element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Dashboard />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="dashboard" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Dashboard />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="propriedades" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Propriedades />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="contatos" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Contatos />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="agenda" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Agenda />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="clientes" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Clientes />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="pipeline" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Pipeline />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="crm" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <CRM />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="relatorios" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Relatorios />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="conexoes" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Conexoes />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="usuarios" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Usuarios />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="chats" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Chats />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="lei-inquilino" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <LeiInquilino />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="configuracoes" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Configuracoes />
-          </Suspense>
-        } 
-      />
-      <Route 
-        path="profile" 
-        element={
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Profile />
-          </Suspense>
-        } 
-      />
-    </Route>
-    
-    {/* Rotas de autenticação aprimoradas */}
-    <Route 
-      path="/sign-in" 
-      element={
-        <PublicRoute>
-          <Suspense fallback={<PageLoadingFallback />}>
+          <PublicRoute>
             <LoginPage />
-          </Suspense>
-        </PublicRoute>
-      } 
-    />
-    <Route 
-      path="/sign-up" 
-      element={
-        <PublicRoute>
-          <Suspense fallback={<PageLoadingFallback />}>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
             <RegisterPage />
-          </Suspense>
-        </PublicRoute>
-      } 
-    />
-    
-    {/* Página 404 */}
-    <Route 
-      path="*" 
-      element={
-        <Suspense fallback={<PageLoadingFallback />}>
-          <NotFound />
-        </Suspense>
-      } 
-    />
-  </Routes>
+          </PublicRoute>
+        }
+      />
+
+      {/* Rotas Protegidas */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="propriedades" element={<Propriedades />} />
+        <Route path="contatos" element={<Contatos />} />
+        <Route path="agenda" element={<Agenda />} />
+        <Route path="clientes" element={<Clientes />} />
+        <Route path="pipeline" element={<Pipeline />} />
+        <Route path="crm" element={<CRM />} />
+        <Route path="relatorios" element={<Relatorios />} />
+        <Route path="conexoes" element={<Conexoes />} />
+        <Route path="usuarios" element={<Usuarios />} />
+        <Route path="chats" element={<Chats />} />
+        <Route path="lei-inquilino" element={<LeiInquilino />} />
+        <Route path="configuracoes" element={<Configuracoes />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  </Suspense>
 );
 
 export default App;
