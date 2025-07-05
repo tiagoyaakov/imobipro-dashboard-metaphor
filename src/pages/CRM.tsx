@@ -126,8 +126,10 @@ const CRM = () => {
                   {isLoading ? '...' : metrics.avgScore}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {metrics.hotLeads > 0 ? '+' : ''}{metrics.hotLeads} desde ontem
-                </p>
+                 <p className="text-xs text-muted-foreground mt-1">
+-                  {metrics.hotLeads > 0 ? '+' : ''}{metrics.hotLeads} desde ontem
++                  Score médio dos leads
+                 </p>                </p>
               </div>
               <Target className="w-8 h-8 text-green-500" />
             </div>

@@ -254,9 +254,10 @@ export function LeadScoreDashboard({ className }: LeadScoreDashboardProps) {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Taxa de Conversão</p>
                 <p className="text-2xl font-bold">
-                  {Math.round((dashboardData.metrics.hotLeads / dashboardData.metrics.totalContacts) * 100)}%
-                </p>
-              </div>
+                  {dashboardData.metrics.totalContacts > 0
+                    ? Math.round((dashboardData.metrics.hotLeads / dashboardData.metrics.totalContacts) * 100)
+                    : 0}%
+                </p>              </div>
               <TrendingUp className="w-8 h-8 text-orange-500" />
             </div>
           </CardContent>

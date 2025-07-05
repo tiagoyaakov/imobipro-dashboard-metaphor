@@ -477,9 +477,8 @@ export const useContacts = () => {
       queryKey: ['contacts', filters],
       queryFn: () => apiContacts.getAll(filters),
       staleTime: 5 * 60 * 1000, // 5 minutos
-      cacheTime: 10 * 60 * 1000, // 10 minutos
-    });
-  };
+      gcTime: 10 * 60 * 1000, // 10 minutos
+    });  };
   
   const getContact = (id: string) => {
     return useQuery({
@@ -529,9 +528,8 @@ export const useDeals = () => {
       queryKey: ['deals', filters],
       queryFn: () => apiDeals.getAll(filters),
       staleTime: 5 * 60 * 1000,
-      cacheTime: 10 * 60 * 1000,
-    });
-  };
+      gcTime: 10 * 60 * 1000,
+    });  };
   
   const getDeal = (id: string) => {
     return useQuery({

@@ -195,11 +195,10 @@ export function AutomationBuilder({ className }: AutomationBuilderProps) {
     
     const trigger: AutomationTrigger = {
       id: `t${Date.now()}`,
-      type: selectedTrigger.type as any,
+      type: selectedTrigger.type as AutomationTrigger['type'],
       name: selectedTrigger.name,
       conditions: selectedTrigger.conditions || {}
-    };
-    
+    };    
     setNewAutomation(prev => ({ ...prev, trigger }));
     setSelectedTrigger({});
   };
@@ -217,12 +216,11 @@ export function AutomationBuilder({ className }: AutomationBuilderProps) {
     
     const action: AutomationAction = {
       id: `a${Date.now()}`,
-      type: selectedAction.type as any,
+      type: selectedAction.type as AutomationAction['type'],
       name: selectedAction.name,
       config: selectedAction.config || {},
       delay: selectedAction.delay || 0
-    };
-    
+    };    
     setNewAutomation(prev => ({
       ...prev,
       actions: [...(prev.actions || []), action]

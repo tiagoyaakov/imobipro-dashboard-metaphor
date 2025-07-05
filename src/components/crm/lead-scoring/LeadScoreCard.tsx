@@ -175,10 +175,12 @@ export function LeadScoreCard({ contact, className }: LeadScoreCardProps) {
                     min="0"
                     max="100"
                     value={newScore}
-                    onChange={(e) => setNewScore(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setNewScore(isNaN(value) ? 0 : value);
+                    }}
                     placeholder="Digite o novo score"
-                  />
-                </div>
+                  />                </div>
                 <div className="space-y-2">
                   <Label htmlFor="reason">Motivo do Ajuste</Label>
                   <Textarea
