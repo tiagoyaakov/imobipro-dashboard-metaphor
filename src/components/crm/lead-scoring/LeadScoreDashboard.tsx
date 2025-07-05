@@ -98,14 +98,12 @@ export function LeadScoreDashboard({ className }: LeadScoreDashboardProps) {
         topLeads.push({ contact, score });
         
         // Fatores médios
-        avgFactors.engagement += score.factors.engagement;
-        avgFactors.demographics += score.factors.demographics;
-        avgFactors.behavior += score.factors.behavior;
-        avgFactors.firmographics += score.factors.firmographics;
+        avgFactors.engagement += score.factors.engagement || 0;
+        avgFactors.engagement += score.factors.interactionCount || 0;
+        avgFactors.engagement += score.factors.lastActivityDays || 0;
         totalFactors++;
       }
     });
-    
     // Finalizar cálculos
     if (totalFactors > 0) {
       avgFactors.engagement = Math.round(avgFactors.engagement / totalFactors);
@@ -381,7 +379,7 @@ export function LeadScoreDashboard({ className }: LeadScoreDashboardProps) {
                       </Badge>
                       <div className="flex items-center gap-2">
                         <img 
-                          src={item.contact.avatar} 
+                          src={item.contact.avatarUrl} 
                           alt={item.contact.name}
                           className="w-8 h-8 rounded-full"
                         />

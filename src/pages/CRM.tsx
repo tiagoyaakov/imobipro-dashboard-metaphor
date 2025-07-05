@@ -22,11 +22,11 @@ import {
   AutomationBuilder 
 } from '@/components/crm';
 import { useCRMData } from '@/hooks/useCRMData';
-import { useAuth } from '@/contexts/AuthContext';
+import { useClerk } from '@clerk/clerk-react';
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user } = useAuth();
+  const { user } = useClerk();
   
   // Hooks do CRM - usando a estrutura correta
   const { 
@@ -330,7 +330,7 @@ const CRM = () => {
         <p className="text-sm text-muted-foreground">
           Esta página está usando dados mockados para desenvolvimento isolado. 
           Todos os componentes e funcionalidades estão integrados e funcionais.
-          {user && ` Usuário atual: ${user.name} (${user.role})`}
+          {user?.emailAddresses?.[0]?.emailAddress && ` Usuário atual: ${user.emailAddresses[0].emailAddress}`}
         </p>
       </div>
     </div>

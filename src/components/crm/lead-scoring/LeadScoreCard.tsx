@@ -221,7 +221,7 @@ export function LeadScoreCard({ contact, className }: LeadScoreCardProps) {
           </div>
           <Progress value={leadScore.score} className="w-full" />
           <p className="text-sm text-muted-foreground">
-            Última atualização: {new Date(leadScore.lastCalculated).toLocaleDateString('pt-BR')}
+            Última atualização: {new Date(leadScore.lastCalculatedAt).toLocaleDateString('pt-BR')}
           </p>
         </div>
         
