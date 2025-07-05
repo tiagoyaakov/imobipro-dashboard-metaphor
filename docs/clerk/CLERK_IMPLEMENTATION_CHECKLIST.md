@@ -315,9 +315,10 @@
 ### **Progresso Total: 21/30 etapas concluídas - 70% COMPLETO!** 🎉
 
 ### **Próximas Etapas Imediatas:**
-1. **Implementar configuração no Clerk Dashboard** conforme `GUIA_PRODUCAO_CLERK.md`
-2. **Testar registro em produção** após configuração
-3. **Continuar com Fase 6**: Monitoramento e Analytics
+1. **✅ SOLUÇÃO CRIADA**: `SOLUCAO_ERRO_401_PRODUCAO.md` - Guia específico para resolver erro 401
+2. **🚧 AGUARDANDO**: Usuário implementar configuração no Clerk Dashboard
+3. **⏳ PENDENTE**: Testar registro em produção após configuração
+4. **🔄 PRÓXIMO**: Continuar com Fase 6 - Monitoramento e Analytics
 
 ---
 
