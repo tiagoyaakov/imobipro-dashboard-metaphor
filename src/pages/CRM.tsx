@@ -22,7 +22,7 @@ import {
   AutomationBuilder 
 } from '@/components/crm';
 import { useCRMData } from '@/hooks/useCRMData';
-import { useClerk } from '@clerk/clerk-react';
+import { useClerk } from '@clerk/react-router';
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

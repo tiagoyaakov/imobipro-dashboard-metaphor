@@ -1,4 +1,4 @@
-import { UserProfile } from "@clerk/clerk-react";
+import { UserProfile } from "@clerk/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Profile() {

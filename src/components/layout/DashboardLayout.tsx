@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/react-router";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";

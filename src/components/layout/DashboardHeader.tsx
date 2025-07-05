@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUser, useClerk } from "@clerk/react-router";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function DashboardHeader() {

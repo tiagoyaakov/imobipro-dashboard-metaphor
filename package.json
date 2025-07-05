@@ -35,7 +35,6 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.32.4",
     "@clerk/react-router": "^1.6.4",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^6.11.0",
