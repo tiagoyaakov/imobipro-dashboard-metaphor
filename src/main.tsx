@@ -54,38 +54,38 @@ const clerkAppearance = {
   elements: {
     // Layout principal
     rootBox: "mx-auto w-full max-w-md",
-    card: "shadow-soft-lg border-border bg-card text-card-foreground rounded-xl p-6",
+    card: "shadow-xl border border-gray-700 bg-gray-900 text-white rounded-xl p-6",
     
     // Cabeçalho
-    headerTitle: "text-2xl font-bold text-foreground mb-2",
-    headerSubtitle: "text-muted-foreground text-sm leading-relaxed",
+    headerTitle: "text-2xl font-bold text-white mb-2",
+    headerSubtitle: "text-gray-400 text-sm leading-relaxed",
     
     // Botões
-    formButtonPrimary: "bg-imobipro-blue text-white hover:bg-imobipro-blue-dark rounded-lg h-11 px-6 py-2 font-medium transition-all duration-200 focus:ring-2 focus:ring-imobipro-blue focus:ring-offset-2",
-    formButtonSecondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg h-11 px-6 py-2 font-medium transition-all duration-200",
+    formButtonPrimary: "bg-blue-600 text-white hover:bg-blue-700 rounded-lg h-11 px-6 py-2 font-medium transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+    formButtonSecondary: "bg-gray-700 text-gray-200 hover:bg-gray-600 rounded-lg h-11 px-6 py-2 font-medium transition-all duration-200",
     
     // Inputs
-    formFieldInput: "flex h-11 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground ring-offset-background transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-imobipro-blue focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-    formFieldLabel: "text-sm font-medium text-foreground mb-2",
-    formFieldInputShowPasswordButton: "text-muted-foreground hover:text-foreground transition-colors",
+    formFieldInput: "flex h-11 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-sm text-white transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+    formFieldLabel: "text-sm font-medium text-white mb-2",
+    formFieldInputShowPasswordButton: "text-gray-400 hover:text-white transition-colors",
     
     // Links e navegação
-    footerActionLink: "text-imobipro-blue hover:text-imobipro-blue-dark underline-offset-4 hover:underline font-medium transition-colors",
-    footerActionText: "text-muted-foreground text-sm",
-    footerActionLinkText: "text-imobipro-blue hover:text-imobipro-blue-dark font-medium",
+    footerActionLink: "text-blue-400 hover:text-blue-300 underline-offset-4 hover:underline font-medium transition-colors",
+    footerActionText: "text-gray-400 text-sm",
+    footerActionLinkText: "text-blue-400 hover:text-blue-300 font-medium",
     
     // Dividers
-    dividerLine: "bg-border",
-    dividerText: "text-muted-foreground text-sm font-medium",
+    dividerLine: "bg-gray-600",
+    dividerText: "text-gray-400 text-sm font-medium",
     
     // Botões sociais
-    socialButtonsIconButton: "border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-lg h-11 px-4 transition-colors",
-    socialButtonsBlockButton: "border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-lg h-11 px-4 transition-colors",
+    socialButtonsIconButton: "border border-gray-600 bg-gray-900 hover:bg-gray-700 hover:text-white rounded-lg h-11 px-4 transition-colors",
+    socialButtonsBlockButton: "border border-gray-600 bg-gray-900 hover:bg-gray-700 hover:text-white rounded-lg h-11 px-4 transition-colors",
     
     // Identidade e perfil
-    identityPreviewText: "text-foreground font-medium",
-    identityPreviewEditButton: "text-imobipro-blue hover:text-imobipro-blue-dark font-medium",
-    identityPreviewEditButtonIcon: "text-imobipro-blue hover:text-imobipro-blue-dark",
+    identityPreviewText: "text-white font-medium",
+    identityPreviewEditButton: "text-blue-400 hover:text-blue-300 font-medium",
+    identityPreviewEditButtonIcon: "text-blue-400 hover:text-blue-300",
     
     // Avatar e menu de usuário
     userButtonAvatarBox: "w-10 h-10 ring-2 ring-imobipro-blue ring-offset-2 ring-offset-background",
@@ -140,19 +140,19 @@ const clerkAppearance = {
   variables: {
     // Cores principais
     colorPrimary: "hsl(220, 91%, 51%)", // imobipro-blue
-    colorBackground: "hsl(var(--background))",
-    colorText: "hsl(var(--foreground))",
-    colorTextSecondary: "hsl(var(--muted-foreground))",
+    colorBackground: "hsl(210, 11%, 4%)", // Dark background
+    colorText: "hsl(210, 11%, 96%)", // Light text
+    colorTextSecondary: "hsl(210, 11%, 70%)", // Muted text
     
     // Estados
     colorDanger: "hsl(0, 84%, 60%)",
     colorSuccess: "hsl(142, 76%, 36%)",
     colorWarning: "hsl(38, 92%, 50%)",
-    colorNeutral: "hsl(var(--muted))",
+    colorNeutral: "hsl(210, 11%, 12%)", // Dark neutral
     
     // Inputs
-    colorInputBackground: "hsl(var(--background))",
-    colorInputText: "hsl(var(--foreground))",
+    colorInputBackground: "hsl(210, 11%, 14%)", // Dark input background
+    colorInputText: "hsl(210, 11%, 96%)", // Light input text
     
     // Espaçamento e bordas
     spacingUnit: "1rem",
