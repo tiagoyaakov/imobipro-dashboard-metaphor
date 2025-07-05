@@ -69,18 +69,18 @@ const clerkAppearance = {
     userButtonPopoverActionButton: "text-foreground hover:bg-accent hover:text-accent-foreground",
   },
   variables: {
-    colorPrimary: "hsl(var(--primary))",
-    colorBackground: "hsl(var(--background))",
-    colorText: "hsl(var(--foreground))",
-    colorTextSecondary: "hsl(var(--muted-foreground))",
-    colorDanger: "hsl(var(--destructive))",
-    colorSuccess: "hsl(var(--primary))",
-    colorWarning: "hsl(var(--warning))",
-    colorNeutral: "hsl(var(--muted))",
-    colorInputBackground: "hsl(var(--background))",
-    colorInputText: "hsl(var(--foreground))",
-    spacingUnit: "1rem",
-    borderRadius: "0.5rem"
+    colorPrimary: "hsl(220, 91%, 51%)",
+    colorBackground: "hsl(210, 11%, 4%)",
+    colorText: "hsl(210, 11%, 96%)",
+    colorTextSecondary: "hsl(210, 11%, 70%)",
+    colorDanger: "hsl(0, 84%, 60%)",
+    colorSuccess: "hsl(220, 91%, 51%)",
+    colorWarning: "hsl(48, 95%, 58%)",
+    colorNeutral: "hsl(210, 11%, 12%)",
+    colorInputBackground: "hsl(210, 11%, 14%)",
+    colorInputText: "hsl(210, 11%, 96%)",
+    spacingUnit: "0.75rem",
+    borderRadius: "0.75rem"
   }
 }
 
