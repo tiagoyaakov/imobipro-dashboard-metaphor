@@ -86,7 +86,7 @@ export default defineConfig(({ mode, command }) => {
             ],
             'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
             'query-vendor': ['@tanstack/react-query'],
-            'supabase-vendor': ['@supabase/supabase-js'],
+
             'chart-vendor': ['recharts'],
             'date-vendor': ['date-fns'],
             'utils-vendor': ['clsx', 'class-variance-authority', 'tailwind-merge'],
@@ -143,7 +143,7 @@ export default defineConfig(({ mode, command }) => {
         'react-dom',
         'react-router-dom',
         '@tanstack/react-query',
-        '@supabase/supabase-js',
+
         'lucide-react',
         'recharts',
         'date-fns',

@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, ArrowLeft, Home } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUser, useClerk } from '@clerk/clerk-react';
 
 const Unauthorized: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   // Dados do estado da navegação
   const from = location.state?.from;
@@ -28,8 +29,8 @@ const Unauthorized: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/auth/login', { replace: true });
+    await signOut();
+    navigate('/sign-in', { replace: true });
   };
 
   return (
@@ -49,11 +50,11 @@ const Unauthorized: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Usuário:</span>
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
+              <span className="text-sm text-muted-foreground">{user?.emailAddresses[0]?.emailAddress}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Role atual:</span>
-              <Badge variant="outline">{user?.role}</Badge>
+              <Badge variant="outline">{(user?.publicMetadata?.role as string) || 'user'}</Badge>
             </div>
           </div>
 
