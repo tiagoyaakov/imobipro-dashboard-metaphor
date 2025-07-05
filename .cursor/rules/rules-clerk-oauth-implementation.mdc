@@ -1,0 +1,820 @@
+---
+description: Regras para implementação do Clerk como sistema de autenticação no ImobiPRO Dashboard, integrando com React Router DOM 6.26.2, TanStack React Query, shadcn/ui e preparando para integração futura com Supabase.
+alwaysApply: false
+---
+
+## **rules-clerk-authentication-implementation**
+
+**Quando usar**: Ao implementar, modificar ou manter funcionalidades de autenticação no projeto utilizando Clerk.
+
+### **1. Instalação e Configuração Base**
+
+**Dependência obrigatória**:
+```bash
+pnpm add @clerk/react-router
+```
+
+**Variáveis de ambiente obrigatórias**:
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_... # apenas para backend/webhooks
+```
+
+**Configuração do ClerkProvider em main.tsx**:
+```tsx
+import { ClerkProvider } from '@clerk/react-router'
+import { BrowserRouter } from 'react-router-dom'
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('VITE_CLERK_PUBLISHABLE_KEY não encontrada em .env')
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <ClerkProvider 
+        publishableKey={PUBLISHABLE_KEY}
+        afterSignOutUrl="/"
+        signInFallbackRedirectUrl="/dashboard"
+        signUpFallbackRedirectUrl="/dashboard"
+      >
+        <App />
+      </ClerkProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+)
+```
+
+### **2. Componentes de Autenticação**
+
+**Componentes principais obrigatórios**:
+- `SignIn` - para páginas de login
+- `SignUp` - para páginas de registro  
+- `UserButton` - botão de perfil do usuário
+- `SignedIn` / `SignedOut` - renderização condicional
+- `RedirectToSignIn` - redirecionamento automático
+
+**Estrutura de rotas de autenticação**:
+```tsx
+// src/pages/auth/Login.tsx
+import { SignIn } from '@clerk/react-router'
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md">
+        <SignIn 
+          appearance={{
+            elements: {
+              rootBox: "mx-auto",
+              card: "shadow-xl border-border bg-card"
+            }
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+```
+
+### **3. Hooks e Estado de Autenticação**
+
+**Hooks obrigatórios por contexto**:
+- `useAuth()` - estado de autenticação, getToken, isLoaded
+- `useUser()` - dados do usuário atual
+- `useSignIn()` / `useSignUp()` - para flows customizados
+- `useClerk()` - instância do Clerk para métodos avançados
+
+**Exemplo de uso com loading states**:
+```tsx
+import { useAuth, useUser } from '@clerk/react-router'
+
+export function DashboardPage() {
+  const { isLoaded, isSignedIn, getToken } = useAuth()
+  const { user } = useUser()
+
+  if (!isLoaded) {
+    return <PageLoadingFallback />
+  }
+
+  if (!isSignedIn) {
+    return <RedirectToSignIn />
+  }
+
+  return (
+    <div>
+      <h1>Bem-vindo, {user?.firstName}!</h1>
+    </div>
+  )
+}
+```
+
+### **4. Proteção de Rotas**
+
+**Componente ProtectedRoute atualizado**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { Navigate } from 'react-router-dom'
+import { PageLoadingFallback } from '../common/PageLoadingFallback'
+
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  redirectTo?: string
+}
+
+export function ProtectedRoute({ children, redirectTo = '/login' }: ProtectedRouteProps) {
+  const { isLoaded, isSignedIn } = useAuth()
+
+  if (!isLoaded) {
+    return <PageLoadingFallback />
+  }
+
+  if (!isSignedIn) {
+    return <Navigate to={redirectTo} replace />
+  }
+
+  return <>{children}</>
+}
+```
+
+**Renderização condicional com Clerk**:
+```tsx
+import { SignedIn, SignedOut } from '@clerk/react-router'
+
+export function DashboardHeader() {
+  return (
+    <header className="border-b border-border bg-card">
+      <div className="flex items-center justify-between p-4">
+        <h1>ImobiPRO Dashboard</h1>
+        <SignedIn>
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8"
+              }
+            }}
+          />
+        </SignedIn>
+        <SignedOut>
+          <Button asChild>
+            <Link to="/login">Fazer Login</Link>
+          </Button>
+        </SignedOut>
+      </div>
+    </header>
+  )
+}
+```
+
+### **5. Integração com TanStack React Query**
+
+**Hook customizado para fetch autenticado**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { useQuery } from '@tanstack/react-query'
+
+export function useAuthenticatedFetch() {
+  const { getToken } = useAuth()
+
+  const authenticatedFetch = async (url: string, options?: RequestInit) => {
+    const token = await getToken()
+    
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+
+  return authenticatedFetch
+}
+
+// Uso em queries
+export function useProperties() {
+  const authenticatedFetch = useAuthenticatedFetch()
+  
+  return useQuery({
+    queryKey: ['properties'],
+    queryFn: async () => {
+      const response = await authenticatedFetch('/api/properties')
+      return response.json()
+    }
+  })
+}
+```
+
+### **6. Customização Visual e Tema**
+
+**Configuração de aparência consistente com shadcn/ui**:
+```tsx
+const clerkAppearance = {
+  elements: {
+    rootBox: "mx-auto",
+    card: "shadow-xl border-border bg-card text-card-foreground rounded-lg",
+    headerTitle: "text-2xl font-bold text-foreground",
+    headerSubtitle: "text-muted-foreground",
+    formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+    formFieldInput: "bg-background border-input text-foreground rounded-md",
+    footerActionLink: "text-primary hover:text-primary/90"
+  },
+  variables: {
+    colorPrimary: "hsl(var(--primary))",
+    colorBackground: "hsl(var(--background))",
+    colorText: "hsl(var(--foreground))",
+    colorTextSecondary: "hsl(var(--muted-foreground))",
+    colorDanger: "hsl(var(--destructive))",
+    colorSuccess: "hsl(var(--primary))",
+    colorWarning: "hsl(var(--warning))",
+    colorNeutral: "hsl(var(--muted))"
+  }
+}
+
+<SignIn appearance={clerkAppearance} />
+```
+
+### **7. Tratamento de Erros e Estados**
+
+**Padrões para tratamento de erros**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { toast } from 'sonner'
+
+export function useAuthError() {
+  const handleAuthError = (error: any) => {
+    if (error?.errors?.[0]?.code === 'form_identifier_not_found') {
+      toast.error('Usuário não encontrado')
+    } else if (error?.errors?.[0]?.code === 'form_password_incorrect') {
+      toast.error('Senha incorreta')
+    } else {
+      toast.error('Erro na autenticação. Tente novamente.')
+    }
+  }
+
+  return { handleAuthError }
+}
+```
+
+### **8. Preparação para Integração Supabase**
+
+**Configuração de JWT template para Supabase**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+
+export function useSupabaseToken() {
+  const { getToken } = useAuth()
+
+  const getSupabaseToken = async () => {
+    return await getToken({ template: 'supabase' })
+  }
+
+  return { getSupabaseToken }
+}
+```
+
+**Configuração de RLS no Supabase** (para implementação futura):
+```sql
+-- Configurar RLS baseado no Clerk
+CREATE POLICY "Users can only access their own data" ON properties
+  FOR ALL USING (auth.jwt() ->> 'sub' = user_id::text);
+```
+
+### **9. Performance e Otimização**
+
+**Lazy loading de componentes de auth**:
+```tsx
+const LoginPage = lazy(() => import('../pages/auth/Login'))
+const RegisterPage = lazy(() => import('../pages/auth/Register'))
+
+// Usar com Suspense
+<Suspense fallback={<PageLoadingFallback />}>
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/register" element={<RegisterPage />} />
+  </Routes>
+</Suspense>
+```
+
+### **10. Testes e Validação**
+
+**Testes obrigatórios para componentes com Clerk**:
+```tsx
+import { render, screen } from '@testing-library/react'
+import { ClerkProvider } from '@clerk/react-router'
+
+const ClerkTestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ClerkProvider publishableKey="pk_test_..." afterSignOutUrl="/">
+    {children}
+  </ClerkProvider>
+)
+
+test('should render protected content for authenticated user', () => {
+  render(
+    <ClerkTestWrapper>
+      <ProtectedRoute>
+        <div>Protected Content</div>
+      </ProtectedRoute>
+    </ClerkTestWrapper>
+  )
+  
+  expect(screen.getByText('Protected Content')).toBeInTheDocument()
+})
+```
+
+### **11. Boas Práticas de Segurança**
+
+**Validação de ambiente**:
+```tsx
+// Verificar se está em ambiente seguro
+if (import.meta.env.PROD && !window.location.protocol.startsWith('https')) {
+  throw new Error('Clerk requer HTTPS em produção')
+}
+
+// Não expor secrets no frontend
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+// NUNCA usar CLERK_SECRET_KEY no frontend
+```
+
+**Rate limiting e retry logic**:
+```tsx
+const authenticatedFetch = async (url: string, options?: RequestInit, retries = 3) => {
+  const token = await getToken()
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options?.headers,
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) return response
+      if (response.status === 401) {
+        // Token expirado, tentar refresh
+        continue
+      }
+      
+      throw new Error(`HTTP ${response.status}`)
+    } catch (error) {
+      if (i === retries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+```
+
+### **12. Monitoring e Analytics**
+
+**Eventos de autenticação para analytics**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+
+export function useAuthAnalytics() {
+  const { isSignedIn, userId } = useAuth()
+
+  useEffect(() => {
+    if (isSignedIn && userId) {
+      // Analytics de login
+      analytics.identify(userId, {
+        signedInAt: new Date().toISOString()
+      })
+    }
+  }, [isSignedIn, userId])
+}
+```
+
+### **Comandos de Implementação**
+
+**Sequência de comandos para setup**:
+```bash
+# 1. Instalar dependência
+pnpm add @clerk/react-router
+
+# 2. Configurar variáveis de ambiente
+echo "VITE_CLERK_PUBLISHABLE_KEY=pk_test_..." >> .env.local
+
+# 3. Executar testes
+pnpm test
+
+# 4. Verificar build
+pnpm build
+```
+
+**Atualização do architecture.md obrigatória**:
+- Registrar versão do Clerk utilizada
+- Documentar configurações específicas
+- Listar componentes migrados
+- Anotar pendências de integração Supabase## **rules-clerk-authentication-implementation**
+
+**Descrição**: Regras para implementação do Clerk como sistema de autenticação no ImobiPRO Dashboard, integrando com React Router DOM 6.26.2, TanStack React Query, shadcn/ui e preparando para integração futura com Supabase.
+
+**Quando usar**: Ao implementar, modificar ou manter funcionalidades de autenticação no projeto utilizando Clerk.
+
+### **1. Instalação e Configuração Base**
+
+**Dependência obrigatória**:
+```bash
+pnpm add @clerk/react-router
+```
+
+**Variáveis de ambiente obrigatórias**:
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_... # apenas para backend/webhooks
+```
+
+**Configuração do ClerkProvider em main.tsx**:
+```tsx
+import { ClerkProvider } from '@clerk/react-router'
+import { BrowserRouter } from 'react-router-dom'
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('VITE_CLERK_PUBLISHABLE_KEY não encontrada em .env')
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <ClerkProvider 
+        publishableKey={PUBLISHABLE_KEY}
+        afterSignOutUrl="/"
+        signInFallbackRedirectUrl="/dashboard"
+        signUpFallbackRedirectUrl="/dashboard"
+      >
+        <App />
+      </ClerkProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+)
+```
+
+### **2. Componentes de Autenticação**
+
+**Componentes principais obrigatórios**:
+- `SignIn` - para páginas de login
+- `SignUp` - para páginas de registro  
+- `UserButton` - botão de perfil do usuário
+- `SignedIn` / `SignedOut` - renderização condicional
+- `RedirectToSignIn` - redirecionamento automático
+
+**Estrutura de rotas de autenticação**:
+```tsx
+// src/pages/auth/Login.tsx
+import { SignIn } from '@clerk/react-router'
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md">
+        <SignIn 
+          appearance={{
+            elements: {
+              rootBox: "mx-auto",
+              card: "shadow-xl border-border bg-card"
+            }
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+```
+
+### **3. Hooks e Estado de Autenticação**
+
+**Hooks obrigatórios por contexto**:
+- `useAuth()` - estado de autenticação, getToken, isLoaded
+- `useUser()` - dados do usuário atual
+- `useSignIn()` / `useSignUp()` - para flows customizados
+- `useClerk()` - instância do Clerk para métodos avançados
+
+**Exemplo de uso com loading states**:
+```tsx
+import { useAuth, useUser } from '@clerk/react-router'
+
+export function DashboardPage() {
+  const { isLoaded, isSignedIn, getToken } = useAuth()
+  const { user } = useUser()
+
+  if (!isLoaded) {
+    return <PageLoadingFallback />
+  }
+
+  if (!isSignedIn) {
+    return <RedirectToSignIn />
+  }
+
+  return (
+    <div>
+      <h1>Bem-vindo, {user?.firstName}!</h1>
+    </div>
+  )
+}
+```
+
+### **4. Proteção de Rotas**
+
+**Componente ProtectedRoute atualizado**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { Navigate } from 'react-router-dom'
+import { PageLoadingFallback } from '../common/PageLoadingFallback'
+
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  redirectTo?: string
+}
+
+export function ProtectedRoute({ children, redirectTo = '/login' }: ProtectedRouteProps) {
+  const { isLoaded, isSignedIn } = useAuth()
+
+  if (!isLoaded) {
+    return <PageLoadingFallback />
+  }
+
+  if (!isSignedIn) {
+    return <Navigate to={redirectTo} replace />
+  }
+
+  return <>{children}</>
+}
+```
+
+**Renderização condicional com Clerk**:
+```tsx
+import { SignedIn, SignedOut } from '@clerk/react-router'
+
+export function DashboardHeader() {
+  return (
+    <header className="border-b border-border bg-card">
+      <div className="flex items-center justify-between p-4">
+        <h1>ImobiPRO Dashboard</h1>
+        <SignedIn>
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8"
+              }
+            }}
+          />
+        </SignedIn>
+        <SignedOut>
+          <Button asChild>
+            <Link to="/login">Fazer Login</Link>
+          </Button>
+        </SignedOut>
+      </div>
+    </header>
+  )
+}
+```
+
+### **5. Integração com TanStack React Query**
+
+**Hook customizado para fetch autenticado**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { useQuery } from '@tanstack/react-query'
+
+export function useAuthenticatedFetch() {
+  const { getToken } = useAuth()
+
+  const authenticatedFetch = async (url: string, options?: RequestInit) => {
+    const token = await getToken()
+    
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+
+  return authenticatedFetch
+}
+
+// Uso em queries
+export function useProperties() {
+  const authenticatedFetch = useAuthenticatedFetch()
+  
+  return useQuery({
+    queryKey: ['properties'],
+    queryFn: async () => {
+      const response = await authenticatedFetch('/api/properties')
+      return response.json()
+    }
+  })
+}
+```
+
+### **6. Customização Visual e Tema**
+
+**Configuração de aparência consistente com shadcn/ui**:
+```tsx
+const clerkAppearance = {
+  elements: {
+    rootBox: "mx-auto",
+    card: "shadow-xl border-border bg-card text-card-foreground rounded-lg",
+    headerTitle: "text-2xl font-bold text-foreground",
+    headerSubtitle: "text-muted-foreground",
+    formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+    formFieldInput: "bg-background border-input text-foreground rounded-md",
+    footerActionLink: "text-primary hover:text-primary/90"
+  },
+  variables: {
+    colorPrimary: "hsl(var(--primary))",
+    colorBackground: "hsl(var(--background))",
+    colorText: "hsl(var(--foreground))",
+    colorTextSecondary: "hsl(var(--muted-foreground))",
+    colorDanger: "hsl(var(--destructive))",
+    colorSuccess: "hsl(var(--primary))",
+    colorWarning: "hsl(var(--warning))",
+    colorNeutral: "hsl(var(--muted))"
+  }
+}
+
+<SignIn appearance={clerkAppearance} />
+```
+
+### **7. Tratamento de Erros e Estados**
+
+**Padrões para tratamento de erros**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+import { toast } from 'sonner'
+
+export function useAuthError() {
+  const handleAuthError = (error: any) => {
+    if (error?.errors?.[0]?.code === 'form_identifier_not_found') {
+      toast.error('Usuário não encontrado')
+    } else if (error?.errors?.[0]?.code === 'form_password_incorrect') {
+      toast.error('Senha incorreta')
+    } else {
+      toast.error('Erro na autenticação. Tente novamente.')
+    }
+  }
+
+  return { handleAuthError }
+}
+```
+
+### **8. Preparação para Integração Supabase**
+
+**Configuração de JWT template para Supabase**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+
+export function useSupabaseToken() {
+  const { getToken } = useAuth()
+
+  const getSupabaseToken = async () => {
+    return await getToken({ template: 'supabase' })
+  }
+
+  return { getSupabaseToken }
+}
+```
+
+**Configuração de RLS no Supabase** (para implementação futura):
+```sql
+-- Configurar RLS baseado no Clerk
+CREATE POLICY "Users can only access their own data" ON properties
+  FOR ALL USING (auth.jwt() ->> 'sub' = user_id::text);
+```
+
+### **9. Performance e Otimização**
+
+**Lazy loading de componentes de auth**:
+```tsx
+const LoginPage = lazy(() => import('../pages/auth/Login'))
+const RegisterPage = lazy(() => import('../pages/auth/Register'))
+
+// Usar com Suspense
+<Suspense fallback={<PageLoadingFallback />}>
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/register" element={<RegisterPage />} />
+  </Routes>
+</Suspense>
+```
+
+### **10. Testes e Validação**
+
+**Testes obrigatórios para componentes com Clerk**:
+```tsx
+import { render, screen } from '@testing-library/react'
+import { ClerkProvider } from '@clerk/react-router'
+
+const ClerkTestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ClerkProvider publishableKey="pk_test_..." afterSignOutUrl="/">
+    {children}
+  </ClerkProvider>
+)
+
+test('should render protected content for authenticated user', () => {
+  render(
+    <ClerkTestWrapper>
+      <ProtectedRoute>
+        <div>Protected Content</div>
+      </ProtectedRoute>
+    </ClerkTestWrapper>
+  )
+  
+  expect(screen.getByText('Protected Content')).toBeInTheDocument()
+})
+```
+
+### **11. Boas Práticas de Segurança**
+
+**Validação de ambiente**:
+```tsx
+// Verificar se está em ambiente seguro
+if (import.meta.env.PROD && !window.location.protocol.startsWith('https')) {
+  throw new Error('Clerk requer HTTPS em produção')
+}
+
+// Não expor secrets no frontend
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+// NUNCA usar CLERK_SECRET_KEY no frontend
+```
+
+**Rate limiting e retry logic**:
+```tsx
+const authenticatedFetch = async (url: string, options?: RequestInit, retries = 3) => {
+  const token = await getToken()
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options?.headers,
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) return response
+      if (response.status === 401) {
+        // Token expirado, tentar refresh
+        continue
+      }
+      
+      throw new Error(`HTTP ${response.status}`)
+    } catch (error) {
+      if (i === retries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+```
+
+### **12. Monitoring e Analytics**
+
+**Eventos de autenticação para analytics**:
+```tsx
+import { useAuth } from '@clerk/react-router'
+
+export function useAuthAnalytics() {
+  const { isSignedIn, userId } = useAuth()
+
+  useEffect(() => {
+    if (isSignedIn && userId) {
+      // Analytics de login
+      analytics.identify(userId, {
+        signedInAt: new Date().toISOString()
+      })
+    }
+  }, [isSignedIn, userId])
+}
+```
+
+### **Comandos de Implementação**
+
+**Sequência de comandos para setup**:
+```bash
+# 1. Instalar dependência
+pnpm add @clerk/react-router
+
+# 2. Configurar variáveis de ambiente
+echo "VITE_CLERK_PUBLISHABLE_KEY=pk_test_..." >> .env.local
+
+# 3. Executar testes
+pnpm test
+
+# 4. Verificar build
+pnpm build
+```
+
+**Atualização do architecture.md obrigatória**:
+- Registrar versão do Clerk utilizada
+- Documentar configurações específicas
+- Listar componentes migrados
+- Anotar pendências de integração Supabase
