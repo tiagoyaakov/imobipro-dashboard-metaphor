@@ -65,7 +65,7 @@ const clerkAppearance = {
     formButtonSecondary: "bg-gray-700 text-gray-200 hover:bg-gray-600 rounded-lg h-11 px-6 py-2 font-medium transition-all duration-200",
     
     // Inputs
-    formFieldInput: "flex h-11 w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-sm text-white transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+    formFieldInput: "flex h-11 w-full rounded-lg border border-gray-600 bg-black px-4 py-2 text-sm text-white transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
     formFieldLabel: "text-sm font-medium text-white mb-2",
     formFieldInputShowPasswordButton: "text-gray-400 hover:text-white transition-colors",
     
@@ -79,8 +79,9 @@ const clerkAppearance = {
     dividerText: "text-gray-400 text-sm font-medium",
     
     // Botões sociais
-    socialButtonsIconButton: "border border-gray-600 bg-gray-900 hover:bg-gray-700 hover:text-white rounded-lg h-11 px-4 transition-colors",
-    socialButtonsBlockButton: "border border-gray-600 bg-gray-900 hover:bg-gray-700 hover:text-white rounded-lg h-11 px-4 transition-colors",
+    socialButtonsIconButton: "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg h-11 px-4 transition-colors shadow-sm",
+    socialButtonsBlockButton: "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg h-11 px-4 transition-colors shadow-sm font-medium",
+    socialButtonsBlockButtonText: "text-gray-700 font-medium",
     
     // Identidade e perfil
     identityPreviewText: "text-white font-medium",

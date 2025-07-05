@@ -275,6 +275,13 @@
 - [ ] **Fase 7**: Deploy e Produção (0/3 etapas)
 - [ ] **Fase 8**: Manutenção (0/2 etapas)
 
+### **Correções Aplicadas:**
+- [x] **Correção crítica**: Substituído variáveis CSS por valores absolutos HSL no Clerk ✅
+  - Problema: `Error: Clerk: "hsl(var(--muted))" cannot be used as a color`
+  - Solução: Valores absolutos como `hsl(210, 11%, 12%)` em vez de `hsl(var(--muted))`
+  - Impacto: Resolve tela preta em produção
+  - Commit: `c30bd76` - "fix: resolver erro de variáveis CSS no Clerk que causava tela preta em produção"
+
 ### **Progresso Total: 19/30 etapas concluídas - 63% COMPLETO!** 🎉
 
 ---
