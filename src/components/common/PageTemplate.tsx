@@ -40,4 +40,6 @@ const PageTemplate = ({
   );
 };
 
+// Exportações - suportando tanto named export quanto default export
+export { PageTemplate };
 export default PageTemplate;
