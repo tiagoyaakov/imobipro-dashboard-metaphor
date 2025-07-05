@@ -6,7 +6,7 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 // ================================================================
 // IMPORTAÇÃO ESPECÍFICA DO CLERK PARA CALLBACK SSO
 // ================================================================
-import { AuthenticateWithRedirectCallback } from "@clerk/react-router";
+// REMOVIDO: AuthenticateWithRedirectCallback não é necessário para React Router DOM library mode
 
 // ================================================================
 // LAZY LOADING DAS PÁGINAS PRINCIPAIS PARA MELHOR PERFORMANCE
@@ -58,12 +58,8 @@ const App = () => (
       />
 
       {/* ============================================= */}
-      {/* ROTA ESPECÍFICA PARA CALLBACK DO SSO/OAUTH */}
+      {/* REMOVIDO: Callback SSO é tratado automaticamente pelo Clerk em library mode */}
       {/* ============================================= */}
-      <Route
-        path="/login/sso-callback"
-        element={<AuthenticateWithRedirectCallback />}
-      />
 
       {/* Rotas Protegidas */}
       <Route
