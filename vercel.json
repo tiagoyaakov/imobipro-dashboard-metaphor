@@ -11,6 +11,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/login/(.*)",
+      "destination": "/index.html"
+    },
+    {
       "source": "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
       "destination": "/index.html"
     }
