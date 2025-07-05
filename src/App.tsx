@@ -3,6 +3,10 @@ import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute, PublicRoute } from "./components/auth";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
+// ================================================================
+// IMPORTAÇÃO ESPECÍFICA DO CLERK PARA CALLBACK SSO
+// ================================================================
+import { AuthenticateWithRedirectCallback } from "@clerk/react-router";
 
 // ================================================================
 // LAZY LOADING DAS PÁGINAS PRINCIPAIS PARA MELHOR PERFORMANCE
@@ -51,6 +55,14 @@ const App = () => (
             <RegisterPage />
           </PublicRoute>
         }
+      />
+
+      {/* ============================================= */}
+      {/* ROTA ESPECÍFICA PARA CALLBACK DO SSO/OAUTH */}
+      {/* ============================================= */}
+      <Route
+        path="/login/sso-callback"
+        element={<AuthenticateWithRedirectCallback />}
       />
 
       {/* Rotas Protegidas */}
