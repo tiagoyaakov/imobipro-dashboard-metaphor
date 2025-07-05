@@ -1,8 +1,8 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import { SignIn, SignUp } from "@clerk/react-router";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
+import { PublicRoute } from "./components/auth";
 
 // ================================================================
 // LAZY LOADING DAS PÁGINAS PRINCIPAIS PARA MELHOR PERFORMANCE
@@ -22,6 +22,12 @@ const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
+
+// ================================================================
+// LAZY LOADING DAS PÁGINAS DE AUTENTICAÇÃO
+// ================================================================
+const LoginPage = lazy(() => import("./pages/auth/Login"));
+const RegisterPage = lazy(() => import("./pages/auth/Register"));
 
 // ================================================================
 // COMPONENTE PRINCIPAL DE ROTAS
@@ -152,17 +158,27 @@ const App = () => (
       />
     </Route>
     
-    {/* Rotas de autenticação do Clerk */}
-    <Route path="/sign-in" element={
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <SignIn />
-      </div>
-    } />
-    <Route path="/sign-up" element={
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <SignUp />
-      </div>
-    } />
+    {/* Rotas de autenticação aprimoradas */}
+    <Route 
+      path="/sign-in" 
+      element={
+        <PublicRoute>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <LoginPage />
+          </Suspense>
+        </PublicRoute>
+      } 
+    />
+    <Route 
+      path="/sign-up" 
+      element={
+        <PublicRoute>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <RegisterPage />
+          </Suspense>
+        </PublicRoute>
+      } 
+    />
     
     {/* Página 404 */}
     <Route 

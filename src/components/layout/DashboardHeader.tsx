@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser, useClerk } from "@clerk/react-router";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function DashboardHeader() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const navigate = useNavigate();
 
@@ -69,14 +71,31 @@ export default function DashboardHeader() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      toast.success('Logout realizado com sucesso')
       navigate('/sign-in');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+      toast.error('Erro ao fazer logout. Tente novamente.')
     }
   };
 
   const displayName = getUserDisplayName();
   const userPhone = getUserPhone();
+
+  // Componente de loading para avatar e dropdown enquanto carrega os dados
+  const UserSection = () => {
+    if (!isLoaded) {
+      return (
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+      )
+    }
+
+    return (
+                  <UserSection />
+    )
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
