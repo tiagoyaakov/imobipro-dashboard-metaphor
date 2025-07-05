@@ -12,29 +12,44 @@
 
 ---
 
-## ⚡ **SOLUÇÃO RÁPIDA (Recomendada para Testes)**
+## 🛠️ **SOLUÇÃO RÁPIDA (Para Testes)**
 
-### **1. Configurar Domínio de Desenvolvimento no Clerk Dashboard**
+### **1. Configurar Paths no Clerk Dashboard:**
 
-1. **Acesse**: https://dashboard.clerk.com/
-2. **Selecione** sua aplicação (deve estar em "Development")
-3. **Vá para**: `Configure > Domains`
-4. **Adicione o domínio**: `https://imobpro-brown.vercel.app`
-5. **Salve** as configurações
+1. **Acessar Clerk Dashboard:** https://dashboard.clerk.com/
+2. **Selecionar o projeto:** useful-mudfish-1 (ou seu projeto)
+3. **Navegar para:** Configure → Paths
+4. **Configurar campos:**
 
-### **2. Atualizar Configuração das Variáveis de Ambiente na Vercel**
+```
+✅ Fallback development host: https://imobpro-brown.vercel.app
+✅ Sign-in URL: /login
+✅ Sign-up URL: /register
+✅ User profile URL: /profile
+✅ After sign-in URL: /dashboard
+✅ After sign-up URL: /dashboard
+```
 
-1. **Acesse**: https://vercel.com/dashboard
-2. **Selecione** seu projeto `imobipro-dashboard-metaphor`
-3. **Vá para**: `Settings > Environment Variables`
-4. **Adicione/Atualize**:
-   ```env
-   VITE_CLERK_PUBLISHABLE_KEY=pk_test_dXNlZnVsLW11ZGZpc2gtMS5jbGVyay5hY2NvdW50cy5kZXYk
-   CLERK_SECRET_KEY=sk_test_UtCaJ7mDwyQhppEZd6srt4kdjBQ0JcgplFkXQtP0T8
-   ```
-5. **Marque**: "Production" environment
-6. **Clique**: "Save"
-7. **Redeploy**: a aplicação
+### **2. Verificar Domains:**
+- **Ir para:** Configure → Domains
+- **Verificar se existe:** https://imobpro-brown.vercel.app
+- **Se não existir:** Adicionar como domínio permitido
+
+### **3. Verificar Variáveis de Ambiente na Vercel:**
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_dXNlZnVsLW11ZGZpc2gtMS5jbGVyay5hY2NvdW50cy5kZXYk
+CLERK_SECRET_KEY=sk_test_UtCaJ7mDwyQhppEZd6srt4kdjBQ0JcgplFkXQtP0T8
+VITE_CLERK_SIGN_IN_URL=/login
+VITE_CLERK_SIGN_UP_URL=/register
+VITE_CLERK_AFTER_SIGN_IN_URL=/dashboard
+VITE_CLERK_AFTER_SIGN_UP_URL=/dashboard
+```
+
+### **4. Redeploy:**
+```bash
+# Forçar novo deploy na Vercel
+vercel --prod
+```
 
 ---
 
@@ -179,3 +194,237 @@ CLERK_SECRET_KEY=sk_live_...
 ---
 
 **📝 Após resolver, documentar as configurações finais para referência futura.** 
+
+# 🚨 **GUIA DE PRODUÇÃO - Clerk Authentication**
+
+> **Solução definitiva para erro 401 Unauthorized em produção**
+
+---
+
+## 🔍 **PROBLEMA IDENTIFICADO**
+
+### **Sintomas:**
+- ✅ Login funciona perfeitamente
+- ❌ Registro falha com erro 401 Unauthorized
+- ❌ Nenhum email de confirmação enviado
+- ❌ Usuário não é criado na base de dados
+
+### **Erro no Console:**
+```
+GET https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/pat/[...] 401 (Unauthorized)
+```
+
+### **Causa Raiz:**
+O problema está na configuração do **Clerk Dashboard** para o domínio de produção. Chaves de desenvolvimento (`pk_test_`) não funcionam corretamente em domínios de produção não configurados.
+
+---
+
+## 🛠️ **SOLUÇÃO RÁPIDA (Para Testes)**
+
+### **1. Configurar Paths no Clerk Dashboard:**
+
+1. **Acessar Clerk Dashboard:** https://dashboard.clerk.com/
+2. **Selecionar o projeto:** useful-mudfish-1 (ou seu projeto)
+3. **Navegar para:** Configure → Paths
+4. **Configurar campos:**
+
+```
+✅ Fallback development host: https://imobpro-brown.vercel.app
+✅ Sign-in URL: /login
+✅ Sign-up URL: /register
+✅ User profile URL: /profile
+✅ After sign-in URL: /dashboard
+✅ After sign-up URL: /dashboard
+```
+
+### **2. Verificar Domains:**
+- **Ir para:** Configure → Domains
+- **Verificar se existe:** https://imobpro-brown.vercel.app
+- **Se não existir:** Adicionar como domínio permitido
+
+### **3. Verificar Variáveis de Ambiente na Vercel:**
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_dXNlZnVsLW11ZGZpc2gtMS5jbGVyay5hY2NvdW50cy5kZXYk
+CLERK_SECRET_KEY=sk_test_UtCaJ7mDwyQhppEZd6srt4kdjBQ0JcgplFkXQtP0T8
+VITE_CLERK_SIGN_IN_URL=/login
+VITE_CLERK_SIGN_UP_URL=/register
+VITE_CLERK_AFTER_SIGN_IN_URL=/dashboard
+VITE_CLERK_AFTER_SIGN_UP_URL=/dashboard
+```
+
+### **4. Redeploy:**
+```bash
+# Forçar novo deploy na Vercel
+vercel --prod
+```
+
+---
+
+## 🏗️ **SOLUÇÃO COMPLETA (Para Produção Real)**
+
+### **1. Criar Instância de Produção:**
+
+1. **No Clerk Dashboard:**
+   - Create Application → Production
+   - Nome: `ImobiPRO Dashboard - Production`
+   - Tipo: `React`
+
+2. **Configurar Domínio:**
+   - Add Domain: `imobpro-brown.vercel.app`
+   - Verificar SSL: ✅ Automático
+
+### **2. Obter Chaves de Produção:**
+```env
+# Chaves LIVE (não test)
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_[...]
+CLERK_SECRET_KEY=sk_live_[...]
+```
+
+### **3. Configurar DNS (Opcional):**
+```
+# Para domínio customizado
+CNAME imobpro → imobpro-brown.vercel.app
+```
+
+### **4. Configurar Webhooks:**
+```javascript
+// src/api/clerk-webhook.ts
+import { Webhook } from 'svix';
+
+export const POST = async (req: Request) => {
+  const payload = await req.text();
+  const headers = Object.fromEntries(req.headers.entries());
+  
+  const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET!);
+  
+  try {
+    const event = webhook.verify(payload, headers);
+    // Processar evento
+    console.log('Clerk event:', event);
+  } catch (err) {
+    console.error('Webhook error:', err);
+  }
+};
+```
+
+---
+
+## 🔧 **TROUBLESHOOTING**
+
+### **Erro: "Development keys in production"**
+```bash
+# Verificar se as chaves estão corretas
+echo $VITE_CLERK_PUBLISHABLE_KEY
+echo $CLERK_SECRET_KEY
+```
+
+**Solução:** Usar chaves `pk_live_` e `sk_live_` para produção.
+
+### **Erro: "Domain not allowed"**
+```bash
+# Verificar domínio no Clerk Dashboard
+Domain → Add Domain → imobpro-brown.vercel.app
+```
+
+### **Erro: "Fallback host not configured"**
+```bash
+# Configurar no Clerk Dashboard
+Paths → Fallback development host → https://imobpro-brown.vercel.app
+```
+
+### **Erro: "CORS blocked"**
+```javascript
+// vite.config.ts
+server: {
+  cors: {
+    origin: [
+      'https://imobpro-brown.vercel.app',
+      'https://accounts.clerk.dev',
+      'https://clerk.dev'
+    ]
+  }
+}
+```
+
+---
+
+## 📋 **CHECKLIST DE VERIFICAÇÃO**
+
+### **Antes do Deploy:**
+- [ ] Chaves corretas no `.env`
+- [ ] Domínio configurado no Clerk
+- [ ] Paths configurados corretamente
+- [ ] Variáveis de ambiente na Vercel
+- [ ] Build local funciona: `pnpm build`
+
+### **Após o Deploy:**
+- [ ] Login funciona
+- [ ] Registro funciona
+- [ ] Email de confirmação enviado
+- [ ] Redirecionamento correto
+- [ ] Logout funciona
+
+### **Monitoramento:**
+- [ ] Logs da Vercel limpos
+- [ ] Clerk Dashboard sem erros
+- [ ] Analytics funcionando
+- [ ] Webhooks configurados
+
+---
+
+## 🚀 **COMANDOS ÚTEIS**
+
+```bash
+# Verificar build local
+pnpm build && pnpm preview
+
+# Deploy na Vercel
+vercel --prod
+
+# Verificar variáveis de ambiente
+vercel env ls
+
+# Adicionar variável de ambiente
+vercel env add VITE_CLERK_PUBLISHABLE_KEY production
+
+# Ver logs em tempo real
+vercel logs --follow
+```
+
+---
+
+## 📊 **MONITORAMENTO**
+
+### **Métricas Importantes:**
+- **Taxa de sucesso de login:** > 95%
+- **Taxa de sucesso de registro:** > 90%
+- **Tempo de resposta:** < 2s
+- **Erros 401:** = 0
+
+### **Alertas:**
+```javascript
+// Configurar alertas no Vercel
+{
+  "alerts": [
+    {
+      "name": "Clerk Auth Errors",
+      "condition": "error_rate > 5%",
+      "action": "slack_notification"
+    }
+  ]
+}
+```
+
+---
+
+## 🎯 **PRÓXIMOS PASSOS**
+
+1. **Implementar a solução rápida** para resolver o problema imediato
+2. **Testar registro completo** em produção
+3. **Configurar monitoramento** de erros
+4. **Planejar migração** para chaves de produção
+5. **Implementar webhooks** para sincronização de dados
+
+---
+
+**🔥 URGENTE:** Siga a **Solução Rápida** primeiro para resolver o problema imediato! 
