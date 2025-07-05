@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/react-router'
 import { Navigate } from 'react-router-dom'
-import LoadingSpinner from '@/components/common/LoadingSpinner'
+import PageLoadingFallback from '@/components/common/PageLoadingFallback'
 
 interface PublicRouteProps {
   children: React.ReactNode
@@ -18,13 +18,10 @@ export function PublicRoute({
   // Aguardar carregamento do Clerk
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] w-full">
-        <LoadingSpinner 
-          size="lg" 
-          text="Carregando..." 
-          className="py-12"
-        />
-      </div>
+      <PageLoadingFallback 
+        variant="auth"
+        className="min-h-screen"
+      />
     )
   }
 

@@ -24,7 +24,12 @@ export function ProtectedRoute({
 
   // Aguardar carregamento do Clerk
   if (!isLoaded) {
-    return <PageLoadingFallback />
+    return (
+      <PageLoadingFallback 
+        variant="auth"
+        className="min-h-screen"
+      />
+    )
   }
 
   // Usuário não autenticado

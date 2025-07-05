@@ -86,14 +86,73 @@ export default function DashboardHeader() {
   const UserSection = () => {
     if (!isLoaded) {
       return (
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
+        <div className="flex items-center space-x-3">
+          <Skeleton className="h-8 w-8 rounded-full animate-pulse" />
+          <div className="hidden md:block space-y-1">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
         </div>
       )
     }
 
     return (
-                  <UserSection />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={user?.imageUrl} 
+                alt={displayName}
+              />
+              <AvatarFallback className="bg-imobipro-blue text-white">
+                {displayName
+                  .split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">
+                {displayName}
+              </p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user?.primaryEmailAddress?.emailAddress}
+              </p>
+              {userPhone && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Phone className="h-3 w-3" />
+                  {userPhone}
+                </div>
+              )}
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+              <span>Perfil</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/configuracoes" className="flex items-center">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configurações</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
