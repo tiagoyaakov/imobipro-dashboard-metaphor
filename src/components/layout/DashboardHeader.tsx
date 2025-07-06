@@ -11,8 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthMock } from "@/contexts/AuthContextMock";
 
 export const DashboardHeader = () => {
+  const { user } = useAuthMock();
+
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
       <div className="flex items-center gap-4">
@@ -40,11 +43,11 @@ export const DashboardHeader = () => {
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/avatar-placeholder.svg" />
                 <AvatarFallback className="bg-imobipro-blue text-white text-sm">
-                  {user?.name.charAt(0).toUpperCase() || 'U'}
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="hidden md:inline text-sm font-medium text-foreground">
-                Admin User
+                {user?.name || 'Admin User'}
               </span>
             </Button>
           </DropdownMenuTrigger>
