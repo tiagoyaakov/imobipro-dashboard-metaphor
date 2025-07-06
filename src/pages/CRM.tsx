@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +22,11 @@ import {
   AutomationBuilder 
 } from '@/components/crm';
 import { useCRMData } from '@/hooks/useCRMData';
-import { useAuthMock, AuthDebugPanel } from '@/contexts/AuthContextMock';
+import { useUser } from '@clerk/clerk-react';
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user } = useAuthMock();
+  const { user } = useUser();
   
   // Hooks do CRM - usando a estrutura correta
   const { 
@@ -83,6 +83,11 @@ const CRM = () => {
           <p className="text-muted-foreground mt-1">
             Sistema completo de gestão de relacionamento com clientes
           </p>
+          {user && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Bem-vindo, {user.fullName || user.firstName}!
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
@@ -95,13 +100,6 @@ const CRM = () => {
           </Button>
         </div>
       </div>
-      
-      {/* Debug Panel (apenas em desenvolvimento) */}
-      {user && (
-        <div className="mb-4">
-          <AuthDebugPanel />
-        </div>
-      )}
       
       {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -330,10 +328,10 @@ const CRM = () => {
             Dados Mockados
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Esta página está usando dados mockados para desenvolvimento isolado. 
           Todos os componentes e funcionalidades estão integrados e funcionais.
-          {user && ` Usuário atual: ${user.name} (${user.role})`}
+          {user && ` Usuário atual: ${user.fullName || user.firstName}`}
         </p>
       </div>
     </div>

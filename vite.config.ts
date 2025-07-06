@@ -19,12 +19,48 @@ export default defineConfig(({ mode, command }) => {
       port: parseInt(env.VITE_DEV_PORT) || 8080,
       open: false,
       cors: true,
+      headers: {
+        // Content Security Policy para Clerk
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "font-src 'self' https://fonts.gstatic.com data:",
+          "img-src 'self' data: https: blob:",
+          "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co",
+          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self' https://clerk.com https://*.clerk.com"
+        ].join('; '),
+        
+        // Headers de segurança adicionais
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+      },
     },
 
     // Configurações de preview
     preview: {
       port: 4173,
       host: true,
+      headers: {
+        // CSP também para preview
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "font-src 'self' https://fonts.gstatic.com data:",
+          "img-src 'self' data: https: blob:",
+          "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co",
+          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self' https://clerk.com https://*.clerk.com"
+        ].join('; '),
+      },
     },
 
     // Plugins otimizados por ambiente

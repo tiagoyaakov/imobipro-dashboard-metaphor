@@ -1,20 +1,11 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuthMock } from "@/contexts/AuthContextMock";
+import { UserButton, useUser } from "@clerk/clerk-react";
 
 export const DashboardHeader = () => {
-  const { user } = useAuthMock();
+  const { user } = useUser();
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -37,36 +28,38 @@ export const DashboardHeader = () => {
           <span className="absolute -top-1 -right-1 h-3 w-3 bg-imobipro-danger rounded-full text-xs"></span>
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar-placeholder.svg" />
-                <AvatarFallback className="bg-imobipro-blue text-white text-sm">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden md:inline text-sm font-medium text-foreground">
-                {user?.name || 'Admin User'}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <span>Configurações</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-imobipro-danger">
-              <span>Sair</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-medium text-foreground">
+              {user?.fullName || user?.firstName || 'Usuário'}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {user?.primaryEmailAddress?.emailAddress || ''}
+            </span>
+          </div>
+          
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+                userButtonPopoverCard: "bg-background border-border",
+                userButtonPopoverActions: "bg-background",
+                userButtonPopoverActionButton: "text-foreground hover:bg-muted",
+                userButtonPopoverActionButtonText: "text-foreground",
+                userButtonPopoverFooter: "bg-background",
+              },
+              variables: {
+                colorPrimary: "hsl(var(--imobipro-blue))",
+                colorText: "hsl(var(--foreground))",
+                colorTextSecondary: "hsl(var(--muted-foreground))",
+                colorBackground: "hsl(var(--background))",
+                colorInputBackground: "hsl(var(--background))",
+                colorInputText: "hsl(var(--foreground))",
+              }
+            }}
+            afterSignOutUrl="/login"
+          />
+        </div>
       </div>
     </header>
   );

@@ -1,0 +1,596 @@
+---
+description: This rule set is the single source of truth for the end-to-end implementation of Clerk authentication into the ImobiPRO Dashboard project. It provides a non-negotiable, step-by-step guide for:
+
+Initial Setup: Configuring environment variables, installing dependencies, and setting up the main ClerkProvider.
+
+Secure Routing: Creating protected route components and refactoring the entire application's routing system to distinguish between public and private areas.
+
+Authenticated Backend Integration: Securely connecting to a Supabase database by adapting Row-Level Security (RLS) policies and using Clerk-generated JWTs for all data-fetching operations.
+
+Code Refactoring: Migrating existing data hooks (TanStack React Query) to a new authenticated pattern that automatically handles user tokens.
+
+UI/UX Integration: Embedding Clerk's pre-built UI components (like UserButton and SignIn/SignUp pages) into the existing React layout and design system.
+
+Security Hardening: Implementing Content Security Policies (CSP) to protect the application from common web vulnerabilities.
+
+Workflow Orchestration: Mandating the use of specific Meta-Cognitive Primitives (MCPs) for planning, file system operations, and consulting official documentation, ensuring a structured and consistent implementation process..
+alwaysApply: false
+---
+Com certeza. Com base na análise detalhada do documento "Base Estrutural ImobiPRO Dashboard", desenvolvi um conjunto de regras e diretrizes em um formato otimizado para ser interpretado por um modelo de IA como o Claude-v3-sonnet dentro do ambiente do Cursor AI.
+
+Este formato é estruturado, imperativo e contextual, utilizando chaves e uma sintaxe declarativa para minimizar ambiguidades e guiar a IA de forma precisa em cada etapa da implementação.
+
+-----
+
+### **ARQUIVO DE REGRAS PARA IMPLEMENTAÇÃO DE AUTENTICAÇÃO CLERK**
+
+```plaintext
+// AI_INSTRUCTION_SET: CLERK_IMPLEMENTATION_RULES_V1
+// TARGET_MODEL: Claude-v4-sonnet
+// TARGET_ENVIRONMENT: Cursor AI
+// SOURCE_DOCUMENT: base-estrutural-imobihub.md
+// VERSION: 2.0
+
+[CONTEXTO_GERAL]
+{
+  "PROJETO": "ImobiPRO Dashboard",
+  "OBJETIVO_PRIMARIO": "Implementar um sistema de autenticação robusto, seguro e moderno utilizando Clerk.",
+  "OBJETIVO_SECUNDARIO": "Refatorar a aplicação existente para integrar-se nativamente com os hooks e componentes do Clerk, substituindo o sistema de mock e adaptando a integração com Supabase.",
+  "STACK_TECNOLOGICA": ["React 18.3.1", "Vite 5.4.1", "TypeScript 5.5.3", "TanStack React Query 5.56.2", "React Router DOM 6.26.2", "Supabase 2.50.2 (Database Only)", "Tailwind CSS", "shadcn/ui"]
+}
+
+[REGRA_MESTRA]
+{
+  "ID": "RULE-MASTER-001",
+  "DESCRIPTION": "Sua função principal é atuar como um engenheiro de software especialista, implementando a autenticação Clerk no projeto ImobiPRO Dashboard. Você DEVE seguir rigorosamente as fases, regras e fragmentos de código definidos neste documento. A adesão estrita ao plano é CRÍTICA. Você utilizará os MCPs (Meta-Cognitive Primitives) conforme especificado para planejar, executar e validar cada etapa.",
+  "ENFORCEMENT": "STRICT"
+}
+
+[PRINCÍPIOS_FUNDAMENTAIS]
+{
+  "ID": "RULE-CORE-001",
+  "PRINCIPLE": "ADERÊNCIA AO DOCUMENTO FONTE",
+  "DESCRIPTION": "Todas as implementações devem se basear EXCLUSIVAMENTE nas especificações, versões e trechos de código do documento `base-estrutural-imobihub.md`. NÃO introduza novas bibliotecas ou padrões arquiteturais não sancionados."
+},
+{
+  "ID": "RULE-CORE-002",
+  "PRINCIPLE": "EXECUÇÃO FASEADA",
+  "DESCRIPTION": "A implementação DEVE seguir a ordem das fases: 1. Fundação, 2. Integração de Dados, 3. Refinamento. Não avance para a próxima fase sem completar e validar todos os itens da fase atual."
+},
+{
+  "ID": "RULE-CORE-003",
+  "PRINCIPLE": "PRIORIDADE À SEGURANÇA",
+  "DESCRIPTION": "A segurança é primordial. As configurações de RLS (Row-Level Security) no Supabase e CSP (Content Security Policy) são obrigatórias e devem ser implementadas conforme especificado."
+},
+{
+  "ID": "RULE-CORE-004",
+  "PRINCIPLE": "IMUTABILIDADE DO MOCK",
+  "DESCRIPTION": "O sistema de mock existente deve ser considerado obsoleto. O objetivo é a sua substituição completa. NÃO tente adaptar ou manter a lógica de autenticação mockada."
+}
+
+[DIRETRIZES_DE_USO_MCP]
+{
+  "DESCRIPTION": "Você DEVE utilizar os MCPs disponíveis para orquestrar o processo de implementação. A seguir, as regras de engajamento para cada MCP:",
+  "MCP_RULES": [
+    {
+      "MCP": "server-sequential-thinking",
+      "MANDATORY": "🔴 CRÍTICO. OBRIGATÓRIO antes de qualquer decisão de arquitetura, resolução de problemas complexos ou validação de estratégia de fase. Use o template de análise fornecido.",
+      "TRIGGER": "Início de cada fase; Encontro de um bloqueio técnico; Decisão que afeta múltiplos componentes."
+    },
+    {
+      "MCP": "context7-mcp",
+      "MANDATORY": "🔴 CRÍTICO. OBRIGATÓRIO para validar configurações e buscar as melhores práticas mais recentes ANTES de escrever o código. Use o template de busca fornecido.",
+      "TRIGGER": "Antes de configurar `vite.config.ts`; Antes de escrever políticas RLS; Ao customizar componentes Clerk."
+    },
+    {
+      "MCP": "mcp-taskmanager",
+      "MANDATORY": "🟡 ALTAMENTE RECOMENDADO. Use para criar um plano de ação detalhado no início de cada FASE, com base no checklist do documento.",
+      "TRIGGER": "Início das Fases 1, 2 e 3."
+    },
+    {
+      "MCP": "desktop-commander",
+      "MANDATORY": "🟡 RECOMENDADO. Use para todas as operações de criação e modificação de arquivos para garantir consistência e automação.",
+      "TRIGGER": "Criação de novos componentes (`ProtectedRoute`); Modificação de arquivos de configuração (`vite.config.ts`, `main.tsx`)."
+    },
+    {
+      "MCP": "mem0-memory-mcp",
+      "MANDATORY": "🟢 OPCIONAL. Use para registrar decisões arquiteturais importantes ou soluções para problemas não triviais que possam ser úteis no futuro.",
+      "TRIGGER": "Após resolver um desafio de integração (ex: Clerk JWT com Supabase RLS)."
+    },
+    {
+      "MCP": "mcp-supabase",
+      "MANDATORY": "🔵 SOB DEMANDA. A ativação DEVE ser solicitada explicitamente. NÃO use para operações de dados da aplicação (queries, mutations), apenas para tarefas de infraestrutura de DB.",
+      "TRIGGER": "Necessidade de aplicar políticas RLS complexas diretamente no banco; Criação de funções SQL como `get_clerk_user_id`."
+    }
+  ]
+}
+
+// =================================================================================================
+// == INÍCIO DAS REGRAS DE IMPLEMENTAÇÃO POR FASE
+// =================================================================================================
+
+[FASE_1: FUNDAÇÃO E CONFIGURAÇÃO BASE]
+{
+  "DESCRIPTION": "Estabelecer a fundação da autenticação Clerk, configurar o ambiente e proteger as rotas.",
+  "CHECKLIST_ASSOCIADO": ["Pré-implementação", "Implementação Core"]
+}
+
+{
+  "ID": "RULE-PHASE1-1.1",
+  "TASK": "Configuração de Variáveis de Ambiente",
+  "DESCRIPTION": "Crie ou atualize o arquivo `.env` na raiz do projeto com as seguintes chaves. Os valores `pk_test_...` e `sk_test_...` são placeholders e devem ser preenchidos com as chaves reais do projeto Clerk.",
+  "MCP_USAGE": "Use `desktop-commander` para criar/modificar o arquivo `.env`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "env",
+    "CONTENT": """
+# .env - Configuração Completa
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
+# URLs de redirecionamento
+VITE_CLERK_SIGN_IN_URL=/sign-in
+VITE_CLERK_SIGN_UP_URL=/sign-up
+VITE_CLERK_AFTER_SIGN_IN_URL=/dashboard
+VITE_CLERK_AFTER_SIGN_UP_URL=/onboarding
+
+# Supabase (apenas database)
+VITE_SUPABASE_URL=https://...
+VITE_SUPABASE_ANON_KEY=...
+
+# Webhooks
+CLERK_WEBHOOK_SECRET=whsec_...
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE1-1.2",
+  "TASK": "Instalação de Dependências",
+  "DESCRIPTION": "Execute o comando para adicionar as dependências do Clerk ao projeto.",
+  "MCP_USAGE": "Use o terminal integrado para executar o comando.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "bash",
+    "CONTENT": "pnpm add @clerk/clerk-react @clerk/themes"
+  }
+},
+{
+  "ID": "RULE-PHASE1-1.3",
+  "TASK": "Configuração do `ClerkProvider`",
+  "DESCRIPTION": "Modifique o arquivo `src/main.tsx` para envolver a aplicação com `ClerkProvider` e `QueryClientProvider` na ordem correta. A estrutura DEVE corresponder exatamente ao código fornecido.",
+  "MCP_USAGE": "Use `desktop-commander` para reescrever `src/main.tsx`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/main.tsx",
+    "CONTENT": """
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { ClerkProvider } from '@clerk/clerk-react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App'
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('Missing Clerk Publishable Key')
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ClerkProvider 
+      publishableKey={PUBLISHABLE_KEY}
+      afterSignOutUrl="/"
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/onboarding"
+    >
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ClerkProvider>
+  </React.StrictMode>
+)
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE1-1.4",
+  "TASK": "Criação do Componente de Rota Protegida",
+  "DESCRIPTION": "Crie um novo componente `ProtectedRoute.tsx` para encapsular a lógica de verificação de autenticação.",
+  "MCP_USAGE": "Use `desktop-commander` para criar o diretório `src/components/auth` e o arquivo `ProtectedRoute.tsx`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/components/auth/ProtectedRoute.tsx",
+    "CONTENT": """
+import { useAuth } from '@clerk/clerk-react'
+import { Navigate, useLocation } from 'react-router-dom'
+import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  fallback?: string
+}
+
+export function ProtectedRoute({ children, fallback = '/sign-in' }: ProtectedRouteProps) {
+  const { isLoaded, isSignedIn } = useAuth()
+  const location = useLocation()
+
+  if (!isLoaded) {
+    return <LoadingSpinner />
+  }
+
+  if (!isSignedIn) {
+    return <Navigate to={fallback} state={{ from: location }} replace />
+  }
+
+  return <>{children}</>
+}
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE1-1.5",
+  "TASK": "Atualização do Sistema de Rotas",
+  "DESCRIPTION": "Refatore o arquivo `src/App.tsx` para usar o novo `ProtectedRoute`, as rotas de autenticação do Clerk (`<SignIn />`, `<SignUp />`) e implementar lazy loading para as páginas do dashboard.",
+  "MCP_USAGE": "Use `desktop-commander` para reescrever `src/App.tsx`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/App.tsx",
+    "CONTENT": """
+import { lazy, Suspense } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import { SignIn, SignUp } from '@clerk/clerk-react'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { PageLoadingFallback } from '@/components/common/PageLoadingFallback' // Assumindo que este componente existe
+import { NotFound } from '@/pages/NotFound' // Assumindo que este componente existe
+
+// Lazy loading das páginas
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+// ... adicione outras importações lazy aqui ...
+
+export default function App() {
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Routes>
+        {/* Rotas públicas */}
+        <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
+        <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
+        
+        {/* Rotas protegidas */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          {/* ... outras rotas filhas protegidas ... */}
+        </Route>
+        
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  )
+}
+"""
+  }
+}
+
+// =================================================================================================
+
+[FASE_2: INTEGRAÇÃO DE DADOS E BACKEND]
+{
+  "DESCRIPTION": "Conectar o frontend ao Supabase usando tokens do Clerk e refatorar os hooks de dados para serem autenticados.",
+  "CHECKLIST_ASSOCIADO": ["Dados e Backend"]
+}
+
+{
+  "ID": "RULE-PHASE2-2.1",
+  "TASK": "Configuração das Políticas RLS no Supabase",
+  "DESCRIPTION": "As políticas de Row-Level Security no Supabase DEVEM ser adaptadas para usar o `user_id` do JWT do Clerk. Implemente a função `get_clerk_user_id` e as políticas de exemplo.",
+  "MCP_USAGE": "Este é um forte candidato para ativação do `mcp-supabase`. Solicite ativação com o template: 'Preciso ativar o MCP Supabase para aplicar políticas RLS e criar uma função helper para extrair o user_id do JWT do Clerk.'",
+  "CODE_BLOCK": {
+    "LANGUAGE": "sql",
+    "CONTENT": """
+-- Função para extrair user_id do JWT do Clerk
+CREATE OR REPLACE FUNCTION get_clerk_user_id()
+RETURNS text AS $$
+BEGIN
+  RETURN (SELECT auth.jwt()->>'sub');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Políticas RLS adaptadas para Clerk
+-- Exemplo para uma tabela "contacts"
+CREATE POLICY "Users can view their own contacts"
+ON "public"."contacts"
+FOR SELECT
+TO authenticated
+USING (
+  (get_clerk_user_id() = user_id) -- Assumindo que a tabela tem uma coluna 'user_id'
+);
+
+CREATE POLICY "Users can insert their own contacts"
+ON "public"."contacts"
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  (get_clerk_user_id() = user_id)
+);
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE2-2.2",
+  "TASK": "Criação do Cliente Supabase Autenticado",
+  "DESCRIPTION": "Crie um hook customizado `useSupabaseClient` que injeta dinamicamente o token de acesso do Clerk nas requisições do Supabase. O template de token 'supabase' DEVE ser usado.",
+  "MCP_USAGE": "Use `desktop-commander` para criar o arquivo `src/integrations/supabase/client.ts`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/integrations/supabase/client.ts",
+    "CONTENT": """
+import { createClient } from '@supabase/supabase-js'
+import { useAuth } from '@clerk/clerk-react'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!
+
+// Cliente anônimo base (pode ser usado para operações públicas se houver)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Hook para obter um cliente Supabase autenticado dinamicamente
+export function useSupabaseAuthenticatedClient() {
+  const { getToken } = useAuth()
+
+  // Retorna uma função que cria um cliente sob demanda com o token mais recente
+  const createAuthenticatedClient = async () => {
+    const token = await getToken({ template: 'supabase' })
+    
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    })
+  }
+
+  return createAuthenticatedClient
+}
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE2-2.3",
+  "TASK": "Criação do Hook de Query Autenticada Genérico",
+  "DESCRIPTION": "Crie um hook wrapper `useAuthenticatedQuery` sobre o TanStack React Query que automatiza a injeção do token de autenticação do Clerk em todas as requisições à API.",
+  "MCP_USAGE": "Use `desktop-commander` para criar o arquivo `src/hooks/useAuthenticatedQuery.ts`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/hooks/useAuthenticatedQuery.ts",
+    "CONTENT": """
+import { useQuery, UseQueryOptions } from '@tanstack/react-query'
+import { useAuth } from '@clerk/clerk-react'
+
+export function useAuthenticatedQuery<T>(
+  queryKey: unknown[],
+  queryFn: (token: string | null) => Promise<T>,
+  options?: Omit<UseQueryOptions<T, Error, T, unknown[]>, 'queryKey' | 'queryFn'>
+) {
+  const { getToken, isSignedIn } = useAuth()
+
+  const enabled = options?.enabled === undefined ? isSignedIn : options.enabled && isSignedIn
+
+  return useQuery({
+    queryKey,
+    queryFn: async (): Promise<T> => {
+      const token = await getToken()
+      
+      return queryFn(token)
+    },
+    ...options,
+    enabled, // A query só será executada se o usuário estiver logado
+  })
+}
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE2-2.4",
+  "TASK": "Refatoração dos Hooks de Dados (Ex: `useContacts`)",
+  "DESCRIPTION": "Adapte os hooks de dados existentes, como `useContacts`, para utilizarem o novo `useSupabaseAuthenticatedClient`. Isso garante que todas as operações com o banco de dados sejam autenticadas.",
+  "MCP_USAGE": "Use `desktop-commander` para modificar o arquivo `src/hooks/useCRMData.ts` (ou similar).",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/hooks/useCRMData.ts",
+    "CONTENT": """
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSupabaseAuthenticatedClient } from '@/integrations/supabase/client'
+import { useAuth } from '@clerk/clerk-react'
+
+// Adapte a interface para seus dados
+interface Contact { id: string; name: string; user_id: string; }
+type CreateContactData = Omit<Contact, 'id' | 'user_id'>;
+
+
+export function useContacts() {
+  const getSupabase = useSupabaseAuthenticatedClient()
+  const queryClient = useQueryClient()
+  const { isSignedIn } = useAuth()
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['contacts'],
+    queryFn: async () => {
+      const supabase = await getSupabase()
+      const { data, error } = await supabase.from('contacts').select('*')
+      if (error) throw error
+      return data
+    },
+    enabled: isSignedIn // Só executa se logado
+  })
+
+  const createMutation = useMutation({
+    mutationFn: async (contact: CreateContactData) => {
+      const supabase = await getSupabase()
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert(contact)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+    },
+  })
+
+  return {
+    contacts: data,
+    isLoading,
+    error,
+    createContact: createMutation.mutate,
+    isCreating: createMutation.isPending,
+  }
+}
+"""
+  }
+}
+
+// =================================================================================================
+
+[FASE_3: REFINAMENTO E UI]
+{
+  "DESCRIPTION": "Integrar os componentes de UI do Clerk no layout, customizar a aparência e aplicar otimizações de performance.",
+  "CHECKLIST_ASSOCIADO": ["UI/UX", "Segurança", "Performance e Otimizações"]
+}
+
+{
+  "ID": "RULE-PHASE3-3.1",
+  "TASK": "Integração do `UserButton` no Layout",
+  "DESCRIPTION": "Modifique o `DashboardLayout.tsx` para exibir o nome do usuário e o `UserButton` do Clerk, que provê acesso ao perfil e funcionalidade de logout.",
+  "MCP_USAGE": "Use `desktop-commander` para modificar o arquivo `src/components/layout/DashboardLayout.tsx`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "src/components/layout/DashboardLayout.tsx",
+    "CONTENT": """
+import { UserButton, useUser } from '@clerk/clerk-react'
+import { Outlet } from 'react-router-dom'
+import { AppSidebar } from './AppSidebar'
+import { DashboardHeader } from './DashboardHeader'
+import { PageLoadingFallback } from '@/components/common/PageLoadingFallback'
+
+export function DashboardLayout() {
+  const { user, isLoaded } = useUser()
+
+  if (!isLoaded) {
+    return <PageLoadingFallback />
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardHeader>
+        <div className="flex items-center gap-4 ml-auto">
+          <span className="text-sm text-muted-foreground hidden md:inline">
+            Bem-vindo, {user?.firstName}
+          </span>
+          <UserButton 
+            afterSignOutUrl="/"
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+              },
+            }}
+          />
+        </div>
+      </DashboardHeader>
+      
+      <div className="flex">
+        <AppSidebar />
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}
+"""
+  }
+},
+{
+  "ID": "RULE-PHASE3-3.2",
+  "TASK": "Configuração da Content Security Policy (CSP)",
+  "DESCRIPTION": "Adicione headers de CSP no arquivo `vite.config.ts` para aumentar a segurança da aplicação, permitindo apenas os domínios do Clerk e os seus próprios.",
+  "MCP_USAGE": "`context7-mcp` para validar os domínios mais recentes do Clerk. `server-sequential-thinking` para analisar se domínios adicionais são necessários. `desktop-commander` para modificar `vite.config.ts`.",
+  "CODE_BLOCK": {
+    "LANGUAGE": "typescript",
+    "PATH": "vite.config.ts",
+    "NOTE": "Este código deve ser mesclado com a configuração existente do Vite.",
+    "CONTENT": """
+// Adicionar dentro do `defineConfig`
+server: {
+  headers: {
+    'Content-Security-Policy': `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://clerk.imobipro.com;
+      connect-src 'self' https://clerk.imobipro.com https://api.imobipro.com;
+      img-src 'self' data: https://img.clerk.com https://images.clerk.dev;
+      style-src 'self' 'unsafe-inline';
+      frame-src 'self' https://challenges.cloudflare.com https://clerk.imobipro.com;
+    `.replace(/\\s+/g, ' ').trim()
+  }
+}
+"""
+  }
+}
+
+// =================================================================================================
+// == FIM DAS REGRAS DE IMPLEMENTAÇÃO
+// =================================================================================================
+
+[TEMPLATES_DE_COMUNICAÇÃO_MCP]
+{
+  "ID": "TEMPLATE-SEQ-THINK",
+  "MCP": "server-sequential-thinking",
+  "TEMPLATE": """
+"Preciso analisar [PROBLEMA/DECISÃO]:
+- Contexto: [Situação atual]
+- Objetivo: [Resultado esperado]  
+- Variáveis: [Fatores a considerar]
+- Impacto: [Sistemas afetados]"
+"""
+},
+{
+  "ID": "TEMPLATE-CONTEXT7",
+  "MCP": "context7-mcp",
+  "TEMPLATE": """
+"Buscar documentação sobre [TÓPICO]:
+- Biblioteca: [@clerk/clerk-react]
+- Foco: [aspecto específico, ex: 'customizing JWT templates for Supabase']
+- Tokens: [5000]
+- Aplicação: [Onde será usado, ex: 'na configuração RLS do Supabase']"
+"""
+},
+{
+  "ID": "TEMPLATE-SUPABASE-ACTIVATION",
+  "MCP": "mcp-supabase",
+  "TEMPLATE": """
+"Preciso ativar o MCP Supabase para [OPERAÇÃO ESPECÍFICA]:
+- Motivo: [Descrição detalhada, ex: 'Aplicar as políticas RLS que dependem do JWT do Clerk']
+- Operação: [CREATE FUNCTION e CREATE POLICY]
+- Urgência: [ALTA]
+- Estimativa: [15 minutos]"
+"""
+}
+```
