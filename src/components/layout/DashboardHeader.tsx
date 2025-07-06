@@ -5,7 +5,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserButton, useUser } from "@clerk/clerk-react";
 
 export const DashboardHeader = () => {
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
+  console.log('Clerk user:', user, 'isLoaded:', isLoaded, 'isSignedIn:', isSignedIn);
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
@@ -37,28 +38,36 @@ export const DashboardHeader = () => {
               {user?.primaryEmailAddress?.emailAddress || ''}
             </span>
           </div>
-          
-          <UserButton 
-            appearance={{
-              elements: {
-                avatarBox: "w-8 h-8",
-                userButtonPopoverCard: "bg-background border-border",
-                userButtonPopoverActions: "bg-background",
-                userButtonPopoverActionButton: "text-foreground hover:bg-muted",
-                userButtonPopoverActionButtonText: "text-foreground",
-                userButtonPopoverFooter: "bg-background",
-              },
-              variables: {
-                colorPrimary: "hsl(var(--imobipro-blue))",
-                colorText: "hsl(var(--foreground))",
-                colorTextSecondary: "hsl(var(--muted-foreground))",
-                colorBackground: "hsl(var(--background))",
-                colorInputBackground: "hsl(var(--background))",
-                colorInputText: "hsl(var(--foreground))",
-              }
-            }}
-            afterSignOutUrl="/login"
-          />
+          <div className="relative">
+            {isLoaded && isSignedIn ? (
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: "w-9 h-9 border-2 border-imobipro-blue bg-muted hover:ring-2 hover:ring-imobipro-blue transition-all duration-150",
+                    userButtonPopoverCard: "bg-background border-border",
+                    userButtonPopoverActions: "bg-background",
+                    userButtonPopoverActionButton: "text-foreground hover:bg-muted",
+                    userButtonPopoverActionButtonText: "text-foreground",
+                    userButtonPopoverFooter: "bg-background",
+                  },
+                  variables: {
+                    colorPrimary: "#2563eb",
+                    colorText: "#fff",
+                    colorTextSecondary: "#a3a3a3",
+                    colorBackground: "#18181b",
+                    colorInputBackground: "#18181b",
+                    colorInputText: "#fff",
+                  }
+                }}
+                afterSignOutUrl="/login"
+              />
+            ) : (
+              <div className="w-9 h-9 flex items-center justify-center border-2 border-imobipro-blue bg-muted text-muted-foreground rounded-full">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-2.21 3.58-4 6-4s6 1.79 6 4"/></svg>
+                <span className="absolute left-full ml-2 text-xs text-imobipro-danger">Erro: usuário não autenticado</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
