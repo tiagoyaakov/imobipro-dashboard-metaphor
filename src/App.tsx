@@ -42,6 +42,7 @@ export default function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="propriedades" element={<Propriedades />} />
             <Route path="contatos" element={<Contatos />} />
             <Route path="agenda" element={<Agenda />} />

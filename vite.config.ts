@@ -23,12 +23,14 @@ export default defineConfig(({ mode, command }) => {
         // Content Security Policy para Clerk
         'Content-Security-Policy': [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: https: blob:",
           "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co",
-          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+          "worker-src 'self' blob:",
+          "child-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self' https://clerk.com https://*.clerk.com"
@@ -50,12 +52,14 @@ export default defineConfig(({ mode, command }) => {
         // CSP também para preview
         'Content-Security-Policy': [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: https: blob:",
           "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co",
-          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+          "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+          "worker-src 'self' blob:",
+          "child-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self' https://clerk.com https://*.clerk.com"
