@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, useNavigate } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
@@ -22,16 +22,28 @@ const queryClient = new QueryClient({
   },
 })
 
+function ClerkProviderWithNavigate({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+
+  return (
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      routerPush={(to) => navigate(to)}
+      routerReplace={(to) => navigate(to, { replace: true })}
+    >
+      {children}
+    </ClerkProvider>
+  )
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ClerkProvider 
-      publishableKey={PUBLISHABLE_KEY}
-    >
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ClerkProviderWithNavigate>
           <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ClerkProvider>
+        </ClerkProviderWithNavigate>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>
 )
