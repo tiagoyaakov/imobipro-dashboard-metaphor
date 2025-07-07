@@ -6,6 +6,8 @@ let supabaseClient: SupabaseClient<Database> | null = null;
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
 
+type GetClerkToken = (options?: { template?: string }) => Promise<string | null>;
+
 /**
  * Retorna uma instância singleton do cliente Supabase.
  * A função `getToken` do Clerk é usada para obter dinamicamente o token de autenticação
@@ -14,15 +16,17 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
  * @param getToken - A função `getToken` do hook `useAuth` do Clerk.
  * @returns Uma instância do SupabaseClient.
  */
-export const getSupabaseClient = (getToken: () => Promise<string | null>) => {
+export const getSupabaseClient = (getToken: GetClerkToken) => {
   if (!supabaseClient) {
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       global: {
         fetch: async (input, init) => {
-          const token = await getToken({ template: 'supabase' });
+          const token = await getToken();
 
           const headers = new Headers(init?.headers);
-          headers.set('Authorization', `Bearer ${token}`);
+          if (token) {
+            headers.set('Authorization', `Bearer ${token}`);
+          }
 
           return fetch(input, { ...init, headers });
         },
