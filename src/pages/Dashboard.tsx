@@ -1,42 +1,52 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Users, Calendar, TrendingUp, DollarSign, Eye } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@clerk/clerk-react";
+import { useCompanyId } from "@/hooks/useCompanyId";
+import { useDashboardKpis } from "@/hooks/useDashboardData";
+import { Home, Users, DollarSign, BarChart3, TrendingUp, Eye, Calendar } from "lucide-react";
 
 const Dashboard = () => {
+  const { userId } = useAuth();
+  const { data: companyData } = useCompanyId(userId);
+  const companyId = companyData?.company_id;
+
+  const { data: kpis, isLoading: isLoadingKpis } = useDashboardKpis(companyId!);
+
+  const formatCurrency = (value: number | undefined) => {
+    if (value === undefined) return "R$ 0,00";
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
   const stats = [
     {
       title: "Total de Propriedades",
-      value: "847",
-      change: "+12%",
-      trend: "up",
+      value: kpis?.total_properties ?? 0,
       icon: Home,
       color: "text-imobipro-blue",
       bgColor: "bg-imobipro-blue/10",
     },
     {
       title: "Clientes Ativos",
-      value: "1,234",
-      change: "+8%",
-      trend: "up",
+      value: kpis?.active_clients ?? 0,
       icon: Users,
       color: "text-imobipro-success",
       bgColor: "bg-imobipro-success/10",
     },
     {
-      title: "Visitas Agendadas",
-      value: "56",
-      change: "+23%",
-      trend: "up",
-      icon: Calendar,
+      title: "Vendas no Mês",
+      value: kpis?.sales_this_month ?? 0,
+      icon: BarChart3,
       color: "text-purple-400",
       bgColor: "bg-purple-400/10",
     },
     {
-      title: "Receita Mensal",
-      value: "R$ 487k",
-      change: "+15%",
-      trend: "up",
+      title: "Receita Total",
+      value: formatCurrency(kpis?.total_revenue),
       icon: DollarSign,
       color: "text-emerald-400",
       bgColor: "bg-emerald-400/10",
@@ -68,26 +78,38 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Card key={index} className="imobipro-card hover:shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold text-foreground mt-2">{stat.value}</p>
-                  <div className="flex items-center mt-2">
-                    <TrendingUp className="h-4 w-4 text-imobipro-success mr-1" />
-                    <span className="text-sm text-imobipro-success font-medium">{stat.change}</span>
-                    <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
+        {isLoadingKpis ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="imobipro-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                      <Skeleton className="h-4 w-32 mb-4" />
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          stats.map((stat, index) => (
+            <Card key={index} className="imobipro-card hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold text-foreground mt-2">{stat.value}</p>
+                    {/* A lógica de tendência "vs mês anterior" será adicionada depois */}
+                  </div>
+                  <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}>
+                    <stat.icon className="h-6 w-6" />
                   </div>
                 </div>
-                <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Charts and Activities */}
