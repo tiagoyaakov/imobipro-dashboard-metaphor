@@ -46,3 +46,30 @@ export interface Database {
 // Aliases para facilitar o uso
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
+
+// -----------------------------------------------------------
+// Tipos customizados para as funções RPC do Dashboard
+// -----------------------------------------------------------
+
+export interface DashboardKpis {
+  total_properties: number;
+  active_clients: number;
+  total_revenue: number;
+  sales_this_month: number;
+}
+
+export interface SalesPerformanceData {
+  month: string;
+  total_sales: number;
+}
+
+export interface NewPropertiesPerformanceData {
+  month: string;
+  new_properties: number;
+}
+
+export interface RecentActivity {
+  description: string;
+  created_at: string;
+  user_name: string;
+}
