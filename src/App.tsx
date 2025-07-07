@@ -33,7 +33,7 @@ export default function App() {
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           {/* Rotas públicas de autenticação */}
-          <Route path="/login/*" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register/*" element={<SignUp routing="path" path="/register" />} />
           
           {/* Rotas protegidas do dashboard */}
