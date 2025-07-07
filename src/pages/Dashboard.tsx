@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useDashboardKpis } from "@/hooks/useDashboardData";
 import { Home, Users, DollarSign, BarChart3, TrendingUp, Eye, Calendar } from "lucide-react";
+import DashboardPerformanceChart from "@/components/charts/DashboardPerformanceChart";
 
 const Dashboard = () => {
   const { userId } = useAuth();
@@ -127,14 +128,18 @@ const Dashboard = () => {
                 <TabsTrigger value="properties">Propriedades</TabsTrigger>
               </TabsList>
               <TabsContent value="revenue" className="mt-6">
-                <div className="h-64 bg-gradient-to-r from-imobipro-blue/10 to-imobipro-blue-dark/10 rounded-lg flex items-center justify-center border border-border">
-                  <p className="text-muted-foreground">Gráfico de receita será implementado aqui</p>
-                </div>
+                {companyId ? (
+                  <DashboardPerformanceChart companyId={companyId} type="revenue" />
+                ) : (
+                  <Skeleton className="h-64 w-full" />
+                )}
               </TabsContent>
               <TabsContent value="properties" className="mt-6">
-                <div className="h-64 bg-gradient-to-r from-imobipro-success/10 to-emerald-400/10 rounded-lg flex items-center justify-center border border-border">
-                  <p className="text-muted-foreground">Gráfico de propriedades será implementado aqui</p>
-                </div>
+                {companyId ? (
+                  <DashboardPerformanceChart companyId={companyId} type="properties" />
+                ) : (
+                  <Skeleton className="h-64 w-full" />
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

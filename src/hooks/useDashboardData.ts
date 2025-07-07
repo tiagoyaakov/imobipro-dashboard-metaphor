@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@clerk/clerk-react';
+import { getSupabaseClient } from '@/integrations/supabase/client';
 import type {
   DashboardKpis,
   SalesPerformanceData,
@@ -14,11 +15,13 @@ import type {
  * Hook para buscar os KPIs do dashboard.
  * Chama a função SQL `get_dashboard_kpis`.
  */
-export const useDashboardKpis = (companyId: string) => {
+export const useDashboardKpis = (companyId: string | undefined | null) => {
+  const { getToken } = useAuth();
   return useQuery<DashboardKpis | null, Error>({
     queryKey: ['dashboard-kpis', companyId],
     queryFn: async () => {
       if (!companyId) return null;
+      const supabase = getSupabaseClient(getToken);
 
       const { data, error } = await supabase.rpc('get_dashboard_kpis', {
         p_company_id: companyId,
@@ -40,11 +43,13 @@ export const useDashboardKpis = (companyId: string) => {
  * Hook para buscar dados de performance de vendas.
  * Chama a função SQL `get_sales_performance`.
  */
-export const useSalesPerformance = (companyId: string, months: number = 6) => {
+export const useSalesPerformance = (companyId: string | undefined | null, months: number = 6) => {
+  const { getToken } = useAuth();
   return useQuery<SalesPerformanceData[] | null, Error>({
     queryKey: ['sales-performance', companyId, months],
     queryFn: async () => {
       if (!companyId) return null;
+      const supabase = getSupabaseClient(getToken);
 
       const { data, error } = await supabase.rpc('get_sales_performance', {
         p_company_id: companyId,
@@ -66,11 +71,13 @@ export const useSalesPerformance = (companyId: string, months: number = 6) => {
  * Hook para buscar dados de performance de novas propriedades.
  * Chama a função SQL `get_new_properties_performance`.
  */
-export const useNewPropertiesPerformance = (companyId: string, months: number = 6) => {
+export const useNewPropertiesPerformance = (companyId: string | undefined | null, months: number = 6) => {
+  const { getToken } = useAuth();
   return useQuery<NewPropertiesPerformanceData[] | null, Error>({
     queryKey: ['new-properties-performance', companyId, months],
     queryFn: async () => {
       if (!companyId) return null;
+      const supabase = getSupabaseClient(getToken);
 
       const { data, error } = await supabase.rpc('get_new_properties_performance', {
         p_company_id: companyId,
@@ -92,11 +99,13 @@ export const useNewPropertiesPerformance = (companyId: string, months: number = 
  * Hook para buscar atividades recentes.
  * Chama a função SQL `get_recent_activities`.
  */
-export const useRecentActivities = (companyId: string, limit: number = 5) => {
+export const useRecentActivities = (companyId: string | undefined | null, limit: number = 5) => {
+  const { getToken } = useAuth();
   return useQuery<RecentActivity[] | null, Error>({
     queryKey: ['recent-activities', companyId, limit],
     queryFn: async () => {
       if (!companyId) return null;
+      const supabase = getSupabaseClient(getToken);
 
       const { data, error } = await supabase.rpc('get_recent_activities', {
         p_company_id: companyId,
