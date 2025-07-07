@@ -200,19 +200,6 @@ export default defineConfig(({ mode, command }) => {
       format: 'es',
     },
 
-    // Configurações experimentais para melhor performance
-    experimental: {
-      renderBuiltUrl(filename, { hostType }) {
-        if (hostType === 'js') {
-          // Otimizar URLs para assets JS
-          return { js: `/${filename}` };
-        } else {
-          // URLs padrão para outros assets
-          return { relative: true };
-        }
-      },
-    },
-
     // Configurações específicas para diferentes ambientes
     ...(isProduction && {
       // Configurações extras apenas para produção
