@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import DashboardLayout from './components/layout/DashboardLayout'
 import PageLoadingFallback from './components/common/PageLoadingFallback'
+import Login from './pages/Login'
 
 // Lazy loading das páginas para melhor performance
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -32,7 +33,7 @@ export default function App() {
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           {/* Rotas públicas de autenticação */}
-          <Route path="/login/*" element={<SignIn routing="path" path="/login" />} />
+          <Route path="/login/*" element={<Login />} />
           <Route path="/register/*" element={<SignUp routing="path" path="/register" />} />
           
           {/* Rotas protegidas do dashboard */}
