@@ -1,0 +1,62 @@
+// -----------------------------------------------------------
+// Exportações dos Componentes de Autenticação
+// -----------------------------------------------------------
+
+// Componentes de Formulário
+export { LoginForm, LoginModalForm } from './LoginForm';
+export { SignupForm, SignupSuccess } from './SignupForm';
+export { 
+  ForgotPasswordForm, 
+  ForgotPasswordSuccess, 
+  ResetPasswordForm 
+} from './ForgotPasswordForm';
+
+// Páginas de Autenticação
+export { LoginPage } from '../../pages/auth/LoginPage';
+export { SignupPage } from '../../pages/auth/SignupPage';
+export { ForgotPasswordPage } from '../../pages/auth/ForgotPasswordPage';
+export { UnauthorizedPage } from '../../pages/auth/UnauthorizedPage';
+
+// Proteção de Rotas
+export { 
+  PrivateRoute, 
+  PublicRoute, 
+  AdminRoute, 
+  CreatorRoute, 
+  AgentRoute,
+  withAuthGuard,
+  usePermissions 
+} from './PrivateRoute';
+
+// Guards e Controles
+export { 
+  AuthGuard,
+  CreatorOnly,
+  AdminOnly,
+  AgentOnly,
+  FeatureGuard,
+  ConditionalMenuItem,
+  useFeatureAccess 
+} from './AuthGuard';
+
+// Componentes de UI
+export { 
+  AuthLoadingSpinner,
+  AuthInitializingSpinner,
+  AuthVerifyingSpinner,
+  AuthRedirectingSpinner 
+} from './AuthLoadingSpinner';
+
+export { 
+  AuthErrorDisplay,
+  AuthSessionExpired,
+  AuthNetworkError,
+  AuthPermissionDenied 
+} from './AuthErrorDisplay';
+
+// Tipos (re-exportados para conveniência)
+export type { 
+  LoginFormData, 
+  SignupFormData, 
+  ForgotPasswordData 
+} from '../../schemas/auth'; 
