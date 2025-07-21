@@ -1,10 +1,35 @@
 # 🔧 Configuração de Variáveis de Ambiente
 
-## Arquivo `.env` - Configuração Local
+## 🚀 **Início Rápido - Modo Mock Automático**
+
+✅ **O sistema funciona automaticamente sem configuração!**
+
+Se você ainda não configurou o Supabase, o ImobiPRO Dashboard funcionará automaticamente em **modo mock** com dados de demonstração. Simplesmente execute:
+
+```bash
+pnpm dev
+```
+
+O sistema detectará automaticamente que não há configurações do Supabase e usará dados mockados para desenvolvimento.
+
+---
+
+## 🔐 **Configuração Avançada - Modo Real (Supabase)**
+
+Para usar autenticação real com banco de dados Supabase, siga os passos abaixo:
+
+### Arquivo `.env` - Configuração Local
 
 Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```env
+# =====================================================
+# MODO DE AUTENTICAÇÃO
+# =====================================================
+
+# Ativar autenticação real (true) ou mock (false)
+VITE_USE_REAL_AUTH=true
+
 # =====================================================
 # SUPABASE - Configurações Obrigatórias
 # =====================================================

@@ -11,7 +11,9 @@ export const authConfig = {
    * Se false, usa sistema mock para desenvolvimento
    */
   useRealAuth: process.env.NODE_ENV === 'production' || 
-               process.env.VITE_USE_REAL_AUTH === 'true',
+               (process.env.VITE_USE_REAL_AUTH === 'true' && 
+                process.env.VITE_SUPABASE_URL && 
+                process.env.VITE_SUPABASE_ANON_KEY),
 
   /**
    * Configurações do Supabase

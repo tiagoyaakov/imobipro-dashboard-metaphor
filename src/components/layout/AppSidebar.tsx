@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMenuItems } from "@/hooks/useRoutes";
 import { usePermissions } from "@/components/auth/PrivateRoute";
 
-export function AppSidebar() {
+function AppSidebarContent() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -44,7 +44,8 @@ export function AppSidebar() {
    * Obter ícone do Lucide React
    */
   const getIcon = (iconName: string) => {
-    const Icon = (Icons as Record<string, React.ComponentType<{ className?: string }>>)[iconName] || Icons.LayoutDashboard;
+    const IconsTyped = Icons as any;
+    const Icon = IconsTyped[iconName] || Icons.LayoutDashboard;
     return Icon;
   };
 
@@ -167,4 +168,31 @@ export function AppSidebar() {
       </SidebarContent>
     </Sidebar>
   );
+}
+
+// Componente wrapper que trata o caso de AuthProvider não estar disponível
+export function AppSidebar() {
+  try {
+    return <AppSidebarContent />;
+  } catch (error) {
+    console.warn('AuthProvider não disponível, renderizando sidebar simplificado:', error);
+    
+    // Sidebar simplificado quando AuthProvider não está disponível
+    return (
+      <div className="w-64 border-r border-border bg-sidebar">
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
+              <Icons.Building2 className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
+          </div>
+          
+          <div className="text-sm text-muted-foreground">
+            Carregando menu...
+          </div>
+        </div>
+      </div>
+    );
+  }
 }

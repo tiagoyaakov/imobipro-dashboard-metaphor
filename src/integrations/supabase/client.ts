@@ -5,36 +5,69 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validação das variáveis de ambiente
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error(
-    'Variáveis de ambiente do Supabase não configuradas. ' +
-    'Verifique se VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão definidas no arquivo .env'
+// Verificação defensiva das variáveis de ambiente
+const hasSupabaseConfig = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+if (!hasSupabaseConfig) {
+  console.warn(
+    '⚠️ Variáveis de ambiente do Supabase não configuradas. ' +
+    'O sistema funcionará em modo mock. Para usar auth real, configure ' +
+    'VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env'
   );
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+// Criar cliente dummy se não há configuração
+const createDummyClient = () => ({
   auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+    signUp: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') }),
+    signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') }),
+    signOut: () => Promise.resolve({ error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    updateUser: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
   },
-  global: {
-    headers: {
-      'X-Client-Info': 'imobipro-dashboard@1.0.0',
-    },
-  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') })
+      })
+    }),
+    update: () => ({
+      eq: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') })
+    }),
+    insert: () => Promise.resolve({ data: null, error: new Error('Supabase não configurado') }),
+  })
 });
+
+export const supabase = hasSupabaseConfig 
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'imobipro-dashboard@1.0.0',
+        },
+      },
+    })
+  : createDummyClient() as any;
 
 // Log de configuração para desenvolvimento (apenas em dev)
 if (import.meta.env.DEV) {
-  console.log('🔗 Supabase Client configurado:', {
-    url: SUPABASE_URL,
-    project: 'ImobPRO',
-    anon_key_prefix: SUPABASE_ANON_KEY.substring(0, 20) + '...',
-  });
+  if (hasSupabaseConfig) {
+    console.log('🔗 Supabase Client configurado:', {
+      url: SUPABASE_URL,
+      project: 'ImobPRO',
+      anon_key_prefix: SUPABASE_ANON_KEY?.substring(0, 20) + '...',
+    });
+  } else {
+    console.log('🔗 Supabase Client em modo dummy (variáveis não configuradas)');
+  }
 }

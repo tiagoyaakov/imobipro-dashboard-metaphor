@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/components/auth/PrivateRoute";
 import { useRoutes } from "@/hooks/useRoutes";
 
-export const DashboardHeader = () => {
+const DashboardHeaderContent = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { canManageSettings } = usePermissions();
@@ -176,4 +176,29 @@ export const DashboardHeader = () => {
       </div>
     </header>
   );
+};
+
+// Componente wrapper que trata o caso de AuthProvider não estar disponível
+export const DashboardHeader = () => {
+  try {
+    return <DashboardHeaderContent />;
+  } catch (error) {
+    console.warn('AuthProvider não disponível, renderizando header simplificado:', error);
+    
+    // Header simplificado quando AuthProvider não está disponível
+    return (
+      <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
+            <Icons.Building2 className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-xl font-bold text-foreground">ImobiPRO</h1>
+        </div>
+        
+        <div className="ml-auto flex items-center">
+          <div className="text-sm text-muted-foreground">Carregando...</div>
+        </div>
+      </header>
+    );
+  }
 };
