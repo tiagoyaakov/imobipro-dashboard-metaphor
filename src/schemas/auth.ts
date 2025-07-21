@@ -81,25 +81,7 @@ export const ResetPasswordSchema = z.object({
   path: ['confirmPassword'],
 });
 
-/**
- * Schema para formulário de atualização de perfil
- */
-export const UpdateProfileSchema = z.object({
-  name: NameSchema,
-  email: EmailSchema,
-});
 
-/**
- * Schema para formulário de alteração de senha
- */
-export const ChangePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
-  newPassword: PasswordSchema,
-  confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: 'Senhas não conferem',
-  path: ['confirmPassword'],
-});
 
 // -----------------------------------------------------------
 // Tipos TypeScript derivados dos schemas
@@ -109,8 +91,6 @@ export type LoginFormData = z.infer<typeof LoginFormSchema>;
 export type SignupFormData = z.infer<typeof SignupFormSchema>;
 export type ForgotPasswordData = z.infer<typeof ForgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof ResetPasswordSchema>;
-export type UpdateProfileData = z.infer<typeof UpdateProfileSchema>;
-export type ChangePasswordData = z.infer<typeof ChangePasswordSchema>;
 
 // -----------------------------------------------------------
 // Schemas para Respostas da API
@@ -225,6 +205,80 @@ export const AUTH_ERROR_MESSAGES = {
 } as const;
 
 // -----------------------------------------------------------
+// Schemas para Perfil e Configurações
+// -----------------------------------------------------------
+
+/**
+ * Schema para atualização de perfil
+ */
+export const UpdateProfileSchema = z.object({
+  name: z
+    .string()
+    .min(2, 'Nome deve ter pelo menos 2 caracteres')
+    .max(100, 'Nome deve ter no máximo 100 caracteres')
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Nome deve conter apenas letras e espaços'),
+  
+  email: z
+    .string()
+    .email('Email inválido')
+    .min(1, 'Email é obrigatório'),
+});
+
+/**
+ * Schema para alteração de senha
+ */
+export const ChangePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, 'Senha atual é obrigatória'),
+  
+  newPassword: z
+    .string()
+    .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
+    .regex(/[a-z]/, 'Nova senha deve conter pelo menos 1 letra minúscula')
+    .regex(/[A-Z]/, 'Nova senha deve conter pelo menos 1 letra maiúscula')
+    .regex(/\d/, 'Nova senha deve conter pelo menos 1 número'),
+  
+  confirmPassword: z
+    .string()
+    .min(1, 'Confirmação de senha é obrigatória'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword'],
+});
+
+/**
+ * Schema para configurações de conta
+ */
+export const AccountSettingsSchema = z.object({
+  notifications: z.object({
+    email: z.boolean().default(true),
+    push: z.boolean().default(true),
+    sms: z.boolean().default(false),
+  }),
+  
+  preferences: z.object({
+    language: z.enum(['pt-BR', 'en-US']).default('pt-BR'),
+    timezone: z.string().default('America/Sao_Paulo'),
+    theme: z.enum(['light', 'dark', 'system']).default('dark'),
+  }),
+  
+  privacy: z.object({
+    profileVisibility: z.enum(['public', 'private', 'company']).default('company'),
+    showEmail: z.boolean().default(false),
+    showPhone: z.boolean().default(false),
+  }),
+});
+
+// -----------------------------------------------------------
+// Tipos TypeScript Derivados
+// -----------------------------------------------------------
+
+export type UpdateProfileData = z.infer<typeof UpdateProfileSchema>;
+export type ChangePasswordData = z.infer<typeof ChangePasswordSchema>;
+export type AccountSettingsData = z.infer<typeof AccountSettingsSchema>;
+
+// -----------------------------------------------------------
 // Tipos para Query Keys (TanStack React Query)
 // -----------------------------------------------------------
 
@@ -233,4 +287,5 @@ export const authKeys = {
   user: () => [...authKeys.all, 'user'] as const,
   session: () => [...authKeys.all, 'session'] as const,
   profile: () => [...authKeys.all, 'profile'] as const,
+  settings: () => [...authKeys.all, 'settings'] as const,
 } as const; 

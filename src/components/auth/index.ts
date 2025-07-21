@@ -17,6 +17,10 @@ export { SignupPage } from '../../pages/auth/SignupPage';
 export { ForgotPasswordPage } from '../../pages/auth/ForgotPasswordPage';
 export { UnauthorizedPage } from '../../pages/auth/UnauthorizedPage';
 
+// Páginas de Perfil e Configurações
+export { ProfilePage } from '../../pages/auth/ProfilePage';
+export { SettingsPage } from '../../pages/auth/SettingsPage';
+
 // Proteção de Rotas
 export { 
   PrivateRoute, 

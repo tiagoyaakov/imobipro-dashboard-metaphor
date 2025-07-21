@@ -25,6 +25,8 @@ interface AuthContextType {
   switchUser: (userId: string) => void;
   /** Recuperar dados do usuário atual */
   refreshUser: () => Promise<void>;
+  /** Atualizar perfil do usuário */
+  updateProfile: (data: { name: string; email: string }) => Promise<{ success: boolean; error?: string }>;
 }
 
 // -----------------------------------------------------------
@@ -219,6 +221,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [supabaseUser, queryClient]);
 
+  /**
+   * Atualizar perfil do usuário
+   */
+  const updateProfile = useCallback(async (data: { name: string; email: string }): Promise<{ success: boolean; error?: string }> => {
+    if (!supabaseUser) {
+      return { success: false, error: 'Usuário não autenticado' };
+    }
+
+    try {
+      // Atualizar dados no Supabase Auth se email mudou
+      if (data.email !== supabaseUser.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: data.email
+        });
+        
+        if (emailError) {
+          throw emailError;
+        }
+      }
+
+      // Atualizar dados customizados na tabela User
+      const { error: updateError } = await supabase
+        .from('User')
+        .update({
+          name: data.name,
+          email: data.email,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', supabaseUser.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Recarregar dados do usuário
+      await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+
+      return { success: true };
+    } catch (error: unknown) {
+      console.error('Erro ao atualizar perfil:', error);
+      return { 
+        success: false, 
+        error: mapSupabaseError(error)
+      };
+    }
+  }, [supabaseUser, queryClient]);
+
   // Configurar listener de mudanças de autenticação
   useEffect(() => {
     let mounted = true;
@@ -279,6 +328,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     switchUser, // Mantido para compatibilidade
     refreshUser,
+    updateProfile,
   };
 
   return (

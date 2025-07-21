@@ -42,6 +42,10 @@ const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const UnauthorizedPage = lazy(() => import("./pages/auth/UnauthorizedPage"));
 
+// Páginas de Perfil e Configurações Avançadas
+const ProfilePage = lazy(() => import("./pages/auth/ProfilePage"));
+const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
+
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -256,6 +260,26 @@ const AppWithAuth = () => (
                 element={
                   <ProtectedRoute>
                     <LeiInquilino />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Perfil do Usuário - Todos os usuários autenticados */}
+              <Route 
+                path="profile" 
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Configurações da Conta - Todos os usuários autenticados */}
+              <Route 
+                path="account/settings" 
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
                   </ProtectedRoute>
                 } 
               />

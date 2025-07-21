@@ -182,6 +182,28 @@ export const routeConfigs: RouteConfig[] = [
     icon: 'Settings',
     category: 'admin',
     requiredFeature: 'system-settings'
+  },
+
+  // Perfil do Usuário - Todos os usuários autenticados
+  {
+    path: '/profile',
+    name: 'profile',
+    title: 'Meu Perfil',
+    description: 'Gerenciar informações pessoais',
+    showInSidebar: false,
+    icon: 'User',
+    category: 'account'
+  },
+
+  // Configurações da Conta - Todos os usuários autenticados
+  {
+    path: '/account/settings',
+    name: 'account-settings',
+    title: 'Configurações da Conta',
+    description: 'Preferências e configurações pessoais',
+    showInSidebar: false,
+    icon: 'Settings',
+    category: 'account'
   }
 ];
 
