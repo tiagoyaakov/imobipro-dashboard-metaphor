@@ -18,6 +18,21 @@ O **ImobiPRO Dashboard** é um sistema de gestão imobiliária (CRM) desenvolvid
 
 ---
 
+## 📚 Regras e Guidelines de Desenvolvimento
+
+### **Regras Técnicas Implementadas**
+- **rules-supabase-auth.md** - Regras obrigatórias para implementação de autenticação Supabase
+- **rules-react-18-3-1** - Guidelines para desenvolvimento React/TypeScript
+- **rules-uiux** - Padrões de interface com shadcn/ui e Tailwind CSS
+- **rules-gerenciamento-de-estado** - TanStack React Query e React Hook Form
+- **rules-desenvolvimento-e-qualidade** - ESLint, TypeScript e qualidade de código
+
+### **Documentação de Deploy**
+- **DEPLOY.md** - Guia completo para deploy na Vercel e outras plataformas
+- **hosting-examples/** - Exemplos de configuração para diferentes provedores
+
+---
+
 ## 🛠️ Stack Tecnológica
 
 ### **Frontend Framework**
