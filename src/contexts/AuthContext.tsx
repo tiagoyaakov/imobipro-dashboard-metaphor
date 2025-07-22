@@ -58,19 +58,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     queryFn: async (): Promise<User | null> => {
       if (!supabaseUser) return null;
       
-      // Buscar dados customizados do usuário na tabela User
+      // Buscar dados customizados do usuário na tabela users
       const { data, error } = await supabase
-        .from('User')
+        .from('users')
         .select(`
           id,
           email,
           name,
           role,
-          isActive,
-          companyId,
-          company:Company(id, name),
-          createdAt,
-          updatedAt
+          is_active,
+          company_id,
+          company:companies(id, name),
+          created_at,
+          updated_at
         `)
         .eq('id', supabaseUser.id)
         .single();
@@ -241,9 +241,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
-      // Atualizar dados customizados na tabela User
+      // Atualizar dados customizados na tabela users
       const { error: updateError } = await supabase
-        .from('User')
+        .from('users')
         .update({
           name: data.name,
           email: data.email,
