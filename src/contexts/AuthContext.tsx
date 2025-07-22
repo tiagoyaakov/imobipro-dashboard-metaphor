@@ -70,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           role,
           is_active,
           company_id,
+          avatar_url,
           company:companies(id, name),
           created_at,
           updated_at

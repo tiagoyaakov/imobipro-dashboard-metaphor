@@ -47,6 +47,7 @@ export const UserSchema = z.object({
   role: UserRoleSchema,
   isActive: z.boolean().default(true),
   companyId: z.string().uuid(),
+  avatarUrl: z.string().url().optional().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()
 });

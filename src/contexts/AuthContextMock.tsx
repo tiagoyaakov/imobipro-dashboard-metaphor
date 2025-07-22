@@ -21,6 +21,10 @@ interface AuthContextType {
   switchUser: (userId: string) => void;
   /** Recuperar dados do usuário atual */
   refreshUser: () => Promise<void>;
+  /** Simula atualização de perfil do usuário */
+  updateProfile: (data: { name: string; email: string; avatarUrl?: string }) => Promise<{ success: boolean; error?: string }>;
+  /** Simula atualização do avatar do usuário */
+  updateAvatar: (avatarUrl: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // -----------------------------------------------------------
@@ -159,6 +163,54 @@ export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({
     }
   }, [currentUser]);
 
+  /**
+   * Simula atualização de perfil do usuário
+   */
+  const updateProfile = useCallback(async (data: { name: string; email: string; avatarUrl?: string }): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      console.log('[AUTH MOCK] Simulando atualização de perfil:', data);
+      
+      // Simular sucesso (no mock não persiste alterações)
+      return { success: true };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: 'Erro simulado na atualização do perfil' 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Simula atualização do avatar do usuário
+   */
+  const updateAvatar = useCallback(async (avatarUrl: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      console.log('[AUTH MOCK] Simulando atualização de avatar:', avatarUrl);
+      
+      // Simular sucesso (no mock não persiste alterações)
+      return { success: true };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: 'Erro simulado na atualização do avatar' 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Valor do contexto
   const contextValue: AuthContextType = {
     isAuthenticated: currentUser !== null,
@@ -167,7 +219,9 @@ export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({
     login,
     logout,
     switchUser,
-    refreshUser
+    refreshUser,
+    updateProfile,
+    updateAvatar
   };
 
   return (

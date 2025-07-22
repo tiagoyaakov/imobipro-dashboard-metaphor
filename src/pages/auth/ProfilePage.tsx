@@ -42,8 +42,7 @@ import type { UpdateProfileData, ChangePasswordData } from '@/schemas/auth';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const auth = useAuth();
-  const user = auth.user;
+  const { user, updateProfile, updateAvatar } = useAuth();
   const { uploadImage } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -82,14 +81,22 @@ export const ProfilePage: React.FC = () => {
     setUpdateMessage(null);
 
     try {
-      // Simulação de update (conectar com API quando disponível)
-      console.log('Atualizando perfil:', data);
-      
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUpdateMessage('Perfil atualizado com sucesso!');
-      setTimeout(() => setUpdateMessage(null), 3000);
+      if (updateProfile) {
+        const result = await updateProfile(data);
+        
+        if (result.success) {
+          setUpdateMessage('Perfil atualizado com sucesso!');
+          setTimeout(() => setUpdateMessage(null), 3000);
+        } else {
+          setUpdateError(result.error || 'Erro ao atualizar perfil');
+        }
+      } else {
+        // Fallback caso não tenha a função
+        console.log('Atualizando perfil:', data);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setUpdateMessage('Perfil atualizado com sucesso!');
+        setTimeout(() => setUpdateMessage(null), 3000);
+      }
     } catch (error) {
       setUpdateError('Erro inesperado ao atualizar perfil');
     } finally {
@@ -138,15 +145,24 @@ export const ProfilePage: React.FC = () => {
       if (result.success && result.url) {
         console.log('Avatar uploaded successfully:', result.url);
         
-        // Por enquanto, apenas mostrar sucesso
-        // TODO: Conectar com API de usuário quando disponível
-        setUpdateMessage('Avatar enviado com sucesso!');
+        if (updateAvatar) {
+          // Usar a função updateAvatar se disponível
+          const updateResult = await updateAvatar(result.url);
+          
+          if (updateResult.success) {
+            setUpdateMessage('Avatar atualizado com sucesso!');
+            setAvatarPreview(null); // Limpar preview já que foi salvo
+          } else {
+            setUpdateError(updateResult.error || 'Erro ao salvar avatar');
+            handleCancelPreview();
+          }
+        } else {
+          // Fallback: apenas mostrar sucesso do upload
+          setUpdateMessage('Avatar enviado com sucesso!');
+          console.warn('Função updateAvatar não disponível - avatar não foi salvo no perfil');
+        }
         
-        // Manter preview por alguns segundos para mostrar resultado
-        setTimeout(() => {
-          setUpdateMessage(null);
-          // Não limpar preview ainda - deixar usuário ver o resultado
-        }, 3000);
+        setTimeout(() => setUpdateMessage(null), 3000);
         
       } else {
         setUpdateError(result.error || 'Erro ao fazer upload do avatar');
@@ -282,7 +298,7 @@ export const ProfilePage: React.FC = () => {
             <CardHeader className="text-center">
               <div className="relative mx-auto mb-4">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src={avatarPreview || "/avatar-placeholder.svg"} />
+                  <AvatarImage src={avatarPreview || user?.avatarUrl || "/avatar-placeholder.svg"} />
                   <AvatarFallback className="bg-imobipro-blue text-white text-xl">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
