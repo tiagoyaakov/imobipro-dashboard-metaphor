@@ -83,7 +83,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      return data as User;
+      // Mapear dados do banco (snake_case) para objeto User (camelCase)
+      const user: User = {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        isActive: data.is_active,
+        companyId: data.company_id,
+        avatarUrl: data.avatar_url,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+
+      return user;
     },
     enabled: !!supabaseUser,
     staleTime: 5 * 60 * 1000, // 5 minutos
