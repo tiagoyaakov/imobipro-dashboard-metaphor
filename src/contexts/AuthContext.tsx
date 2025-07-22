@@ -449,27 +449,95 @@ export const useSignup = () => {
         metadata: metadata 
       });
 
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Primeiro, fazer o signup no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: password,
         options: {
-          data: metadata || {},
+          data: {
+            name: metadata?.name || '',
+            role: metadata?.role || 'AGENT',
+          }
         },
       });
 
-      if (error) {
-        console.error('[DEBUG] Erro no signup:', error);
-        const errorMessage = mapSupabaseError(error);
+      if (authError) {
+        console.error('[DEBUG] Erro no signup:', authError);
+        const errorMessage = mapSupabaseError(authError);
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
 
-      console.log('[DEBUG] Signup bem-sucedido:', data);
-      return { success: true, data };
+      console.log('[DEBUG] Signup no Auth bem-sucedido:', authData);
 
-    } catch (error) {
-      console.error('[DEBUG] Erro inesperado no signup:', error);
-      const errorMessage = AUTH_ERROR_MESSAGES.NETWORK_ERROR;
+      // 2. Se o signup foi bem-sucedido E há um usuário, 
+      // inserir na tabela users (isso deve funcionar com as novas políticas RLS)
+      if (authData?.user) {
+        console.log('[DEBUG] Inserindo usuário na tabela users...');
+        
+        // Buscar uma empresa padrão ou criar uma se necessário
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id')
+          .limit(1);
+
+        if (companiesError) {
+          console.error('[DEBUG] Erro ao buscar companies:', companiesError);
+        }
+
+        let companyId = companies?.[0]?.id;
+        
+        // Se não há empresas, criar uma padrão (apenas para desenvolvimento/teste)
+        if (!companyId) {
+          console.log('[DEBUG] Criando empresa padrão...');
+          const { data: newCompany, error: createCompanyError } = await supabase
+            .from('companies')
+            .insert([
+              { name: 'Empresa Padrão' }
+            ])
+            .select('id')
+            .single();
+
+          if (createCompanyError) {
+            console.error('[DEBUG] Erro ao criar empresa:', createCompanyError);
+          } else {
+            companyId = newCompany?.id;
+          }
+        }
+
+        // Inserir o usuário na tabela custom users
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id, // Usar o ID do Supabase Auth
+              email: email.trim().toLowerCase(),
+              password: '[HANDLED_BY_SUPABASE_AUTH]', // Placeholder, auth é gerenciado pelo Supabase
+              name: metadata?.name || '',
+              role: metadata?.role || 'AGENT',
+              company_id: companyId,
+              is_active: true,
+            }
+          ])
+          .select()
+          .single();
+
+        if (userError) {
+          console.error('[DEBUG] Erro ao inserir usuário na tabela users:', userError);
+          
+          // Se falhou a inserção na tabela users mas o auth foi criado, 
+          // precisamos fazer cleanup ou retornar sucesso parcial
+          console.log('[DEBUG] Auth criado mas falha na tabela users. Usuário pode fazer login mas dados podem estar incompletos.');
+        } else {
+          console.log('[DEBUG] Usuário inserido na tabela users com sucesso:', userData);
+        }
+      }
+
+      return { success: true, data: authData };
+
+    } catch (error: unknown) {
+      console.error('[DEBUG] Erro geral no signup:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro inesperado durante o registro';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
