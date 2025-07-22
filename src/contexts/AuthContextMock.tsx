@@ -35,17 +35,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderMockProps {
   children: ReactNode;
-  /** ID do usuário padrão para login automático */
-  defaultUserId?: string;
+  /** ID do usuário padrão para login automático (null para não logar automaticamente) */
+  defaultUserId?: string | null;
 }
 
 export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({ 
   children, 
-  defaultUserId = 'mock-agent-uuid-123' 
+  defaultUserId = null // Alterado para não fazer login automático
 }) => {
-  // Estado do usuário atual
+  // Estado do usuário atual - não logado por padrão
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    // Buscar usuário padrão nos dados mockados
+    // Só fazer login automático se explicitamente especificado
+    if (!defaultUserId) return null;
+    
+    // Buscar usuário padrão nos dados mockados apenas se ID foi fornecido
     const defaultUser = usersData.find(user => user.id === defaultUserId);
     return defaultUser as User || null;
   });

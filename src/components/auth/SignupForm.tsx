@@ -165,7 +165,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="AGENT">Corretor</SelectItem>
-                      <SelectItem value="ADMIN">Administrador</SelectItem>
                       <SelectItem value="CREATOR">Proprietário</SelectItem>
                     </SelectContent>
                   </Select>

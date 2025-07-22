@@ -444,6 +444,11 @@ export const useSignup = () => {
     setError(null);
 
     try {
+      console.log('[DEBUG] Tentando signup com:', { 
+        email: email.trim().toLowerCase(), 
+        metadata: metadata 
+      });
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: password,
@@ -453,14 +458,17 @@ export const useSignup = () => {
       });
 
       if (error) {
+        console.error('[DEBUG] Erro no signup:', error);
         const errorMessage = mapSupabaseError(error);
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
 
+      console.log('[DEBUG] Signup bem-sucedido:', data);
       return { success: true, data };
 
     } catch (error) {
+      console.error('[DEBUG] Erro inesperado no signup:', error);
       const errorMessage = AUTH_ERROR_MESSAGES.NETWORK_ERROR;
       setError(errorMessage);
       return { success: false, error: errorMessage };
