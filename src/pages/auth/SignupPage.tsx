@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignupForm, SignupSuccess } from '@/components/auth/SignupForm';
+import { useAuth } from '@/hooks/useAuth';
 
 // -----------------------------------------------------------
 // Página de Registro
@@ -8,15 +9,36 @@ import { SignupForm, SignupSuccess } from '@/components/auth/SignupForm';
 
 export const SignupPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
   const [signupEmail, setSignupEmail] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   /**
-   * Mostrar tela de sucesso após registro
+   * Redirecionar para dashboard se usuário já está autenticado
    */
-  const handleSignupSuccess = () => {
-    // Em um cenário real, o email viria do resultado do signup
-    // Por enquanto, vamos simular
-    setSignupEmail('usuario@exemplo.com');
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log('🔐 [SignupPage] Usuário autenticado após signup, redirecionando para dashboard');
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  /**
+   * Lidar com sucesso do registro
+   */
+  const handleSignupSuccess = (email: string) => {
+    console.log('🎉 [SignupPage] Signup bem-sucedido para:', email);
+    setSignupEmail(email);
+    setShowSuccess(true);
+    
+    // Aguardar um momento para o auth state ser atualizado
+    // Se após 3 segundos não houve redirecionamento automático,
+    // significa que precisa confirmar email
+    setTimeout(() => {
+      if (!isAuthenticated) {
+        console.log('📧 [SignupPage] Aguardando confirmação de email');
+      }
+    }, 3000);
   };
 
   /**
@@ -31,6 +53,7 @@ export const SignupPage: React.FC = () => {
    */
   const handleBackToLogin = () => {
     setSignupEmail(null);
+    setShowSuccess(false);
     navigate('/auth/login');
   };
 
@@ -49,7 +72,7 @@ export const SignupPage: React.FC = () => {
         </div>
 
         {/* Mostrar formulário ou tela de sucesso */}
-        {signupEmail ? (
+        {showSuccess && signupEmail ? (
           <SignupSuccess
             email={signupEmail}
             onBackToLogin={handleBackToLogin}

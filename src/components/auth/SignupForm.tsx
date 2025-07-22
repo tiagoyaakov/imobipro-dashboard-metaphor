@@ -22,7 +22,7 @@ import { SignupFormSchema, SignupFormData } from '@/schemas/auth';
 
 interface SignupFormProps {
   /** Callback chamado após registro bem-sucedido */
-  onSuccess?: () => void;
+  onSuccess?: (email: string) => void;
   /** Callback chamado quando usuário clica em "Já tenho conta" */
   onLoginClick?: () => void;
   /** Se true, mostra link para voltar ao dashboard */
@@ -66,7 +66,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     });
     
     if (result.success) {
-      onSuccess?.();
+      onSuccess?.(data.email);
     }
     // Erro será mostrado automaticamente via error state
   };
