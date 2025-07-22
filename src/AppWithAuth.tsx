@@ -8,6 +8,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Providers de Autenticação
 import { UnifiedAuthProvider } from "@/contexts/AuthProvider";
 
+// Debug para verificar configuração
+import { getAuthMode, authConfig, validateAuthConfig } from "@/config/auth";
+
 // Componentes de Proteção
 import { 
   PrivateRoute, 
@@ -41,10 +44,40 @@ const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const UnauthorizedPage = lazy(() => import("./pages/auth/UnauthorizedPage"));
+const AuthCallbackPage = lazy(() => import("./pages/auth/AuthCallbackPage"));
 
 // Páginas de Perfil e Configurações Avançadas
 const ProfilePage = lazy(() => import("./pages/auth/ProfilePage"));
 const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
+
+// -----------------------------------------------------------
+// DEBUG: Verificar configuração na inicialização
+// -----------------------------------------------------------
+
+console.log('[AUTH DEBUG] Configuração de autenticação:', {
+  mode: getAuthMode(),
+  useRealAuth: authConfig.useRealAuth,
+  supabaseUrl: authConfig.supabase.url ? 'CONFIGURADA' : 'NÃO CONFIGURADA',
+  supabaseKey: authConfig.supabase.anonKey ? 'CONFIGURADA' : 'NÃO CONFIGURADA',
+  environment: import.meta.env.MODE,
+  validation: validateAuthConfig(),
+  // Informações sobre o ambiente
+  currentURL: window.location.href,
+  isProduction: import.meta.env.PROD,
+  allEnvVars: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
+});
+
+// Verificar se estamos em produção e se as variáveis estão corretas
+if (import.meta.env.PROD && import.meta.env.VITE_DEBUG_AUTH === 'true') {
+  console.log('[PROD DEBUG] Variáveis de ambiente em produção:', {
+    VITE_USE_REAL_AUTH: import.meta.env.VITE_USE_REAL_AUTH,
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT_SET',
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET',
+    VITE_SUPABASE_AUTH_REDIRECT_URL: import.meta.env.VITE_SUPABASE_AUTH_REDIRECT_URL,
+    NODE_ENV: import.meta.env.NODE_ENV,
+    MODE: import.meta.env.MODE
+  });
+}
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -120,6 +153,16 @@ const AppWithAuth = () => (
                 <PublicRoute>
                   <Suspense fallback={<PageLoadingFallback />}>
                     <ForgotPasswordPage />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/callback" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <AuthCallbackPage />
                   </Suspense>
                 </PublicRoute>
               } 

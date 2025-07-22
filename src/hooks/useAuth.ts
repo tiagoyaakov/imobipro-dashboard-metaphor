@@ -1,13 +1,34 @@
+import { getAuthMode } from '../config/auth';
+
+// Importar hooks específicos de cada contexto
+import { useAuth as useAuthReal } from '../contexts/AuthContext';
+import { useAuthMock } from '../contexts/AuthContextMock';
+
 // -----------------------------------------------------------
 // Hook de Autenticação Unificado
-// Re-exporta o hook correto baseado na configuração
+// Automaticamente usa o hook correto baseado no modo
 // -----------------------------------------------------------
 
-// Re-exportar diretamente o hook do AuthContext real
-// O AuthContext real já tem fallback para desenvolvimento
-export { useAuth, useLogin, useSignup, usePasswordReset } from '../contexts/AuthContext';
+export const useAuth = () => {
+  const authMode = getAuthMode();
+  
+  if (authMode === 'real') {
+    return useAuthReal();
+  } else {
+    return useAuthMock();
+  }
+};
 
-// Manter exports do mock para casos específicos de desenvolvimento
+// -----------------------------------------------------------
+// Re-exportar hooks específicos do contexto real
+// -----------------------------------------------------------
+
+export { useLogin, useSignup, usePasswordReset } from '../contexts/AuthContext';
+
+// -----------------------------------------------------------
+// Re-exportar hooks específicos do contexto mock
+// -----------------------------------------------------------
+
 export { useAuthMock, hasRole, isAdmin, isCreator } from '../contexts/AuthContextMock';
 
 // -----------------------------------------------------------
