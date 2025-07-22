@@ -337,12 +337,12 @@ export const ProfilePage: React.FC = () => {
               </div>
               
               <CardTitle className="text-xl">{user.name}</CardTitle>
-              <CardDescription className="flex flex-col items-center gap-2">
-                <span>{user.email}</span>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-sm text-muted-foreground">{user.email}</span>
                 <Badge variant={getRoleVariant(user.role)} className="text-xs">
                   {translateRole(user.role)}
                 </Badge>
-              </CardDescription>
+              </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
