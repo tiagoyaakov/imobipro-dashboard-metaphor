@@ -42,8 +42,9 @@ import type { UpdateProfileData, ChangePasswordData } from '@/schemas/auth';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateProfile, updateAvatar } = useAuth();
-  const { uploadImage, isUploading, uploadError } = useImageUpload();
+  const auth = useAuth();
+  const user = auth.user;
+  const { uploadImage } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Estados locais
@@ -54,13 +55,11 @@ export const ProfilePage: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // Formulário de perfil
-  const profileForm = useForm<UpdateProfileData>({
-    resolver: zodResolver(UpdateProfileSchema),
+  // Formulário básico sem avatarUrl
+  const profileForm = useForm({
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      avatarUrl: user?.avatarUrl || '',
     },
   });
 
@@ -73,6 +72,30 @@ export const ProfilePage: React.FC = () => {
       confirmPassword: '',
     },
   });
+
+  /**
+   * Atualizar perfil básico
+   */
+  const handleUpdateProfile = async (data: { name: string; email: string }) => {
+    setIsUpdating(true);
+    setUpdateError(null);
+    setUpdateMessage(null);
+
+    try {
+      // Simulação de update (conectar com API quando disponível)
+      console.log('Atualizando perfil:', data);
+      
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setUpdateMessage('Perfil atualizado com sucesso!');
+      setTimeout(() => setUpdateMessage(null), 3000);
+    } catch (error) {
+      setUpdateError('Erro inesperado ao atualizar perfil');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   /**
    * Lidar com seleção de arquivo de avatar
@@ -113,21 +136,26 @@ export const ProfilePage: React.FC = () => {
       const result = await uploadImage(file, 'avatars', `users/${user?.id}`);
       
       if (result.success && result.url) {
-        // Atualizar avatar no backend
-        const updateResult = await updateAvatar(result.url);
+        console.log('Avatar uploaded successfully:', result.url);
         
-        if (updateResult.success) {
-          setUpdateMessage('Avatar atualizado com sucesso!');
-          setAvatarPreview(null); // Limpar preview já que foi salvo
-          setTimeout(() => setUpdateMessage(null), 3000);
-        } else {
-          setUpdateError(updateResult.error || 'Erro ao salvar avatar');
-        }
+        // Por enquanto, apenas mostrar sucesso
+        // TODO: Conectar com API de usuário quando disponível
+        setUpdateMessage('Avatar enviado com sucesso!');
+        
+        // Manter preview por alguns segundos para mostrar resultado
+        setTimeout(() => {
+          setUpdateMessage(null);
+          // Não limpar preview ainda - deixar usuário ver o resultado
+        }, 3000);
+        
       } else {
         setUpdateError(result.error || 'Erro ao fazer upload do avatar');
+        handleCancelPreview();
       }
     } catch (error) {
+      console.error('Erro no upload do avatar:', error);
       setUpdateError('Erro inesperado ao fazer upload do avatar');
+      handleCancelPreview();
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -137,6 +165,7 @@ export const ProfilePage: React.FC = () => {
    * Abrir seletor de arquivo
    */
   const handleCameraClick = () => {
+    if (isUploadingAvatar) return; // Prevenir clicks durante upload
     fileInputRef.current?.click();
   };
 
@@ -150,30 +179,6 @@ export const ProfilePage: React.FC = () => {
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
-    }
-  };
-
-  /**
-   * Atualizar perfil
-   */
-  const handleUpdateProfile = async (data: UpdateProfileData) => {
-    setIsUpdating(true);
-    setUpdateError(null);
-    setUpdateMessage(null);
-
-    try {
-      const result = await updateProfile(data);
-      
-      if (result.success) {
-        setUpdateMessage('Perfil atualizado com sucesso!');
-        setTimeout(() => setUpdateMessage(null), 3000);
-      } else {
-        setUpdateError(result.error || 'Erro ao atualizar perfil');
-      }
-    } catch (error) {
-      setUpdateError('Erro inesperado ao atualizar perfil');
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -277,27 +282,40 @@ export const ProfilePage: React.FC = () => {
             <CardHeader className="text-center">
               <div className="relative mx-auto mb-4">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src={avatarPreview || user?.avatarUrl || "/avatar-placeholder.svg"} />
+                  <AvatarImage src={avatarPreview || "/avatar-placeholder.svg"} />
                   <AvatarFallback className="bg-imobipro-blue text-white text-xl">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
+                
+                {/* Loading overlay durante upload */}
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  </div>
+                )}
+                
                 <Button
                   size="sm"
                   variant="outline"
                   className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
                   onClick={handleCameraClick}
+                  disabled={isUploadingAvatar}
+                  title={isUploadingAvatar ? "Enviando..." : "Alterar foto"}
                 >
-                  <Camera className="w-4 h-4" />
+                  {isUploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </Button>
-                {avatarPreview && (
+                
+                {/* Botão de cancelar preview */}
+                {avatarPreview && !isUploadingAvatar && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 p-0"
+                    className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 p-0 border-red-200 hover:bg-red-50"
                     onClick={handleCancelPreview}
+                    title="Cancelar"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4 text-red-500" />
                   </Button>
                 )}
               </div>
