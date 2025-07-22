@@ -26,7 +26,9 @@ interface AuthContextType {
   /** Recuperar dados do usuário atual */
   refreshUser: () => Promise<void>;
   /** Atualizar perfil do usuário */
-  updateProfile: (data: { name: string; email: string }) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: { name: string; email: string; avatarUrl?: string }) => Promise<{ success: boolean; error?: string }>;
+  /** Atualizar avatar do usuário */
+  updateAvatar: (avatarUrl: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // -----------------------------------------------------------
@@ -224,7 +226,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Atualizar perfil do usuário
    */
-  const updateProfile = useCallback(async (data: { name: string; email: string }): Promise<{ success: boolean; error?: string }> => {
+  const updateProfile = useCallback(async (data: { name: string; email: string; avatarUrl?: string }): Promise<{ success: boolean; error?: string }> => {
     if (!supabaseUser) {
       return { success: false, error: 'Usuário não autenticado' };
     }
@@ -242,11 +244,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Atualizar dados customizados na tabela users
+      const updateData: { name: string; email: string; updated_at: string; avatar_url?: string } = {
+        name: data.name,
+        email: data.email,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (data.avatarUrl !== undefined) {
+        updateData.avatar_url = data.avatarUrl;
+      }
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', supabaseUser.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Recarregar dados do usuário
+      await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+
+      return { success: true };
+    } catch (error: unknown) {
+      console.error('Erro ao atualizar perfil:', error);
+      return { 
+        success: false, 
+        error: mapSupabaseError(error)
+      };
+    }
+  }, [supabaseUser, queryClient]);
+
+  /**
+   * Atualizar apenas o avatar do usuário
+   */
+  const updateAvatar = useCallback(async (avatarUrl: string): Promise<{ success: boolean; error?: string }> => {
+    if (!supabaseUser) {
+      return { success: false, error: 'Usuário não autenticado' };
+    }
+
+    try {
+      // Atualizar dados customizados na tabela users
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          name: data.name,
-          email: data.email,
+          avatar_url: avatarUrl,
           updated_at: new Date().toISOString(),
         })
         .eq('id', supabaseUser.id);
@@ -260,7 +303,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return { success: true };
     } catch (error: unknown) {
-      console.error('Erro ao atualizar perfil:', error);
+      console.error('Erro ao atualizar avatar:', error);
       return { 
         success: false, 
         error: mapSupabaseError(error)
@@ -329,6 +372,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     switchUser, // Mantido para compatibilidade
     refreshUser,
     updateProfile,
+    updateAvatar,
   };
 
   return (
@@ -363,7 +407,8 @@ export const useAuth = (): AuthContextType => {
         logout: () => {},
         switchUser: () => {},
         refreshUser: async () => {},
-        updateProfile: async () => ({ success: false, error: 'Contexto não inicializado' })
+        updateProfile: async () => ({ success: false, error: 'Contexto não inicializado' }),
+        updateAvatar: async () => ({ success: false, error: 'Contexto não inicializado' }),
       };
     }
     

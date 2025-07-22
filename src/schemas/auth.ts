@@ -222,6 +222,11 @@ export const UpdateProfileSchema = z.object({
     .string()
     .email('Email inválido')
     .min(1, 'Email é obrigatório'),
+  
+  avatarUrl: z
+    .string()
+    .url('URL do avatar inválida')
+    .optional(),
 });
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
@@ -12,7 +12,9 @@ import {
   Eye,
   EyeOff,
   Lock,
-  Loader2
+  Loader2,
+  Upload,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Hooks e schemas
 import { useAuth } from '@/hooks/useAuth';
+import { useImageUpload } from '@/hooks/useImageUpload';
 import { UpdateProfileSchema, ChangePasswordSchema } from '@/schemas/auth';
 import type { UpdateProfileData, ChangePasswordData } from '@/schemas/auth';
 
@@ -39,13 +42,17 @@ import type { UpdateProfileData, ChangePasswordData } from '@/schemas/auth';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, updateAvatar } = useAuth();
+  const { uploadImage, isUploading, uploadError } = useImageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Estados locais
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Formulário de perfil
   const profileForm = useForm<UpdateProfileData>({
@@ -53,6 +60,7 @@ export const ProfilePage: React.FC = () => {
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
+      avatarUrl: user?.avatarUrl || '',
     },
   });
 
@@ -65,6 +73,85 @@ export const ProfilePage: React.FC = () => {
       confirmPassword: '',
     },
   });
+
+  /**
+   * Lidar com seleção de arquivo de avatar
+   */
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validação do arquivo
+    if (!file.type.startsWith('image/')) {
+      setUpdateError('Arquivo deve ser uma imagem');
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setUpdateError('Arquivo muito grande. Máximo 5MB');
+      return;
+    }
+
+    // Criar preview
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+
+    // Fazer upload imediato
+    handleAvatarUpload(file);
+  };
+
+  /**
+   * Fazer upload do avatar
+   */
+  const handleAvatarUpload = async (file: File) => {
+    setIsUploadingAvatar(true);
+    setUpdateError(null);
+    setUpdateMessage(null);
+
+    try {
+      const result = await uploadImage(file, 'avatars', `users/${user?.id}`);
+      
+      if (result.success && result.url) {
+        // Atualizar avatar no backend
+        const updateResult = await updateAvatar(result.url);
+        
+        if (updateResult.success) {
+          setUpdateMessage('Avatar atualizado com sucesso!');
+          setAvatarPreview(null); // Limpar preview já que foi salvo
+          setTimeout(() => setUpdateMessage(null), 3000);
+        } else {
+          setUpdateError(updateResult.error || 'Erro ao salvar avatar');
+        }
+      } else {
+        setUpdateError(result.error || 'Erro ao fazer upload do avatar');
+      }
+    } catch (error) {
+      setUpdateError('Erro inesperado ao fazer upload do avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  /**
+   * Abrir seletor de arquivo
+   */
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  /**
+   * Cancelar preview do avatar
+   */
+  const handleCancelPreview = () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   /**
    * Atualizar perfil
@@ -190,7 +277,7 @@ export const ProfilePage: React.FC = () => {
             <CardHeader className="text-center">
               <div className="relative mx-auto mb-4">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src="/avatar-placeholder.svg" />
+                  <AvatarImage src={avatarPreview || user?.avatarUrl || "/avatar-placeholder.svg"} />
                   <AvatarFallback className="bg-imobipro-blue text-white text-xl">
                     {user.name?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
@@ -199,9 +286,20 @@ export const ProfilePage: React.FC = () => {
                   size="sm"
                   variant="outline"
                   className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                  onClick={handleCameraClick}
                 >
                   <Camera className="w-4 h-4" />
                 </Button>
+                {avatarPreview && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 p-0"
+                    onClick={handleCancelPreview}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               
               <CardTitle className="text-xl">{user.name}</CardTitle>
@@ -349,6 +447,13 @@ export const ProfilePage: React.FC = () => {
           </Card>
         </div>
       </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleAvatarSelect}
+        className="hidden"
+        accept="image/*"
+      />
     </div>
   );
 };
