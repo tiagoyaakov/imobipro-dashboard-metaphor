@@ -44,9 +44,13 @@ Função: Corretor ou Proprietário
 [DEBUG] Inserindo usuário na tabela users...
 [DEBUG] ✅ Usuário inserido na tabela users com sucesso: {...}
 [DEBUG] ✅ Signup completo finalizado com sucesso
+
+// Após o signup:
+🔐 [Auth] Estado de autenticação alterado: SIGNED_IN
+🔐 [SignupPage] Usuário autenticado após signup, redirecionando para dashboard
 ```
 
-**🎯 Resultado:** Redirecionamento para confirmação de email ou dashboard
+**🎯 Resultado:** **Redirecionamento AUTOMÁTICO para o dashboard principal** (não mais tela estática!)
 
 ### **❌ Com Email EXISTENTE:**
 ```javascript
@@ -56,6 +60,9 @@ Função: Corretor ou Proprietário
 ```
 
 **🎯 Resultado:** Mensagem clara: **"Este email já está cadastrado. Tente fazer login ou use outro email."**
+
+### **📧 Se Precisar Confirmar Email:**
+Se o redirecionamento automático não acontecer em 3 segundos, será exibida a tela de confirmação de email.
 
 ---
 
@@ -81,6 +88,16 @@ Função: Corretor ou Proprietário
 
 ## 🔧 **MELHORIAS IMPLEMENTADAS**
 
+### **📍 Redirecionamento Automático (NOVO!):**
+```typescript
+// Monitora estado de autenticação após signup
+useEffect(() => {
+  if (isAuthenticated && !isLoading) {
+    navigate('/', { replace: true }); // Vai para dashboard!
+  }
+}, [isAuthenticated, isLoading, navigate]);
+```
+
 ### **📋 Tratamento de Erro Melhorado:**
 ```typescript
 // Detecta email duplicado e mostra mensagem clara
@@ -93,13 +110,15 @@ if (authError.status === 422) {
 - ✅ Processo completo rastreado
 - ✅ Erros específicos identificados  
 - ✅ Debug simplificado para futuras manutenções
+- ✅ Logs de redirecionamento para troubleshooting
 
-### **🔄 Fluxo Completo Restaurado:**
+### **🔄 Fluxo Completo Otimizado:**
 1. ✅ Signup no Supabase Auth
 2. ✅ Buscar/criar empresa padrão  
 3. ✅ Inserir usuário na tabela `users`
-4. ✅ Políticas RLS funcionando
-5. ✅ Tratamento de erros robusto
+4. ✅ Estado de auth atualizado automaticamente
+5. ✅ **Redirecionamento automático para dashboard**
+6. ✅ Fallback para confirmação de email se necessário
 
 ---
 
