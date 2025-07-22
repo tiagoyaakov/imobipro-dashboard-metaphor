@@ -444,13 +444,12 @@ export const useSignup = () => {
     setError(null);
 
     try {
-      console.log('[DEBUG] === TESTE DE SIGNUP SIMPLIFICADO ===');
-      console.log('[DEBUG] Tentando signup APENAS no Supabase Auth (sem tabela users):', { 
+      console.log('[DEBUG] Iniciando signup completo:', { 
         email: email.trim().toLowerCase(), 
         metadata: metadata 
       });
 
-      // VERSÃO SIMPLIFICADA - apenas signup no Supabase Auth
+      // 1. Primeiro, fazer o signup no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: password,
@@ -463,25 +462,25 @@ export const useSignup = () => {
       });
 
       if (authError) {
-        console.error('[DEBUG] Erro no signup básico do Supabase:', authError);
-        console.error('[DEBUG] Detalhes do erro:', {
-          message: authError.message,
-          status: authError.status,
-          code: authError.__isAuthError ? 'AUTH_ERROR' : 'UNKNOWN',
-        });
+        console.error('[DEBUG] Erro no signup do Supabase Auth:', authError);
+        
+        // Tratamento específico para email duplicado
+        if (authError.message?.includes('already registered') || 
+            authError.message?.includes('user_already_exists') ||
+            authError.status === 422) {
+          const errorMessage = 'Este email já está cadastrado. Tente fazer login ou use outro email.';
+          setError(errorMessage);
+          return { success: false, error: errorMessage };
+        }
+        
         const errorMessage = mapSupabaseError(authError);
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
 
-      console.log('[DEBUG] ✅ Signup básico do Supabase funcionou!', authData);
-      
-      // COMENTANDO TEMPORARIAMENTE A LÓGICA COMPLEXA
-      console.log('[DEBUG] PULANDO inserção na tabela users para diagnóstico...');
-      
-      /*
-      // 2. Se o signup foi bem-sucedido E há um usuário, 
-      // inserir na tabela users (isso deve funcionar com as novas políticas RLS)
+      console.log('[DEBUG] ✅ Signup no Auth bem-sucedido:', authData);
+
+      // 2. Se o signup foi bem-sucedido E há um usuário, inserir na tabela users
       if (authData?.user) {
         console.log('[DEBUG] Inserindo usuário na tabela users...');
         
@@ -536,19 +535,18 @@ export const useSignup = () => {
           console.error('[DEBUG] Erro ao inserir usuário na tabela users:', userError);
           
           // Se falhou a inserção na tabela users mas o auth foi criado, 
-          // precisamos fazer cleanup ou retornar sucesso parcial
+          // usuário pode fazer login mas dados podem estar incompletos
           console.log('[DEBUG] Auth criado mas falha na tabela users. Usuário pode fazer login mas dados podem estar incompletos.');
         } else {
-          console.log('[DEBUG] Usuário inserido na tabela users com sucesso:', userData);
+          console.log('[DEBUG] ✅ Usuário inserido na tabela users com sucesso:', userData);
         }
       }
-      */
 
-      console.log('[DEBUG] ✅ Retornando sucesso do signup simplificado');
+      console.log('[DEBUG] ✅ Signup completo finalizado com sucesso');
       return { success: true, data: authData };
 
     } catch (error: unknown) {
-      console.error('[DEBUG] ❌ Erro geral no signup simplificado:', error);
+      console.error('[DEBUG] ❌ Erro geral no signup:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro inesperado durante o registro';
       setError(errorMessage);
       return { success: false, error: errorMessage };
