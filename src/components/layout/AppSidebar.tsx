@@ -1,24 +1,16 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import * as Icons from "lucide-react";
-import { ChevronDown } from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 
 // Hooks
@@ -29,34 +21,19 @@ function AppSidebarContent() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    main: true,
-    management: true,
-    advanced: false,
-  });
   const isCollapsed = state === "collapsed";
 
   // Hooks para dados dinâmicos
-  const { menuItems, categoryStats, userRole } = useMenuItems();
+  const { flatMenuItems, userRole } = useMenuItems();
   const { user } = usePermissions();
 
   /**
    * Obter ícone do Lucide React
    */
   const getIcon = (iconName: string) => {
-    const IconsTyped = Icons as any;
+    const IconsTyped = Icons as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
     const Icon = IconsTyped[iconName] || Icons.LayoutDashboard;
     return Icon;
-  };
-
-  /**
-   * Toggle de grupo
-   */
-  const toggleGroup = (groupKey: string) => {
-    setOpenGroups(prev => ({
-      ...prev,
-      [groupKey]: !prev[groupKey]
-    }));
   };
 
   const isActive = (path: string) => currentPath === path;
@@ -92,65 +69,40 @@ function AppSidebarContent() {
           )}
         </div>
 
-        {/* Menu dinâmico baseado em permissões */}
-        <div className="space-y-4">
-          {menuItems.map((category) => (
-            <Collapsible
-              key={category.category}
-              open={openGroups[category.category] ?? true}
-              onOpenChange={() => toggleGroup(category.category)}
-              className="w-full"
-            >
-              <SidebarGroup>
-                {!isCollapsed && (
-                  <CollapsibleTrigger asChild>
-                    <SidebarGroupLabel className="group/label text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3 flex items-center justify-between hover:text-sidebar-foreground cursor-pointer">
-                      {category.title}
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {category.routes.length}
-                        </Badge>
-                        <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/label:rotate-180" />
-                      </div>
-                    </SidebarGroupLabel>
-                  </CollapsibleTrigger>
-                )}
-
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="space-y-1">
-                      {category.routes.map((route) => {
-                        const Icon = getIcon(route.icon || 'Home');
-                        return (
-                          <SidebarMenuItem key={route.path}>
-                            <SidebarMenuButton asChild>
-                              <NavLink
-                                to={route.path}
-                                end={route.path === "/"}
-                                className={getNavCls}
-                                title={route.description}
-                              >
-                                <Icon className="h-5 w-5 flex-shrink-0" />
-                                {!isCollapsed && (
-                                  <span className="truncate">{route.title}</span>
-                                )}
-                                {!isCollapsed && route.allowedRoles && (
-                                  <Badge variant="outline" className="ml-auto text-xs">
-                                    {route.allowedRoles.includes('CREATOR') ? '👑' :
-                                     route.allowedRoles.includes('ADMIN') ? '⚙️' : '👤'}
-                                  </Badge>
-                                )}
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
-          ))}
+        {/* Menu direto sem categorias */}
+        <div className="space-y-1">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                {flatMenuItems.map((route) => {
+                  const Icon = getIcon(route.icon || 'Home');
+                  return (
+                    <SidebarMenuItem key={route.path}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={route.path}
+                          end={route.path === "/"}
+                          className={getNavCls}
+                          title={route.description}
+                        >
+                          <Icon className="h-5 w-5 flex-shrink-0" />
+                          {!isCollapsed && (
+                            <span className="truncate">{route.title}</span>
+                          )}
+                          {!isCollapsed && route.allowedRoles && (
+                            <Badge variant="outline" className="ml-auto text-xs">
+                              {route.allowedRoles.includes('CREATOR') ? '👑' :
+                               route.allowedRoles.includes('ADMIN') ? '⚙️' : '👤'}
+                            </Badge>
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </div>
 
         {/* Quick Actions - apenas quando não colapsado */}
