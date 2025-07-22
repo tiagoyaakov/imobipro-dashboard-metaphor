@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut, Settings, UserCircle } from "lucide-react";
+import { Bell, Search, User, LogOut, Settings, UserCircle, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,7 +121,7 @@ const DashboardHeaderContent = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar-placeholder.svg" />
+                <AvatarImage src={user?.avatarUrl || "/avatar-placeholder.svg"} />
                 <AvatarFallback className="bg-imobipro-blue text-white text-sm">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -190,7 +190,7 @@ export const DashboardHeader = () => {
       <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-6 gap-4">
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
-            <Icons.Building2 className="w-5 h-5 text-white" />
+            <Building2 className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold text-foreground">ImobiPRO</h1>
         </div>
