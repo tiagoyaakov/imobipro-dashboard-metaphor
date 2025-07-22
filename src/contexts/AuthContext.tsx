@@ -350,6 +350,23 @@ export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   
   if (context === undefined) {
+    // Em produção e se estivermos em uma rota que deveria ter contexto, lançar erro
+    if (import.meta.env.PROD && window.location.pathname.startsWith('/auth/login')) {
+      console.warn('[AuthContext] Contexto não disponível na página de login, retornando estado padrão');
+      
+      // Retornar estado padrão para páginas de auth
+      return {
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+        login: async () => ({ success: false, error: 'Contexto não inicializado' }),
+        logout: () => {},
+        switchUser: () => {},
+        refreshUser: async () => {},
+        updateProfile: async () => ({ success: false, error: 'Contexto não inicializado' })
+      };
+    }
+    
     throw new Error(
       'useAuth deve ser usado dentro de um AuthProvider. ' +
       'Certifique-se de envolver seu componente com <AuthProvider>.'
@@ -364,23 +381,48 @@ export const useAuth = (): AuthContextType => {
 // -----------------------------------------------------------
 
 /**
- * Hook para gerenciar estado de login
+ * Hook para gerenciar login de usuário
+ * Independente do contexto de autenticação para funcionar em rotas públicas
  */
 export const useLogin = () => {
-  const { login, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const handleLogin = useCallback(async (data: LoginFormData) => {
     setError(null);
+    setIsLoading(true);
     
-    const result = await login(data.email, data.password);
-    
-    if (!result.success && result.error) {
-      setError(result.error);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        const errorMessage = mapSupabaseError(authError);
+        setError(errorMessage);
+        setIsLoading(false);
+        return { success: false, error: errorMessage };
+      }
+
+      if (authData?.user) {
+        // Invalidar queries para recarregar dados do usuário
+        await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+        setIsLoading(false);
+        return { success: true };
+      }
+
+      setError(AUTH_ERROR_MESSAGES.UNKNOWN_ERROR);
+      setIsLoading(false);
+      return { success: false, error: AUTH_ERROR_MESSAGES.UNKNOWN_ERROR };
+    } catch (error) {
+      const errorMessage = AUTH_ERROR_MESSAGES.UNKNOWN_ERROR;
+      setError(errorMessage);
+      setIsLoading(false);
+      return { success: false, error: errorMessage };
     }
-    
-    return result;
-  }, [login]);
+  }, [queryClient]);
 
   return {
     login: handleLogin,
