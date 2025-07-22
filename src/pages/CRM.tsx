@@ -22,11 +22,23 @@ import {
   AutomationBuilder 
 } from '@/components/crm';
 import { useCRMData } from '@/hooks/useCRMData';
-import { useAuthMock, AuthDebugPanel } from '@/contexts/AuthContextMock';
+import { useAuth } from '@/hooks/useAuth';
+import type { Contact, Deal, LeadScore } from '@/schemas/crm';
+
+// Tipos para os dados retornados pelos hooks
+interface ContactsResponse {
+  data: Contact[];
+  total: number;
+}
+
+interface DealsResponse {
+  data: Deal[];
+  total: number;
+}
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user } = useAuthMock();
+  const { user } = useAuth();
   
   // Hooks do CRM - usando a estrutura correta
   const { 
@@ -43,7 +55,7 @@ const CRM = () => {
   
   // Métricas resumidas
   const metrics = useMemo(() => {
-    if (!contactsData?.data || !leadScores || !dealsData?.data) {
+    if (!(contactsData as ContactsResponse)?.data || !leadScores || !(dealsData as DealsResponse)?.data) {
       return {
         totalContacts: 0,
         hotLeads: 0,
@@ -54,12 +66,12 @@ const CRM = () => {
       };
     }
     
-    const contactsArray = contactsData.data;
-    const dealsArray = dealsData.data;
+    const contactsArray = (contactsData as ContactsResponse).data;
+    const dealsArray = (dealsData as DealsResponse).data;
     
-    const hotLeads = leadScores.filter(score => score.score >= 80).length;
+    const hotLeads = (leadScores as LeadScore[]).filter(score => score.score >= 80).length;
     const avgScore = Math.round(
-      leadScores.reduce((sum, score) => sum + score.score, 0) / leadScores.length
+      (leadScores as LeadScore[]).reduce((sum: number, score: LeadScore) => sum + score.score, 0) / (leadScores as LeadScore[]).length
     );
     
     return {
@@ -95,13 +107,6 @@ const CRM = () => {
           </Button>
         </div>
       </div>
-      
-      {/* Debug Panel (apenas em desenvolvimento) */}
-      {user && (
-        <div className="mb-4">
-          <AuthDebugPanel />
-        </div>
-      )}
       
       {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -291,7 +296,7 @@ const CRM = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {contactsData?.data?.map((contact) => (
+                {(contactsData as ContactsResponse)?.data?.map((contact) => (
                   <LeadScoreCard 
                     key={contact.id} 
                     contact={contact}

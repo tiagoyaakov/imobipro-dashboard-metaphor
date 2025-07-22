@@ -20,9 +20,9 @@ export const authConfig = {
    * Configurações do Supabase
    */
   supabase: {
-    url: process.env.VITE_SUPABASE_URL,
-    anonKey: process.env.VITE_SUPABASE_ANON_KEY,
-    authRedirectUrl: process.env.VITE_SUPABASE_AUTH_REDIRECT_URL,
+    url: import.meta.env.VITE_SUPABASE_URL,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    authRedirectUrl: import.meta.env.VITE_SUPABASE_AUTH_REDIRECT_URL,
   },
 
   /**
@@ -185,7 +185,7 @@ export const getDevConfig = () => {
 /**
  * Log de debug (apenas em desenvolvimento)
  */
-export const debugLog = (message: string, ...args: any[]) => {
+export const debugLog = (message: string, ...args: unknown[]) => {
   if (authConfig.development.enableDebugLogs) {
     console.log(`[AUTH DEBUG] ${message}`, ...args);
   }
