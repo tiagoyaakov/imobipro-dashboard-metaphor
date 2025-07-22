@@ -312,8 +312,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw updateError;
       }
 
-      // Recarregar dados do usuário
+      // Recarregar dados do usuário de forma forçada
       await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+      await queryClient.refetchQueries({ queryKey: authKeys.user() });
 
       return { success: true };
     } catch (error: unknown) {
