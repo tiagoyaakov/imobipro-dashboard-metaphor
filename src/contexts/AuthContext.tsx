@@ -444,12 +444,13 @@ export const useSignup = () => {
     setError(null);
 
     try {
-      console.log('[DEBUG] Tentando signup com:', { 
+      console.log('[DEBUG] === TESTE DE SIGNUP SIMPLIFICADO ===');
+      console.log('[DEBUG] Tentando signup APENAS no Supabase Auth (sem tabela users):', { 
         email: email.trim().toLowerCase(), 
         metadata: metadata 
       });
 
-      // 1. Primeiro, fazer o signup no Supabase Auth
+      // VERSÃO SIMPLIFICADA - apenas signup no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: password,
@@ -462,14 +463,23 @@ export const useSignup = () => {
       });
 
       if (authError) {
-        console.error('[DEBUG] Erro no signup:', authError);
+        console.error('[DEBUG] Erro no signup básico do Supabase:', authError);
+        console.error('[DEBUG] Detalhes do erro:', {
+          message: authError.message,
+          status: authError.status,
+          code: authError.__isAuthError ? 'AUTH_ERROR' : 'UNKNOWN',
+        });
         const errorMessage = mapSupabaseError(authError);
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
 
-      console.log('[DEBUG] Signup no Auth bem-sucedido:', authData);
-
+      console.log('[DEBUG] ✅ Signup básico do Supabase funcionou!', authData);
+      
+      // COMENTANDO TEMPORARIAMENTE A LÓGICA COMPLEXA
+      console.log('[DEBUG] PULANDO inserção na tabela users para diagnóstico...');
+      
+      /*
       // 2. Se o signup foi bem-sucedido E há um usuário, 
       // inserir na tabela users (isso deve funcionar com as novas políticas RLS)
       if (authData?.user) {
@@ -532,11 +542,13 @@ export const useSignup = () => {
           console.log('[DEBUG] Usuário inserido na tabela users com sucesso:', userData);
         }
       }
+      */
 
+      console.log('[DEBUG] ✅ Retornando sucesso do signup simplificado');
       return { success: true, data: authData };
 
     } catch (error: unknown) {
-      console.error('[DEBUG] Erro geral no signup:', error);
+      console.error('[DEBUG] ❌ Erro geral no signup simplificado:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro inesperado durante o registro';
       setError(errorMessage);
       return { success: false, error: errorMessage };
