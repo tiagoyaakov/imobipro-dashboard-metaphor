@@ -13,7 +13,7 @@ interface UserStatsData {
   active: number;
   inactive: number;
   byRole: {
-    PROPRIETARIO: number;
+    DEV_MASTER: number;
     ADMIN: number;
     AGENT: number;
   };
@@ -86,10 +86,10 @@ export const UserStats: React.FC<UserStatsProps> = ({ stats, isLoading = false }
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Home className="h-3 w-3 text-yellow-600" />
-              <span className="text-xs font-medium">Proprietário</span>
+              <span className="text-xs font-medium">Dev Master</span>
             </div>
             <Badge variant="secondary" className="text-xs">
-              {stats.byRole.PROPRIETARIO}
+              {stats.byRole.DEV_MASTER}
             </Badge>
           </div>
           <div className="flex items-center justify-between">

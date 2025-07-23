@@ -19,6 +19,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 // Components específicos
 import { UserList } from '@/components/users/UserList';
 import { UserStats } from '@/components/users/UserStats';
+import { AddUserModal } from '@/components/users/AddUserModal';
 
 // -----------------------------------------------------------
 // Página Principal de Gestão de Usuários
@@ -29,10 +30,13 @@ export const Usuarios: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // Estado para controlar modal de adicionar usuário
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   // Hooks
   const { user: currentUser } = useAuth();
-  const { canManageUsers } = useUserPermissions();
+  const { canManageUsers, canCreateUsers } = useUserPermissions();
   const { data: users = [], isLoading, error } = useUsers();
   const stats = useUserStats();
 
@@ -127,12 +131,16 @@ export const Usuarios: React.FC = () => {
           </p>
         </div>
         
-        {/* Botão adicionar usuário (futuro) */}
-        <Button variant="outline" disabled>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Usuário
-          <Badge variant="secondary" className="ml-2">Em breve</Badge>
-        </Button>
+        {/* Botão adicionar usuário */}
+        {canCreateUsers && (
+          <Button 
+            onClick={() => setIsAddUserModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Usuário
+          </Button>
+        )}
       </div>
 
       {/* Estatísticas */}
@@ -174,7 +182,7 @@ export const Usuarios: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as funções</SelectItem>
-                <SelectItem value="PROPRIETARIO">Proprietário</SelectItem>
+                <SelectItem value="DEV_MASTER">Dev Master</SelectItem>
                 <SelectItem value="ADMIN">Administrador</SelectItem>
                 <SelectItem value="AGENT">Corretor</SelectItem>
               </SelectContent>
@@ -255,6 +263,16 @@ export const Usuarios: React.FC = () => {
           do sistema para fins de segurança.
         </AlertDescription>
       </Alert>
+
+      {/* Modal para adicionar usuário */}
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onSuccess={() => {
+          // O modal será fechado automaticamente pelo callback onSuccess
+          // A lista será atualizada automaticamente pela invalidação do cache
+        }}
+      />
     </div>
   );
 };
