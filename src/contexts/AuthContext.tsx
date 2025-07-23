@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { User } from '../schemas/crm';
 import { authKeys, AUTH_ERROR_MESSAGES, LoginFormData } from '../schemas/auth';
+import '../utils/authDebug'; // Importar debug helper
 
 // -----------------------------------------------------------
 // Tipos do contexto de autenticação
