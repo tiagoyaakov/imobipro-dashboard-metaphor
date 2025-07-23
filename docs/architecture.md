@@ -658,3 +658,77 @@ O projeto está completamente configurado e otimizado para deploy na Vercel com 
 ---
 
 *Relatório gerado automaticamente através de análise de código estática - Janeiro 2025* 
+
+## 📊 **HIERARQUIA DE USUÁRIOS - ESTRUTURA ORGANIZACIONAL**
+
+### **🎯 HIERARQUIA ATUAL (Atualizada)**
+
+```mermaid
+graph TB
+    A[🏛️ ADMINISTRADOR] --> B[🏠 PROPRIETÁRIO]
+    A --> C[👤 CORRETOR]
+    B --> C
+    
+    subgraph "Permissões por Nível"
+        A1["ADMINISTRADOR<br/>• Acesso total ao sistema<br/>• Gestão de usuários<br/>• Configurações gerais<br/>• Todos os dados"]
+        B1["PROPRIETÁRIO<br/>• Visualiza próprias propriedades<br/>• Chats dos corretores<br/>• Métricas dos imóveis<br/>• SEM gestão de usuários"]
+        C1["CORRETOR<br/>• Apenas próprios dados<br/>• Próprias conversas<br/>• Próprias métricas<br/>• Sem acesso administrativo"]
+    end
+```
+
+### **🔐 CONTROLE DE ACESSO POR MÓDULO**
+
+| Módulo | ADMIN | PROPRIETÁRIO | CORRETOR |
+|--------|-------|-------------|----------|
+| **Dashboard** | ✅ Todos os dados | ✅ Suas propriedades | ✅ Seus dados |
+| **Propriedades** | ✅ Todas | ✅ Suas próprias | ✅ Atribuídas |
+| **Contatos** | ✅ Todos | ✅ De suas propriedades | ✅ Seus próprios |
+| **CRM** | ✅ Completo | ✅ Suas propriedades | ❌ Sem acesso |
+| **Relatórios** | ✅ Todos | ✅ Suas propriedades | ❌ Sem acesso |
+| **Usuários** | ✅ Gestão completa | ❌ Sem acesso | ❌ Sem acesso |
+| **Configurações** | ✅ Acesso total | ❌ Sem acesso | ❌ Sem acesso |
+| **Chats** | ✅ Todos | ✅ De suas propriedades | ✅ Seus próprios |
+
+### **⚙️ IMPLEMENTAÇÃO TÉCNICA**
+
+#### **Database Schema**
+```sql
+-- Enum atualizado
+ALTER TYPE user_role RENAME VALUE 'CREATOR' TO 'PROPRIETARIO';
+
+-- Hierarquia: ADMIN > PROPRIETARIO > AGENT
+```
+
+#### **RLS Policies**
+```sql
+-- Apenas ADMIN pode gerenciar usuários
+CREATE OR REPLACE FUNCTION public.is_admin_user()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE id = auth.uid() 
+    AND role = 'ADMIN'
+    AND is_active = true
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+```
+
+#### **Frontend Types**
+```typescript
+export interface User {
+  role: 'PROPRIETARIO' | 'ADMIN' | 'AGENT'; // Atualizado
+}
+
+export const useUserPermissions = () => {
+  return {
+    canManageUsers: user?.role === 'ADMIN', // Apenas ADMIN
+    isCurrentUserAdmin: user?.role === 'ADMIN',
+    isCurrentUserProprietario: user?.role === 'PROPRIETARIO',
+    isCurrentUserCorretor: user?.role === 'AGENT',
+  };
+};
+```
+
+--- 
