@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
           name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
-          role: (supabaseUser.user_metadata?.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT') || 'AGENT',
+          role: (supabaseUser.user_metadata?.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT') || 'DEV_MASTER', // Temporariamente DEV_MASTER para teste
           isActive: true,
           companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Company padrão
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,

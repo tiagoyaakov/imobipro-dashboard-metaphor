@@ -36,6 +36,35 @@ function AppSidebarContent() {
     return Icon;
   };
 
+  /**
+   * Definir ordem personalizada dos módulos
+   */
+  const getModuleOrder = (path: string): number => {
+    const orderMap: Record<string, number> = {
+      '/': 1,           // Dashboard
+      '/agenda': 2,     // Agenda
+      '/clientes': 3,   // Clientes
+      '/conexoes': 4,   // Conexões
+      '/contatos': 5,   // Contatos
+      '/lei-inquilino': 6, // Lei do Inquilino
+      '/pipeline': 7,   // Pipeline
+      '/propriedades': 8, // Propriedades
+      '/crm': 9,        // CRM Avançado
+      '/relatorios': 10, // Relatórios
+      '/usuarios': 11,  // Usuários
+      '/configuracoes': 12, // Configurações
+    };
+    return orderMap[path] || 999;
+  };
+
+  /**
+   * Verificar se o módulo tem acesso especial (ícone dourado)
+   */
+  const hasSpecialAccess = (path: string): boolean => {
+    const specialPaths = ['/crm', '/relatorios', '/usuarios', '/configuracoes'];
+    return specialPaths.includes(path);
+  };
+
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -44,25 +73,32 @@ function AppSidebarContent() {
         : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
     }`;
 
+  // Ordenar itens do menu conforme especificação
+  const orderedMenuItems = [...flatMenuItems].sort((a, b) => {
+    return getModuleOrder(a.path) - getModuleOrder(b.path);
+  });
+
   return (
     <Sidebar className={`${isCollapsed ? "w-20" : "w-64"} border-r border-border bg-sidebar`}>
       <SidebarContent className="p-4">
         {/* Logo */}
         <div className="mb-8 px-2">
           {!isCollapsed ? (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
-                <Icons.Building2 className="w-5 h-5 text-white" />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
+                  <Icons.Building2 className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
               </div>
-              <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
               {effectiveUser && (
-                <div className="ml-auto flex flex-col items-end gap-1">
+                <div className="ml-10">
                   <Badge variant="outline" className="text-xs">
                     {effectiveUser.role === 'DEV_MASTER' ? 'Dev Master' : 
                      effectiveUser.role === 'ADMIN' ? 'Admin' : 'Corretor'}
                   </Badge>
                   {isImpersonating && (
-                    <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
+                    <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 ml-1">
                       Impersonando
                     </Badge>
                   )}
@@ -81,8 +117,10 @@ function AppSidebarContent() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
-                {flatMenuItems.map((route) => {
+                {orderedMenuItems.map((route) => {
                   const Icon = getIcon(route.icon || 'Home');
+                  const isSpecialAccess = hasSpecialAccess(route.path);
+                  
                   return (
                     <SidebarMenuItem key={route.path}>
                       <SidebarMenuButton asChild>
@@ -92,15 +130,13 @@ function AppSidebarContent() {
                           className={getNavCls}
                           title={route.description}
                         >
-                          <Icon className="h-5 w-5 flex-shrink-0" />
+                          <Icon 
+                            className={`h-5 w-5 flex-shrink-0 ${
+                              isSpecialAccess ? 'text-yellow-500' : ''
+                            }`} 
+                          />
                           {!isCollapsed && (
                             <span className="truncate">{route.title}</span>
-                          )}
-                          {!isCollapsed && route.allowedRoles && (
-                            <Badge variant="outline" className="ml-auto text-xs">
-                              {route.allowedRoles.includes('DEV_MASTER') ? '👑' :
-                               route.allowedRoles.includes('ADMIN') ? '⚙️' : '👤'}
-                            </Badge>
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -140,11 +176,13 @@ export function AppSidebar() {
     return (
       <div className="w-64 border-r border-border bg-sidebar">
         <div className="p-4">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
-              <Icons.Building2 className="w-5 h-5 text-white" />
+          <div className="flex flex-col gap-1 mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
+                <Icons.Building2 className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
             </div>
-            <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
           </div>
           
           <div className="text-sm text-muted-foreground">
