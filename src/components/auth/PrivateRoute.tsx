@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffectiveUser } from '@/hooks/useImpersonation';
 import { AuthInitializingSpinner, AuthVerifyingSpinner } from './AuthLoadingSpinner';
 import type { UserRole } from '@/integrations/supabase/types';
 
@@ -25,8 +26,12 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
   redirectTo = '/auth/login',
   showLoading = true,
 }) => {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user: originalUser, isLoading, isAuthenticated } = useAuth();
+  const { effectiveUser } = useEffectiveUser();
   const location = useLocation();
+
+  // Usar usuário efetivo para verificações de permissão
+  const user = effectiveUser || originalUser;
 
   // Mostrar loading enquanto verifica autenticação
   if (isLoading && showLoading) {
@@ -44,7 +49,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
     );
   }
 
-  // Se tem roles específicas, verificar permissão
+  // Se tem roles específicas, verificar permissão (baseada no usuário efetivo)
   if (allowedRoles && allowedRoles.length > 0) {
     const hasPermission = allowedRoles.includes(user.role as UserRole);
     
@@ -174,7 +179,11 @@ export const AgentRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 // -----------------------------------------------------------
 
 export const usePermissions = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user: originalUser, isAuthenticated } = useAuth();
+  const { effectiveUser } = useEffectiveUser();
+
+  // Usar usuário efetivo para verificações de permissão
+  const user = effectiveUser || originalUser;
 
   const hasRole = (role: UserRole) => {
     return isAuthenticated && user?.role === role;

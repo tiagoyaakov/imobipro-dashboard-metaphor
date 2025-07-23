@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 
 // Hooks
 import { useMenuItems } from "@/hooks/useRoutes";
-import { usePermissions } from "@/components/auth/PrivateRoute";
+import { useEffectiveUser } from "@/hooks/useImpersonation";
 
 function AppSidebarContent() {
   const { state } = useSidebar();
@@ -25,13 +25,13 @@ function AppSidebarContent() {
 
   // Hooks para dados dinâmicos
   const { flatMenuItems, userRole } = useMenuItems();
-  const { user } = usePermissions();
+  const { effectiveUser, originalUser, isImpersonating } = useEffectiveUser();
 
   /**
    * Obter ícone do Lucide React
    */
   const getIcon = (iconName: string) => {
-    const IconsTyped = Icons as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
+    const IconsTyped = Icons as unknown as Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>>;
     const Icon = IconsTyped[iconName] || Icons.LayoutDashboard;
     return Icon;
   };
@@ -55,11 +55,18 @@ function AppSidebarContent() {
                 <Icons.Building2 className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
-              {user && (
-                <Badge variant="outline" className="ml-auto text-xs">
-                  {user.role === 'DEV_MASTER' ? 'Dev Master' : 
-                   user.role === 'ADMIN' ? 'Admin' : 'Corretor'}
-                </Badge>
+              {effectiveUser && (
+                <div className="ml-auto flex flex-col items-end gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    {effectiveUser.role === 'DEV_MASTER' ? 'Dev Master' : 
+                     effectiveUser.role === 'ADMIN' ? 'Admin' : 'Corretor'}
+                  </Badge>
+                  {isImpersonating && (
+                    <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
+                      Impersonando
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
           ) : (

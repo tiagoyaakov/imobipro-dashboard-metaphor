@@ -11,7 +11,7 @@ import {
   type UserRole,
   type RouteConfig 
 } from '@/config/routes';
-import { usePermissions } from '@/components/auth/PrivateRoute';
+import { useEffectiveUser } from '@/hooks/useImpersonation';
 
 // -----------------------------------------------------------
 // Hook para Gerenciamento de Rotas
@@ -19,7 +19,7 @@ import { usePermissions } from '@/components/auth/PrivateRoute';
 
 export const useRoutes = () => {
   const location = useLocation();
-  const { user, isAuthenticated } = usePermissions();
+  const { effectiveUser, originalUser, isImpersonating } = useEffectiveUser();
 
   /**
    * Rota atual
@@ -29,12 +29,17 @@ export const useRoutes = () => {
   }, [location.pathname]);
 
   /**
-   * Role do usuário atual
+   * Role do usuário efetivo (considerando impersonation)
    */
-  const userRole = user?.role as UserRole;
+  const userRole = effectiveUser?.role as UserRole;
 
   /**
-   * Rotas disponíveis para o usuário atual
+   * Verificar se está autenticado
+   */
+  const isAuthenticated = !!effectiveUser;
+
+  /**
+   * Rotas disponíveis para o usuário efetivo
    */
   const availableRoutes = useMemo(() => {
     if (!isAuthenticated || !userRole) return [];
@@ -42,7 +47,7 @@ export const useRoutes = () => {
   }, [isAuthenticated, userRole]);
 
   /**
-   * Rotas para o sidebar
+   * Rotas para o sidebar (baseadas no usuário efetivo)
    */
   const sidebarRoutes = useMemo(() => {
     if (!isAuthenticated || !userRole) return [];
@@ -143,9 +148,12 @@ export const useRoutes = () => {
     routeStats,
     menuCategories,
     
-    // Estado do usuário
+    // Estado do usuário (efetivo)
     userRole,
-    isAuthenticated
+    isAuthenticated,
+    effectiveUser,
+    originalUser,
+    isImpersonating
   };
 };
 
