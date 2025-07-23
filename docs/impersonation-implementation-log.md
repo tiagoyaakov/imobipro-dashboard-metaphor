@@ -13,11 +13,22 @@
 - **Causa:** Funções RPC de impersonation não existiam no banco Supabase
 - **Impacto:** Sistema de impersonation inacessível para DEV_MASTER
 
-## 🚨 Problema Adicional Resolvido
+## 🚨 Problemas Adicionais Resolvidos
 
+### 1. Conflito de Sobrecarga
 - **Erro:** `Could not choose the best candidate function between: public.start_user_impersonation(target_user_id => uuid), public.start_user_impersonation(target_user_id => uuid, session_token => text)`
 - **Causa:** Conflito de sobrecarga entre versão antiga e nova da função
 - **Solução:** Remoção da versão antiga que usava `gen_random_bytes`
+
+### 2. Erro de Tipos UUID
+- **Erro:** `operator does not exist: uuid = text`
+- **Causa:** Conversão desnecessária `user_id::text`
+- **Solução:** Comparação UUID direta em todas as funções
+
+### 3. Referência Ambígua de Coluna
+- **Erro:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Variável local e coluna da tabela com mesmo nome
+- **Solução:** Qualificação explícita com nome da tabela
 
 ## 🛠️ Solução Implementada
 
@@ -68,7 +79,9 @@ CREATE TABLE public.user_impersonations (
   - Não pode impersonar a si mesmo
   - Não pode ter impersonation ativa simultânea
 - **Retorno:** JSON com status e dados do usuário alvo
-- **Correção:** Comparação UUID direta
+- **Correções:**
+  - Comparação UUID direta
+  - Qualificação explícita de colunas: `user_impersonations.admin_user_id`
 
 #### `end_user_impersonation()`
 - **Propósito:** Finalizar impersonation ativa
@@ -76,13 +89,16 @@ CREATE TABLE public.user_impersonations (
   - Usuário deve ser DEV_MASTER
   - Deve existir impersonation ativa
 - **Retorno:** JSON com status da operação
+- **Correção:** Qualificação explícita de colunas
 
 #### `get_active_impersonation()`
 - **Propósito:** Verificar impersonation ativa
 - **Validações:**
   - Usuário deve ser DEV_MASTER
 - **Retorno:** JSON com dados da impersonation ativa ou `false`
-- **Correção:** Comparação UUID direta
+- **Correções:**
+  - Comparação UUID direta
+  - Qualificação explícita de colunas
 
 ## 🔧 Detalhes Técnicos
 
@@ -102,6 +118,7 @@ CREATE TABLE public.user_impersonations (
 - **PostgreSQL 17:** Compatível com versão do Supabase
 - **Extensões:** `uuid-ossp` habilitada automaticamente
 - **Tipos:** Comparação UUID direta (sem conversão para text)
+- **Qualificação:** Referências de coluna explícitas para evitar ambiguidade
 
 ## ✅ Validação da Implementação
 
@@ -113,7 +130,8 @@ CREATE TABLE public.user_impersonations (
 5. ✅ **Índices:** Índices de performance criados
 6. ✅ **Remoção de Conflito:** Versão antiga da função removida
 7. ✅ **Correção de Tipos:** Comparação UUID corrigida
-8. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
+8. ✅ **Correção de Ambiguidade:** Referências de coluna qualificadas
+9. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
 
 ### Verificação Final
 ```sql
@@ -153,6 +171,8 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 3. **`remove_old_impersonation_function`** - Remoção de conflito
 4. **`fix_impersonation_function_types`** - Correção de tipos UUID
 5. **`fix_all_impersonation_functions_uuid`** - Correção final de UUID
+6. **`fix_ambiguous_column_reference`** - Correção de ambiguidade
+7. **`fix_all_ambiguous_column_references`** - Correção completa
 
 ## 🐛 Problemas Resolvidos
 
@@ -164,6 +184,11 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 - **Problema:** `operator does not exist: uuid = text`
 - **Causa:** Conversão desnecessária `user_id::text`
 - **Solução:** Comparação UUID direta em todas as funções
+
+### 3. Referência Ambígua de Coluna
+- **Problema:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Variável local `admin_user_id` e coluna da tabela com mesmo nome
+- **Solução:** Qualificação explícita `user_impersonations.admin_user_id`
 
 ---
 
