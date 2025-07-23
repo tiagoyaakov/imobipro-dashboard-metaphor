@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Mail, Lock, User, Loader2, Building } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Componentes UI
@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks e schemas
 import { useSignup } from '@/hooks/useAuth';
@@ -49,7 +48,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'AGENT',
     },
   });
 
@@ -61,7 +59,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     
     const result = await signup(data.email, data.password, {
       name: data.name,
-      role: data.role,
+      role: 'AGENT', // Valor padrão definido pelo sistema
       companyId: data.companyId,
     });
     
@@ -145,29 +143,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
                       />
                     </div>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Campo Função */}
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Função</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione sua função" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="AGENT">Corretor</SelectItem>
-                      <SelectItem value="CREATOR">Proprietário</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

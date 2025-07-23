@@ -57,7 +57,6 @@ export const SignupFormSchema = z.object({
   password: PasswordSchema,
   confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
   companyId: z.string().uuid('ID da empresa inválido').optional(),
-  role: z.enum(['AGENT', 'ADMIN', 'CREATOR']).default('AGENT'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
   path: ['confirmPassword'],

@@ -631,6 +631,26 @@ jobs:
 
 ---
 
+## 📝 Histórico de Mudanças Recentes
+
+### **Janeiro 2025**
+
+#### **🔐 Melhoria na Autenticação - Remoção do Campo "Função"**
+- **Data:** Janeiro 2025
+- **Tipo:** Melhoria de UX/Processo
+- **Descrição:** Removido o campo "Função" do formulário de criação de contas (`/auth/signup`)
+- **Rationale:** O administrador do sistema agora define as funções dos usuários posteriormente via painel administrativo
+- **Impacto:** 
+  - Simplificação do processo de registro
+  - Todos os novos usuários são criados como 'AGENT' por padrão
+  - Reduz fricção no onboarding de novos usuários
+- **Arquivos Alterados:**
+  - `src/schemas/auth.ts` - Schema SignupFormSchema simplificado
+  - `src/components/auth/SignupForm.tsx` - Removido campo "Função" do UI
+  - Contexto de autenticação mantém valor padrão 'AGENT'
+
+---
+
 **✅ Deploy Status: READY FOR PRODUCTION**
 
 O projeto está completamente configurado e otimizado para deploy na Vercel com performance de nível enterprise e segurança robusta.
