@@ -49,10 +49,11 @@ function AppSidebarContent() {
       '/lei-inquilino': 6, // Lei do Inquilino
       '/pipeline': 7,   // Pipeline
       '/propriedades': 8, // Propriedades
-      '/crm': 9,        // CRM Avançado
-      '/relatorios': 10, // Relatórios
-      '/usuarios': 11,  // Usuários
-      '/configuracoes': 12, // Configurações
+      '/chats': 9,      // Chats
+      '/crm': 10,       // CRM Avançado
+      '/relatorios': 11, // Relatórios
+      '/usuarios': 12,  // Usuários
+      '/configuracoes': 13, // Configurações
     };
     return orderMap[path] || 999;
   };
@@ -89,7 +90,13 @@ function AppSidebarContent() {
                 <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
                   <Icons.Building2 className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
+                <NavLink 
+                  to="/" 
+                  className="text-xl font-bold text-sidebar-foreground hover:text-imobipro-blue transition-colors cursor-pointer"
+                  title="Ir para Dashboard"
+                >
+                  ImobiPRO
+                </NavLink>
               </div>
               {effectiveUser && (
                 <div className="ml-10">
@@ -106,9 +113,13 @@ function AppSidebarContent() {
               )}
             </div>
           ) : (
-            <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center mx-auto">
+            <NavLink 
+              to="/" 
+              className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center mx-auto hover:from-imobipro-blue-dark hover:to-imobipro-blue transition-all cursor-pointer"
+              title="Ir para Dashboard"
+            >
               <Icons.Building2 className="w-5 h-5 text-white" />
-            </div>
+            </NavLink>
           )}
         </div>
 
@@ -181,7 +192,13 @@ export function AppSidebar() {
               <div className="w-8 h-8 bg-gradient-to-r from-imobipro-blue to-imobipro-blue-dark rounded-lg flex items-center justify-center">
                 <Icons.Building2 className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
+              <NavLink 
+                to="/" 
+                className="text-xl font-bold text-sidebar-foreground hover:text-imobipro-blue transition-colors cursor-pointer"
+                title="Ir para Dashboard"
+              >
+                ImobiPRO
+              </NavLink>
             </div>
           </div>
           
