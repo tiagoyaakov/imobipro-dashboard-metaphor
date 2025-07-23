@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Crown,
+  Home,
   Shield,
   User,
   UserCheck,
@@ -66,7 +66,7 @@ interface UserActionDialogState {
   isOpen: boolean;
   type: 'role' | 'status' | null;
   user: UserType | null;
-  newRole?: 'CREATOR' | 'ADMIN' | 'AGENT';
+  newRole?: 'PROPRIETARIO' | 'ADMIN' | 'AGENT';
   newStatus?: boolean;
   reason?: string;
 }
@@ -91,8 +91,8 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter ícone da função
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'CREATOR':
-        return <Crown className="h-4 w-4 text-yellow-600" />;
+      case 'PROPRIETARIO':
+        return <Home className="h-4 w-4 text-yellow-600" />;
       case 'ADMIN':
         return <Shield className="h-4 w-4 text-blue-600" />;
       default:
@@ -103,8 +103,8 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter texto da função
   const getRoleText = (role: string) => {
     switch (role) {
-      case 'CREATOR':
-        return 'Criador';
+      case 'PROPRIETARIO':
+        return 'Proprietário';
       case 'ADMIN':
         return 'Administrador';
       default:
@@ -115,7 +115,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter cor do badge da função
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'CREATOR':
+      case 'PROPRIETARIO':
         return 'default' as const;
       case 'ADMIN':
         return 'secondary' as const;
@@ -186,7 +186,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Verificar se usuário pode alterar função
   const canChangeRole = (targetUser: UserType) => {
     if (targetUser.id === currentUserId) return false;
-    if (targetUser.role === 'CREATOR' && !permissions.canPromoteToCreator) return false;
+    // Apenas admin pode alterar qualquer função
     return permissions.canManageUsers;
   };
 
@@ -196,7 +196,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
     return permissions.canManageUsers;
   };
 
-  const isLoading = updateRoleMutation.isLoading || toggleStatusMutation.isLoading;
+  const isLoading = updateRoleMutation.isPending || toggleStatusMutation.isPending;
 
   return (
     <>
@@ -341,7 +341,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                 <Label>Nova Função</Label>
                 <Select
                   value={dialogState.newRole}
-                  onValueChange={(value: 'CREATOR' | 'ADMIN' | 'AGENT') => {
+                  onValueChange={(value: 'PROPRIETARIO' | 'ADMIN' | 'AGENT') => {
                     setDialogState(prev => ({ ...prev, newRole: value }));
                   }}
                 >
@@ -351,8 +351,8 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                   <SelectContent>
                     <SelectItem value="AGENT">Corretor</SelectItem>
                     <SelectItem value="ADMIN">Administrador</SelectItem>
-                    {permissions.canPromoteToCreator && (
-                      <SelectItem value="CREATOR">Criador</SelectItem>
+                    {permissions.canPromoteToProprietario && (
+                      <SelectItem value="PROPRIETARIO">Proprietário</SelectItem>
                     )}
                   </SelectContent>
                 </Select>

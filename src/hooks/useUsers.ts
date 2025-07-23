@@ -11,7 +11,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'CREATOR' | 'ADMIN' | 'AGENT';
+  role: 'PROPRIETARIO' | 'ADMIN' | 'AGENT';
   is_active: boolean;
   company_id: string;
   avatar_url?: string;
@@ -26,7 +26,7 @@ export interface User {
 
 export interface UpdateUserRoleParams {
   userId: string;
-  newRole: 'CREATOR' | 'ADMIN' | 'AGENT';
+  newRole: 'PROPRIETARIO' | 'ADMIN' | 'AGENT';
   reason?: string;
 }
 
@@ -43,45 +43,45 @@ export interface ToggleUserStatusParams {
 export const useUsers = () => {
   const { user: currentUser } = useAuth();
   
-  return useQuery({
-    queryKey: ['users', 'admin-management'],
-    queryFn: async (): Promise<User[]> => {
-      // Verificar se usuário atual tem permissão
-      if (!currentUser || !['ADMIN', 'CREATOR'].includes(currentUser.role)) {
-        throw new Error('Acesso negado. Apenas administradores podem visualizar usuários.');
-      }
+      return useQuery({
+      queryKey: ['users', 'admin-management'],
+      queryFn: async (): Promise<User[]> => {
+        // Verificar se usuário atual tem permissão (apenas ADMIN)
+        if (!currentUser || currentUser.role !== 'ADMIN') {
+          throw new Error('Acesso negado. Apenas administradores podem visualizar usuários.');
+        }
 
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          name,
-          role,
-          is_active,
-          company_id,
-          avatar_url,
-          telefone,
-          created_at,
-          updated_at,
-          company:companies(id, name)
-        `)
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('users')
+          .select(`
+            id,
+            email,
+            name,
+            role,
+            is_active,
+            company_id,
+            avatar_url,
+            telefone,
+            created_at,
+            updated_at,
+            company:companies(id, name)
+          `)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ [useUsers] Erro ao buscar usuários:', error);
-        throw new Error('Erro ao carregar lista de usuários');
-      }
+        if (error) {
+          console.error('❌ [useUsers] Erro ao buscar usuários:', error);
+          throw new Error('Erro ao carregar lista de usuários');
+        }
 
-      console.log('✅ [useUsers] Usuários carregados:', data?.length || 0);
-      return data || [];
-    },
-    enabled: !!currentUser && ['ADMIN', 'CREATOR'].includes(currentUser.role),
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    cacheTime: 5 * 60 * 1000, // 5 minutos
-    retry: 2,
-    retryDelay: 1000,
-  });
+        console.log('✅ [useUsers] Usuários carregados:', data?.length || 0);
+        return data || [];
+      },
+      enabled: !!currentUser && currentUser.role === 'ADMIN',
+      staleTime: 2 * 60 * 1000, // 2 minutos
+      gcTime: 5 * 60 * 1000, // 5 minutos (substituindo cacheTime)
+      retry: 2,
+      retryDelay: 1000,
+    });
 };
 
 // -----------------------------------------------------------
@@ -94,8 +94,8 @@ export const useUpdateUserRole = () => {
 
   return useMutation({
     mutationFn: async ({ userId, newRole, reason }: UpdateUserRoleParams) => {
-      // Verificar permissões no frontend
-      if (!currentUser || !['ADMIN', 'CREATOR'].includes(currentUser.role)) {
+      // Verificar permissões no frontend (apenas ADMIN)
+      if (!currentUser || currentUser.role !== 'ADMIN') {
         throw new Error('Acesso negado');
       }
 
@@ -156,8 +156,8 @@ export const useToggleUserStatus = () => {
 
   return useMutation({
     mutationFn: async ({ userId, newStatus, reason }: ToggleUserStatusParams) => {
-      // Verificar permissões no frontend
-      if (!currentUser || !['ADMIN', 'CREATOR'].includes(currentUser.role)) {
+      // Verificar permissões no frontend (apenas ADMIN)
+      if (!currentUser || currentUser.role !== 'ADMIN') {
         throw new Error('Acesso negado');
       }
 
@@ -217,10 +217,12 @@ export const useUserPermissions = () => {
   const { user } = useAuth();
 
   return {
-    canManageUsers: user?.role === 'ADMIN' || user?.role === 'CREATOR',
-    canPromoteToAdmin: user?.role === 'CREATOR',
-    canPromoteToCreator: false, // Apenas o sistema pode criar CREATOR
-    isCurrentUserAdmin: user?.role === 'ADMIN' || user?.role === 'CREATOR',
+    canManageUsers: user?.role === 'ADMIN', // Apenas ADMIN pode gerenciar usuários
+    canPromoteToAdmin: user?.role === 'ADMIN', // Apenas ADMIN pode promover
+    canPromoteToProprietario: user?.role === 'ADMIN', // Apenas ADMIN pode definir proprietários
+    isCurrentUserAdmin: user?.role === 'ADMIN',
+    isCurrentUserProprietario: user?.role === 'PROPRIETARIO',
+    isCurrentUserCorretor: user?.role === 'AGENT',
     currentUserId: user?.id,
   };
 };
@@ -237,7 +239,7 @@ export const useUserStats = () => {
     active: users.filter(u => u.is_active).length,
     inactive: users.filter(u => !u.is_active).length,
     byRole: {
-      CREATOR: users.filter(u => u.role === 'CREATOR').length,
+      PROPRIETARIO: users.filter(u => u.role === 'PROPRIETARIO').length,
       ADMIN: users.filter(u => u.role === 'ADMIN').length,
       AGENT: users.filter(u => u.role === 'AGENT').length,
     },

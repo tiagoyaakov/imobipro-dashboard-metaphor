@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Enums baseados no schema Prisma
 // -----------------------------------------------------------
 
-export const UserRoleSchema = z.enum(['CREATOR', 'ADMIN', 'AGENT']);
+export const UserRoleSchema = z.enum(['PROPRIETARIO', 'ADMIN', 'AGENT']);
 
 export const ContactCategorySchema = z.enum(['CLIENT', 'LEAD', 'PARTNER']);
 

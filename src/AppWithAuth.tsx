@@ -247,21 +247,21 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* CRM - Acesso para Admin e Creator */}
+              {/* CRM - Acesso para Admin e Proprietário */}
               <Route 
                 path="crm" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'CREATOR']}>
+                  <ProtectedRoute allowedRoles={['ADMIN', 'PROPRIETARIO']}>
                     <CRM />
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Relatórios - Acesso para Admin e Creator */}
+              {/* Relatórios - Acesso para Admin e Proprietário */}
               <Route 
                 path="relatorios" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'CREATOR']}>
+                  <ProtectedRoute allowedRoles={['ADMIN', 'PROPRIETARIO']}>
                     <Relatorios />
                   </ProtectedRoute>
                 } 
@@ -277,11 +277,11 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* Usuários - Apenas Creator e Admin */}
+              {/* Usuários - Apenas Admin */}
               <Route 
                 path="usuarios" 
                 element={
-                  <ProtectedRoute allowedRoles={['CREATOR', 'ADMIN']}>
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
                     <Usuarios />
                   </ProtectedRoute>
                 } 
@@ -327,11 +327,11 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* Configurações - Apenas Creator e Admin */}
+              {/* Configurações - Apenas Admin */}
               <Route 
                 path="configuracoes" 
                 element={
-                  <ProtectedRoute allowedRoles={['CREATOR', 'ADMIN']}>
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
                     <Configuracoes />
                   </ProtectedRoute>
                 } 

@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 // Components específicos
 import { UserList } from '@/components/users/UserList';
 import { UserStats } from '@/components/users/UserStats';
-import { UserFilters } from '@/components/users/UserFilters';
 
 // -----------------------------------------------------------
 // Página Principal de Gestão de Usuários
@@ -175,7 +174,7 @@ export const Usuarios: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as funções</SelectItem>
-                <SelectItem value="CREATOR">Criador</SelectItem>
+                <SelectItem value="PROPRIETARIO">Proprietário</SelectItem>
                 <SelectItem value="ADMIN">Administrador</SelectItem>
                 <SelectItem value="AGENT">Corretor</SelectItem>
               </SelectContent>
