@@ -35,6 +35,16 @@
 - **Causa:** Existiam duas versões da função `end_user_impersonation`
 - **Solução:** Remoção da versão antiga com parâmetro `session_token`
 
+### 5. Função get_effective_user_id
+- **Erro:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Função `get_effective_user_id` tinha referência ambígua
+- **Solução:** Qualificação explícita `user_impersonations.admin_user_id`
+
+### 6. Policy RLS Ambígua
+- **Erro:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Policy `admin_can_manage_impersonations` tinha referência ambígua
+- **Solução:** Remoção da policy problemática
+
 ## 🛠️ Solução Implementada
 
 ### 1. Estrutura do Banco de Dados
@@ -54,10 +64,11 @@ CREATE TABLE public.user_impersonations (
 );
 ```
 
-#### Políticas RLS
-- **SELECT:** Usuários podem visualizar próprias impersonations
-- **INSERT:** Usuários podem inserir próprias impersonations  
-- **UPDATE:** Usuários podem atualizar próprias impersonations
+#### Políticas RLS (Corrigidas)
+- **SELECT:** `admin_user_id = auth.uid()` (qualificação implícita)
+- **INSERT:** `admin_user_id = auth.uid()` (qualificação implícita)
+- **UPDATE:** `admin_user_id = auth.uid()` (qualificação implícita)
+- **Removida:** Policy `admin_can_manage_impersonations` (causava ambiguidade)
 
 #### Índices de Performance
 - `idx_user_impersonations_active` - Busca por impersonations ativas
@@ -108,6 +119,11 @@ CREATE TABLE public.user_impersonations (
   - Comparação UUID direta
   - Qualificação explícita de colunas
 
+#### `get_effective_user_id()`
+- **Propósito:** Obter ID do usuário efetivo (impersonado ou atual)
+- **Retorno:** UUID do usuário efetivo
+- **Correção:** Qualificação explícita `user_impersonations.admin_user_id`
+
 ## 🔧 Detalhes Técnicos
 
 ### Segurança
@@ -128,27 +144,30 @@ CREATE TABLE public.user_impersonations (
 - **Tipos:** Comparação UUID direta (sem conversão para text)
 - **Qualificação:** Referências de coluna explícitas para evitar ambiguidade
 - **Sobrecarga:** Apenas uma versão de cada função para evitar conflitos
+- **Policies:** Qualificação implícita em policies RLS
 
 ## ✅ Validação da Implementação
 
 ### Testes Realizados
 1. ✅ **Criação da Tabela:** `user_impersonations` criada com sucesso
 2. ✅ **Políticas RLS:** Todas as políticas aplicadas corretamente
-3. ✅ **Funções RPC:** Todas as 5 funções criadas e funcionais
+3. ✅ **Funções RPC:** Todas as 6 funções criadas e funcionais
 4. ✅ **Geração de Token:** `generate_session_token()` testada com sucesso
 5. ✅ **Índices:** Índices de performance criados
 6. ✅ **Remoção de Conflito:** Versão antiga da função removida
 7. ✅ **Correção de Tipos:** Comparação UUID corrigida
 8. ✅ **Correção de Ambiguidade:** Referências de coluna qualificadas
 9. ✅ **Remoção de Múltiplas Versões:** Apenas uma versão de cada função
-10. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
+10. ✅ **Correção de get_effective_user_id:** Qualificação explícita
+11. ✅ **Correção de Policy RLS:** Remoção de policy ambígua
+12. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
 
 ### Verificação Final
 ```sql
 -- Apenas uma versão de cada função existe
 SELECT proname, COUNT(*) as versions
 FROM pg_proc 
-WHERE proname IN ('start_user_impersonation', 'end_user_impersonation', 'get_active_impersonation')
+WHERE proname IN ('start_user_impersonation', 'end_user_impersonation', 'get_active_impersonation', 'get_effective_user_id')
 GROUP BY proname;
 -- Resultado: 1 versão de cada função ✅
 
@@ -185,6 +204,8 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 6. **`fix_ambiguous_column_reference`** - Correção de ambiguidade
 7. **`fix_all_ambiguous_column_references`** - Correção completa
 8. **`remove_old_end_impersonation_function`** - Remoção de versão antiga
+9. **`fix_get_effective_user_id_ambiguous`** - Correção de get_effective_user_id
+10. **`fix_rls_policy_ambiguous`** - Correção de policy RLS
 
 ## 🐛 Problemas Resolvidos
 
@@ -206,6 +227,16 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 - **Problema:** Duas versões da função `end_user_impersonation`
 - **Causa:** Versão antiga com parâmetro `session_token` causava ambiguidade
 - **Solução:** Remoção da versão antiga, mantendo apenas a versão sem parâmetros
+
+### 5. Função get_effective_user_id
+- **Problema:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Função tinha referência ambígua na query
+- **Solução:** Qualificação explícita `user_impersonations.admin_user_id`
+
+### 6. Policy RLS Ambígua
+- **Problema:** `column reference "admin_user_id" is ambiguous`
+- **Causa:** Policy `admin_can_manage_impersonations` tinha referência ambígua
+- **Solução:** Remoção da policy problemática
 
 ---
 
