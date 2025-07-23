@@ -30,6 +30,11 @@
 - **Causa:** Variável local e coluna da tabela com mesmo nome
 - **Solução:** Qualificação explícita com nome da tabela
 
+### 4. Múltiplas Versões de Funções
+- **Erro:** `column reference "admin_user_id" is ambiguous` (persistente)
+- **Causa:** Existiam duas versões da função `end_user_impersonation`
+- **Solução:** Remoção da versão antiga com parâmetro `session_token`
+
 ## 🛠️ Solução Implementada
 
 ### 1. Estrutura do Banco de Dados
@@ -85,11 +90,14 @@ CREATE TABLE public.user_impersonations (
 
 #### `end_user_impersonation()`
 - **Propósito:** Finalizar impersonation ativa
+- **Parâmetros:** Nenhum (versão simplificada)
 - **Validações:**
   - Usuário deve ser DEV_MASTER
   - Deve existir impersonation ativa
 - **Retorno:** JSON com status da operação
-- **Correção:** Qualificação explícita de colunas
+- **Correções:**
+  - Qualificação explícita de colunas
+  - Remoção de versão antiga com parâmetro `session_token`
 
 #### `get_active_impersonation()`
 - **Propósito:** Verificar impersonation ativa
@@ -119,6 +127,7 @@ CREATE TABLE public.user_impersonations (
 - **Extensões:** `uuid-ossp` habilitada automaticamente
 - **Tipos:** Comparação UUID direta (sem conversão para text)
 - **Qualificação:** Referências de coluna explícitas para evitar ambiguidade
+- **Sobrecarga:** Apenas uma versão de cada função para evitar conflitos
 
 ## ✅ Validação da Implementação
 
@@ -131,15 +140,17 @@ CREATE TABLE public.user_impersonations (
 6. ✅ **Remoção de Conflito:** Versão antiga da função removida
 7. ✅ **Correção de Tipos:** Comparação UUID corrigida
 8. ✅ **Correção de Ambiguidade:** Referências de coluna qualificadas
-9. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
+9. ✅ **Remoção de Múltiplas Versões:** Apenas uma versão de cada função
+10. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
 
 ### Verificação Final
 ```sql
--- Apenas uma versão da função existe
-SELECT proname, proargtypes, proargnames
+-- Apenas uma versão de cada função existe
+SELECT proname, COUNT(*) as versions
 FROM pg_proc 
-WHERE proname = 'start_user_impersonation';
--- Resultado: 1 função encontrada ✅
+WHERE proname IN ('start_user_impersonation', 'end_user_impersonation', 'get_active_impersonation')
+GROUP BY proname;
+-- Resultado: 1 versão de cada função ✅
 
 -- Teste de funcionamento
 SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::UUID);
@@ -173,6 +184,7 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 5. **`fix_all_impersonation_functions_uuid`** - Correção final de UUID
 6. **`fix_ambiguous_column_reference`** - Correção de ambiguidade
 7. **`fix_all_ambiguous_column_references`** - Correção completa
+8. **`remove_old_end_impersonation_function`** - Remoção de versão antiga
 
 ## 🐛 Problemas Resolvidos
 
@@ -189,6 +201,11 @@ SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::U
 - **Problema:** `column reference "admin_user_id" is ambiguous`
 - **Causa:** Variável local `admin_user_id` e coluna da tabela com mesmo nome
 - **Solução:** Qualificação explícita `user_impersonations.admin_user_id`
+
+### 4. Múltiplas Versões de Funções
+- **Problema:** Duas versões da função `end_user_impersonation`
+- **Causa:** Versão antiga com parâmetro `session_token` causava ambiguidade
+- **Solução:** Remoção da versão antiga, mantendo apenas a versão sem parâmetros
 
 ---
 
