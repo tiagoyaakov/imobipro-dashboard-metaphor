@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useEffectiveUser } from './useImpersonation';
 import { toast } from '@/hooks/use-toast';
 
 // -----------------------------------------------------------
@@ -214,16 +215,23 @@ export const useToggleUserStatus = () => {
 // -----------------------------------------------------------
 
 export const useUserPermissions = () => {
-  const { user } = useAuth();
+  const { user: originalUser } = useAuth();
+  const { effectiveUser } = useEffectiveUser();
+
+  // Para gestão de usuários, sempre usar o usuário original (admin)
+  // Para outras permissões, usar o usuário efetivo (impersonado se ativo)
+  const userForManagement = originalUser;
+  const userForPermissions = effectiveUser || originalUser;
 
   return {
-    canManageUsers: user?.role === 'ADMIN', // Apenas ADMIN pode gerenciar usuários
-    canPromoteToAdmin: user?.role === 'ADMIN', // Apenas ADMIN pode promover
-    canPromoteToProprietario: user?.role === 'ADMIN', // Apenas ADMIN pode definir proprietários
-    isCurrentUserAdmin: user?.role === 'ADMIN',
-    isCurrentUserProprietario: user?.role === 'PROPRIETARIO',
-    isCurrentUserCorretor: user?.role === 'AGENT',
-    currentUserId: user?.id,
+    canManageUsers: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode gerenciar usuários
+    canPromoteToAdmin: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode promover
+    canPromoteToProprietario: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode definir proprietários
+    isCurrentUserAdmin: userForPermissions?.role === 'ADMIN',
+    isCurrentUserProprietario: userForPermissions?.role === 'PROPRIETARIO',
+    isCurrentUserCorretor: userForPermissions?.role === 'AGENT',
+    currentUserId: userForPermissions?.id,
+    originalUserId: originalUser?.id, // ID do admin original
   };
 };
 

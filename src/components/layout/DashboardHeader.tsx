@@ -16,12 +16,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/components/auth/PrivateRoute";
 import { useRoutes } from "@/hooks/useRoutes";
+import { ImpersonationButton, useEffectiveUser } from "@/components/impersonation";
 
 const DashboardHeaderContent = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user: originalUser, logout } = useAuth();
+  const { effectiveUser, isImpersonating } = useEffectiveUser();
   const { canManageSettings } = usePermissions();
   const { breadcrumbs } = useRoutes();
+
+  // Usar o usuário efetivo para exibição, mas manter lógica baseada no original
+  const displayUser = effectiveUser || originalUser;
+
+  // Helper para obter avatar url compatível com ambos os tipos
+  const getAvatarUrl = (user: unknown) => {
+    const userObj = user as { avatar_url?: string; avatarUrl?: string };
+    return userObj?.avatar_url || userObj?.avatarUrl || "/avatar-placeholder.svg";
+  };
 
   /**
    * Fazer logout
@@ -56,7 +67,7 @@ const DashboardHeaderContent = () => {
    */
   const translateRole = (role: string) => {
     const roleMap: Record<string, string> = {
-      'CREATOR': 'Proprietário',
+      'PROPRIETARIO': 'Proprietário',
       'ADMIN': 'Administrador',
       'AGENT': 'Corretor',
     };
@@ -68,7 +79,7 @@ const DashboardHeaderContent = () => {
    */
   const getRoleVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
     const variantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      'CREATOR': 'default',
+      'PROPRIETARIO': 'default',
       'ADMIN': 'secondary',
       'AGENT': 'outline',
     };
@@ -117,22 +128,25 @@ const DashboardHeaderContent = () => {
           <span className="absolute -top-1 -right-1 h-3 w-3 bg-imobipro-danger rounded-full text-xs"></span>
         </Button>
 
+        {/* Botão de Impersonation - visível apenas para admins */}
+        <ImpersonationButton />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatarUrl || "/avatar-placeholder.svg"} />
+                <AvatarImage src={getAvatarUrl(displayUser)} />
                 <AvatarFallback className="bg-imobipro-blue text-white text-sm">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  {displayUser?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:flex flex-col items-start">
                 <span className="text-sm font-medium text-foreground">
-                  {user?.name || 'Usuário'}
+                  {displayUser?.name || 'Usuário'}
                 </span>
-                {user?.role && (
-                  <Badge variant={getRoleVariant(user.role)} className="text-xs h-4">
-                    {translateRole(user.role)}
+                {displayUser?.role && (
+                  <Badge variant={getRoleVariant(displayUser.role)} className="text-xs h-4">
+                    {translateRole(displayUser.role)}
                   </Badge>
                 )}
               </div>
@@ -141,14 +155,19 @@ const DashboardHeaderContent = () => {
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.name}</p>
+                <p className="text-sm font-medium leading-none">{displayUser?.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
+                  {displayUser?.email}
                 </p>
-                {user?.role && (
-                  <Badge variant={getRoleVariant(user.role)} className="w-fit text-xs mt-1">
-                    {translateRole(user.role)}
+                {displayUser?.role && (
+                  <Badge variant={getRoleVariant(displayUser.role)} className="w-fit text-xs mt-1">
+                    {translateRole(displayUser.role)}
                   </Badge>
+                )}
+                {isImpersonating && (
+                  <p className="text-xs text-orange-600 font-medium">
+                    🔍 Modo Teste Ativo
+                  </p>
                 )}
               </div>
             </DropdownMenuLabel>
