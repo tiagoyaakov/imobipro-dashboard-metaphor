@@ -62,6 +62,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!supabaseUser) return null;
       
       // Buscar dados customizados do usuário na tabela users (sem JOIN por enquanto)
+      console.log('🔐 [Auth] Buscando dados do usuário:', supabaseUser.id);
+      
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -78,9 +80,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', supabaseUser.id)
         .single();
 
+      console.log('🔐 [Auth] Resultado da query:', { data, error });
+
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar dados do usuário:', error);
-        return null;
+        
+        // Fallback: usar dados básicos do Supabase Auth
+        console.log('🔐 [Auth] Usando fallback com dados do Supabase Auth');
+        const fallbackUser: User = {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
+          role: (supabaseUser.user_metadata?.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT') || 'AGENT',
+          isActive: true,
+          companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Company padrão
+          avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+          createdAt: supabaseUser.created_at || new Date().toISOString(),
+          updatedAt: supabaseUser.updated_at || new Date().toISOString(),
+          company: null, // Sem dados da empresa no fallback
+        };
+        
+        return fallbackUser;
       }
 
       // Buscar dados da empresa separadamente (para evitar problemas de JOIN)
