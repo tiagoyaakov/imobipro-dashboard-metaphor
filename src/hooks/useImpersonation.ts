@@ -62,7 +62,9 @@ export const useImpersonation = () => {
         return { has_active_impersonation: false };
       }
 
-      const { data, error } = await supabase.rpc('get_active_impersonation');
+      const { data, error } = await supabase.rpc('get_active_impersonation', {
+        admin_user_id: currentUser.id,
+      });
 
       if (error) {
         console.error('❌ [useImpersonation] Erro ao verificar impersonation:', error);
@@ -101,6 +103,7 @@ export const useImpersonation = () => {
 
       const { data, error } = await supabase.rpc('start_user_impersonation', {
         target_user_id: targetUserId,
+        admin_user_id: currentUser.id,
       });
 
       if (error) {
@@ -151,7 +154,9 @@ export const useImpersonation = () => {
 
       console.log('🔄 [endImpersonation] Finalizando impersonation');
 
-      const { data, error } = await supabase.rpc('end_user_impersonation');
+      const { data, error } = await supabase.rpc('end_user_impersonation', {
+        admin_user_id: currentUser.id,
+      });
 
       if (error) {
         console.error('❌ [endImpersonation] Erro na função RPC:', error);
