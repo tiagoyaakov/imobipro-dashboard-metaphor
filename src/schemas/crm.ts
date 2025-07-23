@@ -42,6 +42,11 @@ export const ActivityTypeSchema = z.enum([
 // Schemas principais baseados no banco de dados
 // -----------------------------------------------------------
 
+export const CompanySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(2, 'Nome da empresa deve ter pelo menos 2 caracteres')
+});
+
 export const UserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
@@ -50,6 +55,7 @@ export const UserSchema = z.object({
   isActive: z.boolean().default(true),
   companyId: z.string().uuid(),
   avatarUrl: z.string().url().optional().nullable(),
+  company: CompanySchema.optional().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()
 });
@@ -210,6 +216,7 @@ export const MarketingAutomationFormSchema = z.object({
 // Tipos TypeScript inferidos
 // -----------------------------------------------------------
 
+export type Company = z.infer<typeof CompanySchema>;
 export type User = z.infer<typeof UserSchema>;
 export type Contact = z.infer<typeof ContactSchema>;
 export type Deal = z.infer<typeof DealSchema>;

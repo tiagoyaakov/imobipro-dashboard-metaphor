@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     queryFn: async (): Promise<User | null> => {
       if (!supabaseUser) return null;
       
-      // Buscar dados customizados do usuário na tabela users
+      // Buscar dados customizados do usuário na tabela users (sem JOIN por enquanto)
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -72,7 +72,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           is_active,
           company_id,
           avatar_url,
-          company:companies(id, name),
           created_at,
           updated_at
         `)
@@ -82,6 +81,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar dados do usuário:', error);
         return null;
+      }
+
+      // Buscar dados da empresa separadamente (para evitar problemas de JOIN)
+      let companyData = null;
+      if (data.company_id) {
+        try {
+          const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('id, name')
+            .eq('id', data.company_id)
+            .single();
+          
+          if (!companyError && company) {
+            companyData = company;
+          }
+        } catch (companyErr) {
+          console.warn('🔐 [Auth] Erro ao buscar dados da empresa:', companyErr);
+        }
       }
 
       // Mapear dados do banco (snake_case) para objeto User (camelCase)
@@ -95,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatarUrl: data.avatar_url,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        company: companyData, // Dados da empresa buscados separadamente
       };
 
       return user;
