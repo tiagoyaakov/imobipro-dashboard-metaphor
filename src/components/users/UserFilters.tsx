@@ -72,7 +72,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
-              <SelectItem value="CREATOR">Criador</SelectItem>
+              <SelectItem value="DEV_MASTER">Dev Master</SelectItem>
               <SelectItem value="ADMIN">Administrador</SelectItem>
               <SelectItem value="AGENT">Corretor</SelectItem>
             </SelectContent>

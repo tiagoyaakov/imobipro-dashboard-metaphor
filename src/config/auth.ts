@@ -44,12 +44,17 @@ export const authConfig = {
    */
   development: {
     // Usuário mock padrão para desenvolvimento
-    defaultMockUser: {
-      id: 'dev-user-1',
-      email: 'admin@imobipro.com',
-      name: 'Administrador Dev',
-      role: 'CREATOR' as const,
-      companyId: 'dev-company-1',
+    defaultUser: {
+      id: 'mock-user-id',
+      email: 'dev@imobipro.com',
+      name: 'Desenvolvedor',
+      role: 'DEV_MASTER' as const,
+      is_active: true,
+      company_id: 'mock-company-id',
+      avatar_url: null,
+      telefone: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
     
     // Se true, mostra logs detalhados de autenticação
@@ -220,7 +225,7 @@ export const PROTECTED_ROUTES = {
 } as const;
 
 export const ROLE_PERMISSIONS = {
-  CREATOR: ['all'],
+  DEV_MASTER: ['all'],
   ADMIN: ['manage_users', 'view_reports', 'manage_crm', 'manage_settings'],
   AGENT: ['manage_properties', 'manage_contacts', 'view_pipeline', 'use_chat'],
 } as const;

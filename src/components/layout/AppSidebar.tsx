@@ -57,7 +57,7 @@ function AppSidebarContent() {
               <h1 className="text-xl font-bold text-sidebar-foreground">ImobiPRO</h1>
               {user && (
                 <Badge variant="outline" className="ml-auto text-xs">
-                  {user.role === 'CREATOR' ? 'Proprietário' : 
+                  {user.role === 'DEV_MASTER' ? 'Dev Master' : 
                    user.role === 'ADMIN' ? 'Admin' : 'Corretor'}
                 </Badge>
               )}
@@ -91,7 +91,7 @@ function AppSidebarContent() {
                           )}
                           {!isCollapsed && route.allowedRoles && (
                             <Badge variant="outline" className="ml-auto text-xs">
-                              {route.allowedRoles.includes('CREATOR') ? '👑' :
+                              {route.allowedRoles.includes('DEV_MASTER') ? '👑' :
                                route.allowedRoles.includes('ADMIN') ? '⚙️' : '👤'}
                             </Badge>
                           )}

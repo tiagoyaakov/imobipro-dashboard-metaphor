@@ -62,22 +62,47 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 interface RoleGuardProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  allowedRoles?: Array<'DEV_MASTER' | 'ADMIN' | 'AGENT'>;
 }
 
 export const CreatorOnly: React.FC<RoleGuardProps> = ({ children, fallback }) => (
-  <AuthGuard allowedRoles={['CREATOR']} fallback={fallback}>
+  <AuthGuard allowedRoles={['DEV_MASTER']} fallback={fallback}>
     {children}
   </AuthGuard>
 );
 
 export const AdminOnly: React.FC<RoleGuardProps> = ({ children, fallback }) => (
-  <AuthGuard allowedRoles={['ADMIN', 'CREATOR']} fallback={fallback}>
+  <AuthGuard allowedRoles={['ADMIN', 'DEV_MASTER']} fallback={fallback}>
     {children}
   </AuthGuard>
 );
 
 export const AgentOnly: React.FC<RoleGuardProps> = ({ children, fallback }) => (
-  <AuthGuard allowedRoles={['AGENT', 'ADMIN', 'CREATOR']} fallback={fallback}>
+  <AuthGuard allowedRoles={['AGENT', 'ADMIN', 'DEV_MASTER']} fallback={fallback}>
+    {children}
+  </AuthGuard>
+);
+
+export const DevMasterOnly: React.FC<RoleGuardProps> = ({ children, fallback }) => (
+  <AuthGuard allowedRoles={['DEV_MASTER']} fallback={fallback}>
+    {children}
+  </AuthGuard>
+);
+
+export const AdminOrDevMaster: React.FC<RoleGuardProps> = ({ children, fallback }) => (
+  <AuthGuard allowedRoles={['ADMIN', 'DEV_MASTER']} fallback={fallback}>
+    {children}
+  </AuthGuard>
+);
+
+export const AdminOrCreator: React.FC<RoleGuardProps> = ({ children, fallback }) => (
+  <AuthGuard allowedRoles={['ADMIN', 'DEV_MASTER']} fallback={fallback}>
+    {children}
+  </AuthGuard>
+);
+
+export const AuthenticatedOnly: React.FC<RoleGuardProps> = ({ children, fallback }) => (
+  <AuthGuard allowedRoles={['AGENT', 'ADMIN', 'DEV_MASTER']} fallback={fallback}>
     {children}
   </AuthGuard>
 );
@@ -101,19 +126,19 @@ export const FeatureGuard: React.FC<FeatureGuardProps> = ({
   fallback = null,
 }) => {
   // Mapa de features por role (pode ser expandido)
-  const { isCreator, isAdmin, isAgent } = usePermissions();
+  const { isDevMaster, isAdmin, isAgent } = usePermissions();
 
   const featureAccess: Record<string, boolean> = {
     // Features de administração
-    'user-management': isCreator || isAdmin,
-    'system-settings': isCreator || isAdmin,
-    'reports-advanced': isCreator || isAdmin,
-    'billing': isCreator,
+    'user-management': isDevMaster || isAdmin,
+    'system-settings': isDevMaster || isAdmin,
+    'reports-advanced': isDevMaster || isAdmin,
+    'billing': isDevMaster,
     
     // Features de agente
-    'lead-management': isAgent || isAdmin || isCreator,
-    'property-management': isAgent || isAdmin || isCreator,
-    'client-communication': isAgent || isAdmin || isCreator,
+    'lead-management': isAgent || isAdmin || isDevMaster,
+    'property-management': isAgent || isAdmin || isDevMaster,
+    'client-communication': isAgent || isAdmin || isDevMaster,
     
     // Features gerais
     'dashboard': true,
@@ -131,27 +156,27 @@ export const FeatureGuard: React.FC<FeatureGuardProps> = ({
 // -----------------------------------------------------------
 
 export const useFeatureAccess = () => {
-  const { isCreator, isAdmin, isAgent } = usePermissions();
+  const { isDevMaster, isAdmin, isAgent } = usePermissions();
 
   const hasFeature = (feature: string): boolean => {
     const featureAccess: Record<string, boolean> = {
       // Features de administração
-      'user-management': isCreator || isAdmin,
-      'system-settings': isCreator || isAdmin,
-      'reports-advanced': isCreator || isAdmin,
-      'billing': isCreator,
-      'company-settings': isCreator || isAdmin,
+      'user-management': isDevMaster || isAdmin,
+      'system-settings': isDevMaster || isAdmin,
+      'reports-advanced': isDevMaster || isAdmin,
+      'billing': isDevMaster,
+      'company-settings': isDevMaster || isAdmin,
       
       // Features de agente
-      'lead-management': isAgent || isAdmin || isCreator,
-      'property-management': isAgent || isAdmin || isCreator,
-      'client-communication': isAgent || isAdmin || isCreator,
-      'appointment-scheduling': isAgent || isAdmin || isCreator,
+      'lead-management': isAgent || isAdmin || isDevMaster,
+      'property-management': isAgent || isAdmin || isDevMaster,
+      'client-communication': isAgent || isAdmin || isDevMaster,
+      'appointment-scheduling': isAgent || isAdmin || isDevMaster,
       
       // Features de CRM
-      'crm-automation': isAdmin || isCreator,
-      'crm-analytics': isAdmin || isCreator,
-      'lead-scoring': isAdmin || isCreator,
+      'crm-automation': isAdmin || isDevMaster,
+      'crm-analytics': isAdmin || isDevMaster,
+      'lead-scoring': isAdmin || isDevMaster,
       
       // Features gerais
       'dashboard': true,
@@ -193,7 +218,7 @@ export const useFeatureAccess = () => {
 
 interface ConditionalMenuItemProps {
   /** Roles permitidas para ver o item */
-  allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>;
+  allowedRoles?: Array<'DEV_MASTER' | 'ADMIN' | 'AGENT'>;
   /** Feature necessária */
   requiredFeature?: string;
   /** Conteúdo do item de menu */

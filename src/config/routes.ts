@@ -2,7 +2,7 @@
 // Configuração de Rotas e Permissões
 // -----------------------------------------------------------
 
-export type UserRole = 'CREATOR' | 'ADMIN' | 'AGENT';
+export type UserRole = 'DEV_MASTER' | 'ADMIN' | 'AGENT';
 
 export interface RouteConfig {
   /** Caminho da rota */
@@ -98,26 +98,26 @@ export const routeConfigs: RouteConfig[] = [
     category: 'sales'
   },
 
-  // CRM Avançado - Apenas Admin e Creator
+  // CRM Avançado - Apenas Admin e DEV_MASTER
   {
     path: '/crm',
     name: 'crm',
     title: 'CRM Avançado',
     description: 'Gestão avançada de relacionamento',
-    allowedRoles: ['ADMIN', 'CREATOR'],
+    allowedRoles: ['ADMIN', 'DEV_MASTER'],
     showInSidebar: true,
     icon: 'Brain',
     category: 'advanced',
     requiredFeature: 'crm-automation'
   },
 
-  // Relatórios - Apenas Admin e Creator
+  // Relatórios - Apenas Admin e DEV_MASTER
   {
     path: '/relatorios',
     name: 'reports',
     title: 'Relatórios',
     description: 'Análises e relatórios',
-    allowedRoles: ['ADMIN', 'CREATOR'],
+    allowedRoles: ['ADMIN', 'DEV_MASTER'],
     showInSidebar: true,
     icon: 'BarChart3',
     category: 'analytics',
@@ -135,13 +135,13 @@ export const routeConfigs: RouteConfig[] = [
     category: 'integrations'
   },
 
-  // Gestão de Usuários - Apenas Creator e Admin
+  // Gestão de Usuários - Apenas DEV_MASTER e Admin
   {
     path: '/usuarios',
     name: 'users',
     title: 'Usuários',
     description: 'Gestão de usuários do sistema',
-    allowedRoles: ['CREATOR', 'ADMIN'],
+    allowedRoles: ['DEV_MASTER', 'ADMIN'],
     showInSidebar: true,
     icon: 'Users2',
     category: 'admin',
@@ -171,13 +171,13 @@ export const routeConfigs: RouteConfig[] = [
     category: 'legal'
   },
 
-  // Configurações - Apenas Creator e Admin
+  // Configurações - Apenas DEV_MASTER e Admin
   {
     path: '/configuracoes',
     name: 'settings',
     title: 'Configurações',
     description: 'Configurações do sistema',
-    allowedRoles: ['CREATOR', 'ADMIN'],
+    allowedRoles: ['DEV_MASTER', 'ADMIN'],
     showInSidebar: true,
     icon: 'Settings',
     category: 'admin',

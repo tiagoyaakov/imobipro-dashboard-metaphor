@@ -35,12 +35,11 @@ export {
 // Guards e Controles
 export { 
   AuthGuard,
-  CreatorOnly,
-  AdminOnly,
-  AgentOnly,
+  DevMasterOnly,
+  AdminOrDevMaster,
+  AuthenticatedOnly,
   FeatureGuard,
-  ConditionalMenuItem,
-  useFeatureAccess 
+  useFeatureAccess,
 } from './AuthGuard';
 
 // Componentes de UI

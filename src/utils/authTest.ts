@@ -79,7 +79,7 @@ export const simulateAuthFlow = async () => {
 export const testRoutePermissions = () => {
   console.group('🛡️ Teste de Permissões de Rotas');
   
-  const roles = ['CREATOR', 'ADMIN', 'AGENT'] as const;
+  const roles = ['DEV_MASTER', 'ADMIN', 'AGENT'] as const;
   const restrictedRoutes = ['/crm', '/relatorios', '/usuarios', '/configuracoes'];
   
   roles.forEach(role => {
@@ -92,11 +92,11 @@ export const testRoutePermissions = () => {
       switch (route) {
         case '/crm':
         case '/relatorios':
-          hasAccess = ['CREATOR', 'ADMIN'].includes(role);
+          hasAccess = ['DEV_MASTER', 'ADMIN'].includes(role);
           break;
         case '/usuarios':
         case '/configuracoes':
-          hasAccess = ['CREATOR', 'ADMIN'].includes(role);
+          hasAccess = ['DEV_MASTER', 'ADMIN'].includes(role);
           break;
         default:
           hasAccess = true;

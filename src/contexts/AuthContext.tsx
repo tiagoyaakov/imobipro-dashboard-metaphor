@@ -719,14 +719,14 @@ export const hasRole = (user: User | null, requiredRole: string): boolean => {
  * Verifica se o usuário tem permissão de administrador
  */
 export const isAdmin = (user: User | null): boolean => {
-  return hasRole(user, 'ADMIN') || hasRole(user, 'CREATOR');
+  return hasRole(user, 'ADMIN') || hasRole(user, 'DEV_MASTER');
 };
 
 /**
  * Verifica se o usuário é o criador do sistema
  */
-export const isCreator = (user: User | null): boolean => {
-  return hasRole(user, 'CREATOR');
+export const isDevMaster = (user: User | null): boolean => {
+  return hasRole(user, 'DEV_MASTER');
 };
 
 // -----------------------------------------------------------

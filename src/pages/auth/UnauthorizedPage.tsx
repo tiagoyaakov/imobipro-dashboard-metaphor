@@ -49,7 +49,7 @@ export const UnauthorizedPage: React.FC = () => {
    */
   const translateRole = (role: string) => {
     const roleMap: Record<string, string> = {
-      'CREATOR': 'Proprietário',
+      'DEV_MASTER': 'Dev Master',
       'ADMIN': 'Administrador',
       'AGENT': 'Corretor',
     };
@@ -61,7 +61,7 @@ export const UnauthorizedPage: React.FC = () => {
    */
   const getRoleVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
     const variantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      'CREATOR': 'default',
+      'DEV_MASTER': 'default',
       'ADMIN': 'secondary',
       'AGENT': 'outline',
     };
