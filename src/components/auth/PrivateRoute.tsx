@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthInitializingSpinner, AuthVerifyingSpinner } from './AuthLoadingSpinner';
+import type { UserRole } from '@/integrations/supabase/types';
 
 // -----------------------------------------------------------
 // Componente de Rota Privada
@@ -11,7 +12,7 @@ interface PrivateRouteProps {
   /** Componente a ser renderizado se autenticado */
   children: React.ReactNode;
   /** Roles permitidas (opcional - se não especificado, qualquer usuário autenticado pode acessar) */
-  allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>;
+  allowedRoles?: UserRole[];
   /** Rota para redirecionamento se não autenticado */
   redirectTo?: string;
   /** Se true, mostra loading enquanto verifica autenticação */
@@ -45,7 +46,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
 
   // Se tem roles específicas, verificar permissão
   if (allowedRoles && allowedRoles.length > 0) {
-    const hasPermission = allowedRoles.includes(user.role as any);
+    const hasPermission = allowedRoles.includes(user.role as UserRole);
     
     if (!hasPermission) {
       return (
@@ -108,7 +109,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
 // -----------------------------------------------------------
 
 interface WithAuthGuardOptions {
-  allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>;
+  allowedRoles?: UserRole[];
   redirectTo?: string;
   fallback?: React.ComponentType;
 }
@@ -151,19 +152,19 @@ export function withAuthGuard<P extends object>(
 // -----------------------------------------------------------
 
 export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <PrivateRoute allowedRoles={['ADMIN', 'CREATOR']}>
+  <PrivateRoute allowedRoles={['ADMIN', 'DEV_MASTER']}>
     {children}
   </PrivateRoute>
 );
 
-export const CreatorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <PrivateRoute allowedRoles={['CREATOR']}>
+export const DevMasterRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <PrivateRoute allowedRoles={['DEV_MASTER']}>
     {children}
   </PrivateRoute>
 );
 
 export const AgentRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <PrivateRoute allowedRoles={['AGENT', 'ADMIN', 'CREATOR']}>
+  <PrivateRoute allowedRoles={['AGENT', 'ADMIN', 'DEV_MASTER']}>
     {children}
   </PrivateRoute>
 );
@@ -175,18 +176,18 @@ export const AgentRoute: React.FC<{ children: React.ReactNode }> = ({ children }
 export const usePermissions = () => {
   const { user, isAuthenticated } = useAuth();
 
-  const hasRole = (role: 'CREATOR' | 'ADMIN' | 'AGENT') => {
+  const hasRole = (role: UserRole) => {
     return isAuthenticated && user?.role === role;
   };
 
-  const hasAnyRole = (roles: Array<'CREATOR' | 'ADMIN' | 'AGENT'>) => {
-    return isAuthenticated && user?.role && roles.includes(user.role as any);
+  const hasAnyRole = (roles: UserRole[]) => {
+    return isAuthenticated && user?.role && roles.includes(user.role as UserRole);
   };
 
-  const canAccess = (allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>) => {
+  const canAccess = (allowedRoles?: UserRole[]) => {
     if (!isAuthenticated || !user) return false;
     if (!allowedRoles || allowedRoles.length === 0) return true;
-    return allowedRoles.includes(user.role as any);
+    return allowedRoles.includes(user.role as UserRole);
   };
 
   return {
@@ -195,12 +196,12 @@ export const usePermissions = () => {
     hasRole,
     hasAnyRole,
     canAccess,
-    isCreator: hasRole('CREATOR'),
+    isDevMaster: hasRole('DEV_MASTER'),
     isAdmin: hasRole('ADMIN'),
     isAgent: hasRole('AGENT'),
-    canManageUsers: hasAnyRole(['CREATOR', 'ADMIN']),
-    canManageSettings: hasAnyRole(['CREATOR', 'ADMIN']),
-    canViewReports: hasAnyRole(['CREATOR', 'ADMIN']),
+    canManageUsers: hasAnyRole(['DEV_MASTER', 'ADMIN']),
+    canManageSettings: hasAnyRole(['DEV_MASTER', 'ADMIN']),
+    canViewReports: hasAnyRole(['DEV_MASTER', 'ADMIN']),
   };
 };
 

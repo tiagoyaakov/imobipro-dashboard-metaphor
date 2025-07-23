@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePermissions } from './PrivateRoute';
 import { AuthPermissionDenied } from './AuthErrorDisplay';
+import type { UserRole } from '@/integrations/supabase/types';
 
 // -----------------------------------------------------------
 // Componente de Guard de Autenticação
@@ -10,7 +11,7 @@ interface AuthGuardProps {
   /** Conteúdo a ser renderizado se autorizado */
   children: React.ReactNode;
   /** Roles permitidas */
-  allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>;
+  allowedRoles?: UserRole[];
   /** Comportamento quando não autorizado */
   fallback?: 'hide' | 'show-error' | React.ReactNode;
   /** Callback quando acesso negado */

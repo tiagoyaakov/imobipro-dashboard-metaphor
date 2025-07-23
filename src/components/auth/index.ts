@@ -26,7 +26,7 @@ export {
   PrivateRoute, 
   PublicRoute, 
   AdminRoute, 
-  CreatorRoute, 
+  DevMasterRoute, 
   AgentRoute,
   withAuthGuard,
   usePermissions 

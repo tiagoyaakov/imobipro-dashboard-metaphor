@@ -10,8 +10,14 @@ import { useAuthMock } from '../contexts/AuthContextMock';
 // -----------------------------------------------------------
 
 export const useAuth = () => {
-  // Por ora, sempre usar o modo mock até o real estar implementado
-  return useAuthMock();
+  const authMode = getAuthMode();
+  
+  // Usar o hook apropriado baseado na configuração
+  if (authMode === 'real') {
+    return useAuthReal();
+  } else {
+    return useAuthMock();
+  }
 };
 
 // -----------------------------------------------------------

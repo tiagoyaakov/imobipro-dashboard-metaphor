@@ -16,7 +16,7 @@ import {
   PrivateRoute, 
   PublicRoute, 
   AdminRoute, 
-  CreatorRoute 
+  DevMasterRoute 
 } from "@/components/auth";
 
 // Layout
@@ -100,7 +100,7 @@ const queryClient = new QueryClient({
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: Array<'CREATOR' | 'ADMIN' | 'AGENT'>;
+  allowedRoles?: Array<'DEV_MASTER' | 'ADMIN' | 'AGENT'>;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
@@ -247,21 +247,21 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* CRM - Acesso para Admin e Proprietário */}
+              {/* CRM - Acesso para DEV_MASTER e Admin */}
               <Route 
                 path="crm" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROPRIETARIO']}>
+                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <CRM />
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Relatórios - Acesso para Admin e Proprietário */}
+              {/* Relatórios - Acesso para DEV_MASTER e Admin */}
               <Route 
                 path="relatorios" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROPRIETARIO']}>
+                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <Relatorios />
                   </ProtectedRoute>
                 } 
@@ -277,11 +277,11 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* Usuários - Apenas Admin */}
+              {/* Usuários - DEV_MASTER e Admin */}
               <Route 
                 path="usuarios" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <Usuarios />
                   </ProtectedRoute>
                 } 
@@ -327,11 +327,11 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* Configurações - Apenas Admin */}
+              {/* Configurações - DEV_MASTER e Admin */}
               <Route 
                 path="configuracoes" 
                 element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <Configuracoes />
                   </ProtectedRoute>
                 } 
