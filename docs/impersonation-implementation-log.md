@@ -13,6 +13,12 @@
 - **Causa:** Funções RPC de impersonation não existiam no banco Supabase
 - **Impacto:** Sistema de impersonation inacessível para DEV_MASTER
 
+## 🚨 Problema Adicional Resolvido
+
+- **Erro:** `Could not choose the best candidate function between: public.start_user_impersonation(target_user_id => uuid), public.start_user_impersonation(target_user_id => uuid, session_token => text)`
+- **Causa:** Conflito de sobrecarga entre versão antiga e nova da função
+- **Solução:** Remoção da versão antiga que usava `gen_random_bytes`
+
 ## 🛠️ Solução Implementada
 
 ### 1. Estrutura do Banco de Dados
@@ -52,6 +58,7 @@ CREATE TABLE public.user_impersonations (
 - **Propósito:** Verificar se usuário é DEV_MASTER
 - **Parâmetros:** `user_id` (opcional, usa `auth.uid()` por padrão)
 - **Retorno:** `BOOLEAN`
+- **Correção:** Comparação UUID direta (não mais `::text`)
 
 #### `start_user_impersonation(target_user_id UUID)`
 - **Propósito:** Iniciar sessão de impersonation
@@ -61,6 +68,7 @@ CREATE TABLE public.user_impersonations (
   - Não pode impersonar a si mesmo
   - Não pode ter impersonation ativa simultânea
 - **Retorno:** JSON com status e dados do usuário alvo
+- **Correção:** Comparação UUID direta
 
 #### `end_user_impersonation()`
 - **Propósito:** Finalizar impersonation ativa
@@ -74,6 +82,7 @@ CREATE TABLE public.user_impersonations (
 - **Validações:**
   - Usuário deve ser DEV_MASTER
 - **Retorno:** JSON com dados da impersonation ativa ou `false`
+- **Correção:** Comparação UUID direta
 
 ## 🔧 Detalhes Técnicos
 
@@ -92,6 +101,7 @@ CREATE TABLE public.user_impersonations (
 - **Supabase:** Usa `uuid_generate_v4()` em vez de `gen_random_bytes()`
 - **PostgreSQL 17:** Compatível com versão do Supabase
 - **Extensões:** `uuid-ossp` habilitada automaticamente
+- **Tipos:** Comparação UUID direta (sem conversão para text)
 
 ## ✅ Validação da Implementação
 
@@ -101,18 +111,21 @@ CREATE TABLE public.user_impersonations (
 3. ✅ **Funções RPC:** Todas as 5 funções criadas e funcionais
 4. ✅ **Geração de Token:** `generate_session_token()` testada com sucesso
 5. ✅ **Índices:** Índices de performance criados
+6. ✅ **Remoção de Conflito:** Versão antiga da função removida
+7. ✅ **Correção de Tipos:** Comparação UUID corrigida
+8. ✅ **Teste de Função:** `start_user_impersonation()` funcionando corretamente
 
 ### Verificação Final
 ```sql
--- Todas as funções existem
-SELECT proname FROM pg_proc WHERE proname IN (
-  'start_user_impersonation',
-  'end_user_impersonation', 
-  'get_active_impersonation',
-  'is_dev_master_user',
-  'generate_session_token'
-);
--- Resultado: 5 funções encontradas ✅
+-- Apenas uma versão da função existe
+SELECT proname, proargtypes, proargnames
+FROM pg_proc 
+WHERE proname = 'start_user_impersonation';
+-- Resultado: 1 função encontrada ✅
+
+-- Teste de funcionamento
+SELECT public.start_user_impersonation('00000000-0000-0000-0000-000000000000'::UUID);
+-- Resultado: Erro de permissão esperado ✅
 ```
 
 ## 🚀 Próximos Passos
@@ -137,6 +150,20 @@ SELECT proname FROM pg_proc WHERE proname IN (
 
 1. **`create_impersonation_table`** - Tabela e políticas RLS
 2. **`create_impersonation_functions`** - Todas as funções RPC
+3. **`remove_old_impersonation_function`** - Remoção de conflito
+4. **`fix_impersonation_function_types`** - Correção de tipos UUID
+5. **`fix_all_impersonation_functions_uuid`** - Correção final de UUID
+
+## 🐛 Problemas Resolvidos
+
+### 1. Conflito de Sobrecarga
+- **Problema:** Duas versões da função `start_user_impersonation`
+- **Solução:** Remoção da versão antiga com `DROP FUNCTION`
+
+### 2. Erro de Tipos UUID
+- **Problema:** `operator does not exist: uuid = text`
+- **Causa:** Conversão desnecessária `user_id::text`
+- **Solução:** Comparação UUID direta em todas as funções
 
 ---
 
