@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useEffectiveUser } from './useImpersonation';
 import { toast } from '@/hooks/use-toast';
+import type { UserRole } from '@/integrations/supabase/types';
+import { canManageUser, filterUsersByHierarchy } from '@/contexts/AuthContextMock';
 
 // -----------------------------------------------------------
 // Tipos para o módulo de usuários
@@ -224,14 +226,28 @@ export const useUserPermissions = () => {
   const userForPermissions = effectiveUser || originalUser;
 
   return {
-    canManageUsers: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode gerenciar usuários
-    canPromoteToAdmin: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode promover
-    canPromoteToProprietario: userForManagement?.role === 'ADMIN', // Apenas ADMIN original pode definir proprietários
+    // Permissões de gestão (baseadas no usuário original)
+    canManageUsers: userForManagement?.role === 'DEV_MASTER' || userForManagement?.role === 'ADMIN',
+    canCreateUsers: userForManagement?.role === 'DEV_MASTER', // Apenas DEV_MASTER pode criar usuários
+    canPromoteToAdmin: userForManagement?.role === 'DEV_MASTER', // Apenas DEV_MASTER pode promover a ADMIN
+    canManageAgents: userForManagement?.role === 'ADMIN', // ADMIN pode gerenciar AGENT
+    
+    // Permissões do usuário efetivo (podem ser impersonadas)
+    isCurrentUserDevMaster: userForPermissions?.role === 'DEV_MASTER',
     isCurrentUserAdmin: userForPermissions?.role === 'ADMIN',
-    isCurrentUserProprietario: userForPermissions?.role === 'PROPRIETARIO',
-    isCurrentUserCorretor: userForPermissions?.role === 'AGENT',
+    isCurrentUserAgent: userForPermissions?.role === 'AGENT',
+    
+    // IDs
     currentUserId: userForPermissions?.id,
     originalUserId: originalUser?.id, // ID do admin original
+    
+    // Hierarquia
+    currentUserRole: userForPermissions?.role as UserRole,
+    originalUserRole: originalUser?.role as UserRole,
+    
+    // Helpers
+    hasAdminPermissions: userForPermissions?.role === 'DEV_MASTER' || userForPermissions?.role === 'ADMIN',
+    canManageOtherUser: (targetUser: { role: UserRole } | null) => canManageUser(userForManagement, targetUser),
   };
 };
 

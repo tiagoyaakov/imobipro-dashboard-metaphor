@@ -10,13 +10,8 @@ import { useAuthMock } from '../contexts/AuthContextMock';
 // -----------------------------------------------------------
 
 export const useAuth = () => {
-  const authMode = getAuthMode();
-  
-  if (authMode === 'real') {
-    return useAuthReal();
-  } else {
-    return useAuthMock();
-  }
+  // Por ora, sempre usar o modo mock até o real estar implementado
+  return useAuthMock();
 };
 
 // -----------------------------------------------------------
@@ -29,7 +24,7 @@ export { useLogin, useSignup, usePasswordReset } from '../contexts/AuthContext';
 // Re-exportar hooks específicos do contexto mock
 // -----------------------------------------------------------
 
-export { useAuthMock, hasRole, isAdmin, isCreator } from '../contexts/AuthContextMock';
+export { useAuthMock, hasRole, isAdmin, isDevMaster, isImobiliariaAdmin, isAgent } from '../contexts/AuthContextMock';
 
 // -----------------------------------------------------------
 // Tipos re-exportados para conveniência

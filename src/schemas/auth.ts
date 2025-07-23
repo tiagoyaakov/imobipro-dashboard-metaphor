@@ -1,9 +1,20 @@
 import { z } from 'zod';
+import type { UserRole } from '@/integrations/supabase/types';
 
 // -----------------------------------------------------------
-// Schemas de Validação para Autenticação
+// Schemas de Validação para Autenticação - NOVA HIERARQUIA
 // Baseado em: docs/rules-supabase-auth.md
+// 
+// HIERARQUIA ATUAL:
+// - DEV_MASTER: Administrador Global (oculto/ninja)
+// - ADMIN: Administrador de Imobiliária  
+// - AGENT: Corretor
 // -----------------------------------------------------------
+
+/**
+ * Schema para validação de roles com nova hierarquia
+ */
+export const UserRoleSchema = z.enum(['DEV_MASTER', 'ADMIN', 'AGENT'] as const);
 
 /**
  * Schema para validação de email
@@ -283,6 +294,160 @@ export type ChangePasswordData = z.infer<typeof ChangePasswordSchema>;
 export type AccountSettingsData = z.infer<typeof AccountSettingsSchema>;
 
 // -----------------------------------------------------------
+// Schemas para Nova Hierarquia de Usuários
+// -----------------------------------------------------------
+
+/**
+ * Schema para usuário com nova hierarquia
+ */
+export const UserWithHierarchySchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: UserRoleSchema,
+  is_active: z.boolean(),
+  company_id: z.string().uuid(),
+  avatar_url: z.string().url().optional(),
+  telefone: z.string().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Schema para criação de usuário por DEV_MASTER
+ */
+export const CreateUserSchema = z.object({
+  name: NameSchema,
+  email: EmailSchema,
+  password: PasswordSchema,
+  role: z.enum(['ADMIN', 'AGENT']), // DEV_MASTER não pode criar outros DEV_MASTER
+  company_id: z.string().uuid('ID da empresa inválido'),
+  telefone: z.string().optional(),
+});
+
+/**
+ * Schema para atualização de role (respeitando hierarquia)
+ */
+export const UpdateUserRoleSchema = z.object({
+  user_id: z.string().uuid(),
+  new_role: UserRoleSchema,
+}).refine((data) => {
+  // Não permitir criação de DEV_MASTER via schema
+  return data.new_role !== 'DEV_MASTER';
+}, {
+  message: 'Não é possível criar usuários DEV_MASTER',
+  path: ['new_role'],
+});
+
+/**
+ * Schema para validação de permissões baseado na hierarquia
+ */
+export const PermissionCheckSchema = z.object({
+  admin_role: UserRoleSchema,
+  target_role: UserRoleSchema,
+  action: z.enum(['view', 'create', 'update', 'delete', 'impersonate']),
+});
+
+// -----------------------------------------------------------
+// Utilitários de Validação para Hierarquia
+// -----------------------------------------------------------
+
+/**
+ * Valida se um usuário pode realizar uma ação em outro baseado na hierarquia
+ */
+export const validateHierarchyPermission = (
+  adminRole: UserRole,
+  targetRole: UserRole,
+  action: 'view' | 'create' | 'update' | 'delete' | 'impersonate'
+): boolean => {
+  switch (adminRole) {
+    case 'DEV_MASTER':
+      // DEV_MASTER pode tudo, exceto gerenciar outros DEV_MASTER
+      if (action === 'create' && targetRole === 'DEV_MASTER') return false;
+      return targetRole !== 'DEV_MASTER' || action === 'view';
+      
+    case 'ADMIN':
+      // ADMIN só pode gerenciar AGENT
+      return targetRole === 'AGENT';
+      
+    case 'AGENT':
+      // AGENT não pode gerenciar ninguém
+      return false;
+      
+    default:
+      return false;
+  }
+};
+
+/**
+ * Valida se um role deve ser ocultado da interface
+ */
+export const shouldHideFromUI = (role: UserRole, viewerRole?: UserRole): boolean => {
+  // DEV_MASTER sempre oculto para todos (exceto outros DEV_MASTER)
+  if (role === 'DEV_MASTER') {
+    return viewerRole !== 'DEV_MASTER';
+  }
+  return false;
+};
+
+/**
+ * Filtrar usuários baseado na hierarquia (para listas e seleções)
+ */
+export const filterUsersByHierarchy = <T extends { role: UserRole }>(
+  users: T[],
+  viewerRole: UserRole
+): T[] => {
+  return users.filter(user => !shouldHideFromUI(user.role, viewerRole));
+};
+
+// -----------------------------------------------------------
+// Tipos TypeScript Derivados da Nova Hierarquia
+// -----------------------------------------------------------
+
+export type UserWithHierarchy = z.infer<typeof UserWithHierarchySchema>;
+export type CreateUserData = z.infer<typeof CreateUserSchema>;
+export type UpdateUserRoleData = z.infer<typeof UpdateUserRoleSchema>;
+export type PermissionCheck = z.infer<typeof PermissionCheckSchema>;
+
+// -----------------------------------------------------------
+// Constantes para Nova Hierarquia
+// -----------------------------------------------------------
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  DEV_MASTER: 'Dev Master',
+  ADMIN: 'Administrador',
+  AGENT: 'Corretor',
+} as const;
+
+export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  DEV_MASTER: 'Administrador Global (oculto) - controle total do sistema',
+  ADMIN: 'Administrador de Imobiliária - gerencia corretores e dados da empresa',
+  AGENT: 'Corretor - acesso apenas aos próprios leads e clientes',
+} as const;
+
+export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  DEV_MASTER: [
+    'Gerenciar todas as contas',
+    'Ativar/desativar clientes e recursos', 
+    'Criar administradores de imobiliária',
+    'Impersonar qualquer usuário',
+    'Acesso a todas as funcionalidades',
+  ],
+  ADMIN: [
+    'Gerenciar corretores da sua imobiliária',
+    'Ver conversas e métricas dos corretores',
+    'Impersonar corretores',
+    'Configurar permissões específicas',
+  ],
+  AGENT: [
+    'Acessar apenas leads atribuídos',
+    'Gerenciar próprios contatos',
+    'Ver apenas próprias métricas',
+    'Funcionalidades liberadas pelo administrador',
+  ],
+} as const;
+
+// -----------------------------------------------------------
 // Tipos para Query Keys (TanStack React Query)
 // -----------------------------------------------------------
 
@@ -292,4 +457,6 @@ export const authKeys = {
   session: () => [...authKeys.all, 'session'] as const,
   profile: () => [...authKeys.all, 'profile'] as const,
   settings: () => [...authKeys.all, 'settings'] as const,
+  hierarchy: () => [...authKeys.all, 'hierarchy'] as const,
+  permissions: (role: UserRole) => [...authKeys.all, 'permissions', role] as const,
 } as const; 

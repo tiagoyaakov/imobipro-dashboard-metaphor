@@ -21,7 +21,7 @@ export interface ImpersonatedUser {
   id: string;
   email: string;
   name: string;
-  role: 'PROPRIETARIO' | 'ADMIN' | 'AGENT';
+  role: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
   is_active: boolean;
   company_id: string;
   avatar_url?: string;
@@ -57,8 +57,8 @@ export const useImpersonation = () => {
   } = useQuery({
     queryKey: ['impersonation', 'active'],
     queryFn: async (): Promise<ImpersonationData> => {
-      // Apenas ADMINs podem ter impersonations
-      if (!currentUser || currentUser.role !== 'ADMIN') {
+      // Apenas DEV_MASTER e ADMIN podem ter impersonations
+      if (!currentUser || (currentUser.role !== 'DEV_MASTER' && currentUser.role !== 'ADMIN')) {
         return { has_active_impersonation: false };
       }
 
@@ -84,7 +84,7 @@ export const useImpersonation = () => {
         target_user: data.target_user
       };
     },
-    enabled: !!currentUser && currentUser.role === 'ADMIN',
+    enabled: !!currentUser && (currentUser.role === 'DEV_MASTER' || currentUser.role === 'ADMIN'),
     staleTime: 30 * 1000, // 30 segundos
     refetchInterval: 60 * 1000, // Verificar a cada minuto
     retry: 2,
@@ -93,7 +93,7 @@ export const useImpersonation = () => {
   // Mutation para iniciar impersonation
   const startImpersonationMutation = useMutation({
     mutationFn: async ({ targetUserId }: StartImpersonationParams) => {
-      if (!currentUser || currentUser.role !== 'ADMIN') {
+      if (!currentUser || (currentUser.role !== 'DEV_MASTER' && currentUser.role !== 'ADMIN')) {
         throw new Error('Apenas administradores podem usar impersonation');
       }
 
@@ -145,7 +145,7 @@ export const useImpersonation = () => {
   // Mutation para finalizar impersonation
   const endImpersonationMutation = useMutation({
     mutationFn: async () => {
-      if (!currentUser || currentUser.role !== 'ADMIN') {
+      if (!currentUser || (currentUser.role !== 'DEV_MASTER' && currentUser.role !== 'ADMIN')) {
         throw new Error('Apenas administradores podem finalizar impersonation');
       }
 
@@ -194,7 +194,7 @@ export const useImpersonation = () => {
   // Estados derivados
   const isImpersonating = impersonationData?.has_active_impersonation || false;
   const impersonatedUser = impersonationData?.target_user;
-  const canImpersonate = currentUser?.role === 'ADMIN';
+  const canImpersonate = currentUser?.role === 'DEV_MASTER' || currentUser?.role === 'ADMIN';
   const isStarting = startImpersonationMutation.isPending;
   const isEnding = endImpersonationMutation.isPending;
 
@@ -228,9 +228,17 @@ export const useImpersonationTargets = () => {
   return useQuery({
     queryKey: ['impersonation', 'targets'],
     queryFn: async (): Promise<ImpersonatedUser[]> => {
-      // Apenas ADMINs podem ver targets
-      if (!currentUser || currentUser.role !== 'ADMIN') {
+      // Apenas DEV_MASTER e ADMINs podem ver targets
+      if (!currentUser || (currentUser.role !== 'DEV_MASTER' && currentUser.role !== 'ADMIN')) {
         throw new Error('Apenas administradores podem ver usuários para impersonation');
+      }
+
+      // Determinar quais roles podem ser impersonados baseado no usuário atual
+      let allowedRoles: string[] = [];
+      if (currentUser.role === 'DEV_MASTER') {
+        allowedRoles = ['ADMIN', 'AGENT']; // DEV_MASTER pode impersonar ADMIN e AGENT
+      } else if (currentUser.role === 'ADMIN') {
+        allowedRoles = ['AGENT']; // ADMIN pode impersonar apenas AGENT
       }
 
       const { data, error } = await supabase
@@ -248,7 +256,7 @@ export const useImpersonationTargets = () => {
           updated_at,
           company:companies(id, name)
         `)
-        .neq('role', 'ADMIN') // Não incluir outros admins
+        .in('role', allowedRoles) // Filtrar por roles permitidos
         .eq('is_active', true)
         .order('name', { ascending: true });
 
@@ -260,7 +268,7 @@ export const useImpersonationTargets = () => {
       console.log('✅ [useImpersonationTargets] Targets carregados:', data?.length || 0);
       return data || [];
     },
-    enabled: !!currentUser && currentUser.role === 'ADMIN',
+    enabled: !!currentUser && (currentUser.role === 'DEV_MASTER' || currentUser.role === 'ADMIN'),
     staleTime: 5 * 60 * 1000, // 5 minutos
     retry: 2,
   });

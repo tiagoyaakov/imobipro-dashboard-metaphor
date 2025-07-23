@@ -67,8 +67,8 @@ const DashboardHeaderContent = () => {
    */
   const translateRole = (role: string) => {
     const roleMap: Record<string, string> = {
-      'PROPRIETARIO': 'Proprietário',
-      'ADMIN': 'Administrador',
+      'DEV_MASTER': 'Dev Master',
+      'ADMIN': 'Administrador', 
       'AGENT': 'Corretor',
     };
     return roleMap[role] || role;
@@ -79,9 +79,9 @@ const DashboardHeaderContent = () => {
    */
   const getRoleVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
     const variantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      'PROPRIETARIO': 'default',
-      'ADMIN': 'secondary',
-      'AGENT': 'outline',
+      'DEV_MASTER': 'destructive', // Vermelho para destacar o papel especial
+      'ADMIN': 'secondary', // Azul para administradores
+      'AGENT': 'outline', // Outline para corretores
     };
     return variantMap[role] || 'outline';
   };

@@ -1,10 +1,12 @@
 import { z } from 'zod';
+import type { UserRole } from '@/integrations/supabase/types';
 
 // -----------------------------------------------------------
-// Enums baseados no schema Prisma
+// Enums baseados no schema Prisma - NOVA HIERARQUIA
 // -----------------------------------------------------------
 
-export const UserRoleSchema = z.enum(['PROPRIETARIO', 'ADMIN', 'AGENT']);
+// Nova hierarquia de usuários
+export const UserRoleSchema = z.enum(['DEV_MASTER', 'ADMIN', 'AGENT'] as const);
 
 export const ContactCategorySchema = z.enum(['CLIENT', 'LEAD', 'PARTNER']);
 

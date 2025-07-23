@@ -326,19 +326,92 @@ export const hasRole = (user: User | null, requiredRole: string): boolean => {
 };
 
 /**
- * Verifica se o usuário tem permissão de administrador
+ * Verifica se o usuário é DEV_MASTER (administrador global oculto)
  * @param user Usuário a verificar
  */
-export const isAdmin = (user: User | null): boolean => {
-  return hasRole(user, 'ADMIN') || hasRole(user, 'CREATOR');
+export const isDevMaster = (user: User | null): boolean => {
+  return hasRole(user, 'DEV_MASTER');
 };
 
 /**
- * Verifica se o usuário é o criador do sistema
+ * Verifica se o usuário é ADMIN (administrador de imobiliária)
  * @param user Usuário a verificar
  */
-export const isCreator = (user: User | null): boolean => {
-  return hasRole(user, 'CREATOR');
+export const isImobiliariaAdmin = (user: User | null): boolean => {
+  return hasRole(user, 'ADMIN');
+};
+
+/**
+ * Verifica se o usuário é AGENT (corretor)
+ * @param user Usuário a verificar
+ */
+export const isAgent = (user: User | null): boolean => {
+  return hasRole(user, 'AGENT');
+};
+
+/**
+ * Verifica se o usuário tem qualquer permissão administrativa (DEV_MASTER ou ADMIN)
+ * @param user Usuário a verificar
+ */
+export const isAdmin = (user: User | null): boolean => {
+  return isDevMaster(user) || isImobiliariaAdmin(user);
+};
+
+/**
+ * Verifica se um usuário pode gerenciar outro baseado na hierarquia
+ * @param adminUser Usuário administrador
+ * @param targetUser Usuário alvo
+ */
+export const canManageUser = (adminUser: User | null, targetUser: User | null): boolean => {
+  if (!adminUser || !targetUser) return false;
+  
+  switch (adminUser.role) {
+    case 'DEV_MASTER':
+      // DEV_MASTER pode gerenciar ADMIN e AGENT (mas não outros DEV_MASTER)
+      return targetUser.role !== 'DEV_MASTER';
+    case 'ADMIN':
+      // ADMIN pode gerenciar apenas AGENT
+      return targetUser.role === 'AGENT';
+    default:
+      return false;
+  }
+};
+
+/**
+ * Verifica se um usuário pode impersonar outro baseado na hierarquia
+ * @param adminUser Usuário administrador
+ * @param targetUser Usuário alvo
+ */
+export const canImpersonateUser = (adminUser: User | null, targetUser: User | null): boolean => {
+  if (!adminUser || !targetUser) return false;
+  
+  switch (adminUser.role) {
+    case 'DEV_MASTER':
+      // DEV_MASTER pode impersonar ADMIN e AGENT (mas não outros DEV_MASTER)
+      return targetUser.role !== 'DEV_MASTER';
+    case 'ADMIN':
+      // ADMIN pode impersonar apenas AGENT
+      return targetUser.role === 'AGENT';
+    default:
+      return false;
+  }
+};
+
+/**
+ * Filtra usuários baseado na hierarquia (oculta DEV_MASTER de não-DEV_MASTER)
+ * @param users Lista de usuários
+ * @param viewerUser Usuário que está visualizando
+ */
+export const filterUsersByHierarchy = (users: User[], viewerUser: User | null): User[] => {
+  if (!viewerUser) return [];
+  
+  return users.filter(user => {
+    // DEV_MASTER deve ser oculto para todos exceto outros DEV_MASTER
+    if (user.role === 'DEV_MASTER') {
+      return viewerUser.role === 'DEV_MASTER';
+    }
+    return true;
+  });
 };
 
 // -----------------------------------------------------------

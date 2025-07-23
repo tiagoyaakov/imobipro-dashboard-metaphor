@@ -1,11 +1,13 @@
 [
   {
-    "id": "mock-agent-uuid-123",
-    "email": "agente@imobipro.com.br",
-    "name": "Fernando Riolo",
-    "role": "AGENT",
+    "id": "mock-dev-master-uuid-001",
+    "email": "dev@imobipro.com.br",
+    "name": "Dev Master - Sistema",
+    "role": "DEV_MASTER",
     "isActive": true,
     "companyId": "mock-company-uuid-456",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0001",
     "createdAt": "2024-01-01T08:00:00.000Z",
     "updatedAt": "2024-06-29T10:00:00.000Z"
   },
@@ -16,16 +18,56 @@
     "role": "ADMIN",
     "isActive": true,
     "companyId": "mock-company-uuid-456",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0002",
     "createdAt": "2024-01-01T08:00:00.000Z",
     "updatedAt": "2024-06-29T10:00:00.000Z"
   },
   {
-    "id": "mock-creator-uuid-000",
-    "email": "creator@imobipro.com.br",
-    "name": "Fernando Riolo - Creator",
-    "role": "CREATOR",
+    "id": "mock-admin-uuid-456",
+    "email": "admin2@imobipro.com.br",
+    "name": "Segundo Administrador",
+    "role": "ADMIN",
+    "isActive": true,
+    "companyId": "mock-company-uuid-789",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0003",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "mock-agent-uuid-123",
+    "email": "corretor1@imobipro.com.br",
+    "name": "Fernando Riolo - Corretor",
+    "role": "AGENT",
     "isActive": true,
     "companyId": "mock-company-uuid-456",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0004",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "mock-agent-uuid-234",
+    "email": "corretor2@imobipro.com.br",
+    "name": "Maria Silva - Corretor",
+    "role": "AGENT",
+    "isActive": true,
+    "companyId": "mock-company-uuid-456",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0005",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "mock-agent-uuid-345",
+    "email": "corretor3@imobipro.com.br",
+    "name": "João Santos - Corretor",
+    "role": "AGENT",
+    "isActive": false,
+    "companyId": "mock-company-uuid-789",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0006",
     "createdAt": "2024-01-01T08:00:00.000Z",
     "updatedAt": "2024-06-29T10:00:00.000Z"
   }

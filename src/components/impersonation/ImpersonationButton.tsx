@@ -60,10 +60,10 @@ export const ImpersonationButton: React.FC = () => {
   // Função para obter ícone do role
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'PROPRIETARIO':
-        return <Home className="h-3 w-3 text-yellow-600" />;
+      case 'DEV_MASTER':
+        return <Crown className="h-3 w-3 text-red-600" />;
       case 'ADMIN':
-        return <Crown className="h-3 w-3 text-blue-600" />;
+        return <Home className="h-3 w-3 text-blue-600" />;
       default:
         return <User className="h-3 w-3 text-gray-600" />;
     }
@@ -72,8 +72,8 @@ export const ImpersonationButton: React.FC = () => {
   // Função para obter texto do role
   const getRoleText = (role: string) => {
     switch (role) {
-      case 'PROPRIETARIO':
-        return 'Proprietário';
+      case 'DEV_MASTER':
+        return 'Dev Master';
       case 'ADMIN':
         return 'Administrador';
       default:
@@ -209,19 +209,19 @@ export const ImpersonationButton: React.FC = () => {
                         <SelectValue placeholder="Escolha um usuário para testar..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Proprietários */}
+                        {/* Administradores */}
                         <div className="px-2 py-1.5">
                           <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                             <Home className="h-3 w-3" />
-                            Proprietários
+                            Administradores
                           </p>
                         </div>
                         {availableUsers
-                          .filter(user => user.role === 'PROPRIETARIO')
+                          .filter(user => user.role === 'ADMIN')
                           .map(user => (
                             <SelectItem key={user.id} value={user.id}>
                               <div className="flex items-center gap-2">
-                                <Home className="h-3 w-3 text-yellow-600" />
+                                <Home className="h-3 w-3 text-blue-600" />
                                 <span>{user.name}</span>
                                 <span className="text-xs text-muted-foreground">
                                   ({user.email})
