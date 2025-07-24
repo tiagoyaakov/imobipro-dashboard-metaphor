@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { AgendaCalendar, AgendaSidebar, AppointmentModal } from '@/components/agenda';
 import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
 import { useAppointments, useAgentSchedules } from '@/hooks';
+import { Button } from '@/components/ui/button';
+import { Menu, X } from 'lucide-react';
 
 export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Hooks para gerenciamento de dados
   const {
@@ -19,15 +22,17 @@ export default function Agenda() {
   } = useAppointments();
 
   const {
-    agentSchedules,
+    data: agentSchedulesData,
     isLoading: schedulesLoading,
     error: schedulesError
   } = useAgentSchedules();
 
+  const agentSchedules = agentSchedulesData || [];
+
   // Handlers para manipulação de appointments
   const handleAppointmentCreate = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      await createAppointment.mutateAsync(appointmentData);
+      await createAppointment(appointmentData);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -37,7 +42,7 @@ export default function Agenda() {
 
   const handleAppointmentUpdate = async (id: string, appointmentData: Partial<Appointment>) => {
     try {
-      await updateAppointment.mutateAsync({ id, ...appointmentData });
+      await updateAppointment(id, appointmentData);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -47,7 +52,7 @@ export default function Agenda() {
 
   const handleAppointmentDelete = async (id: string) => {
     try {
-      await deleteAppointment.mutateAsync(id);
+      await deleteAppointment(id);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -84,7 +89,7 @@ export default function Agenda() {
             Erro ao carregar agenda
           </h3>
           <p className="text-gray-600">
-            {appointmentsError?.message || schedulesError?.message}
+            {appointmentsError?.toString() || schedulesError?.toString() || 'Erro desconhecido'}
           </p>
         </div>
       </div>
@@ -92,24 +97,64 @@ export default function Agenda() {
   }
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+    <div className="flex h-full bg-background">
+      {/* Sidebar - Responsiva */}
+      <div className={`
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+        fixed lg:relative
+        z-40 lg:z-auto
+        w-80 lg:w-80
+        h-full
+        bg-card border-r border-border
+        transition-transform duration-300 ease-in-out
+        lg:transition-none
+        shadow-lg lg:shadow-none
+      `}>
         <AgendaSidebar 
           appointments={appointments || []}
           isLoading={isLoading}
+          onAppointmentClick={handleEventClick}
         />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <AgendaCalendar
-          appointments={appointments || []}
-          agentSchedules={agentSchedules || []}
-          onDateSelect={handleDateSelect}
-          onEventClick={handleEventClick}
-          isLoading={isLoading}
+      {/* Overlay para mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
         />
+      )}
+
+      {/* Main Content - Foco no Calendário */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header com toggle da sidebar */}
+        <div className="lg:hidden p-4 border-b border-border bg-card">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="flex items-center gap-2"
+            >
+              {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <span className="text-sm">Menu</span>
+            </Button>
+            <h1 className="text-lg font-semibold">Agenda</h1>
+            <div className="w-10" /> {/* Spacer para centralizar título */}
+          </div>
+        </div>
+
+        {/* Conteúdo Principal - Calendário */}
+        <div className="flex-1 p-4 lg:p-6">
+          <AgendaCalendar
+            appointments={appointments || []}
+            agentSchedules={agentSchedules || []}
+            onDateSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Modal */}
@@ -121,7 +166,7 @@ export default function Agenda() {
         onCreate={handleAppointmentCreate}
         onUpdate={handleAppointmentUpdate}
         onDelete={handleAppointmentDelete}
-        isLoading={createAppointment.isPending || updateAppointment.isPending || deleteAppointment.isPending}
+        isLoading={false}
       />
     </div>
   );

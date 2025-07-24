@@ -5,228 +5,260 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Filter, Search, X } from 'lucide-react';
+import { Filter, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { AppointmentStatus, AppointmentType } from '@/types/agenda';
 
 interface AgendaFiltersProps {
-  onFiltersChange?: (filters: AgendaFilters) => void;
-}
-
-export interface AgendaFilters {
-  search: string;
-  agentId: string;
-  status: string;
-  type: string;
-  dateRange: {
-    start: Date | null;
-    end: Date | null;
-  };
+  onFiltersChange?: (filters: any) => void;
 }
 
 const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
-  const [filters, setFilters] = useState<AgendaFilters>({
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [filters, setFilters] = useState({
     search: '',
-    agentId: '',
     status: '',
     type: '',
-    dateRange: {
-      start: null,
-      end: null
-    }
+    agent: '',
+    dateFrom: '',
+    dateTo: ''
   });
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const activeFiltersCount = Object.values(filters).filter(value => value !== '').length;
 
-  const handleFilterChange = (key: keyof AgendaFilters, value: string | Date | null) => {
+  const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
   };
 
-  const handleDateRangeChange = (key: 'start' | 'end', value: string) => {
-    const newFilters = {
-      ...filters,
-      dateRange: {
-        ...filters.dateRange,
-        [key]: value ? new Date(value) : null
-      }
-    };
-    setFilters(newFilters);
-    onFiltersChange?.(newFilters);
-  };
-
   const clearFilters = () => {
-    const clearedFilters: AgendaFilters = {
+    const clearedFilters = {
       search: '',
-      agentId: '',
       status: '',
       type: '',
-      dateRange: {
-        start: null,
-        end: null
-      }
+      agent: '',
+      dateFrom: '',
+      dateTo: ''
     };
     setFilters(clearedFilters);
     onFiltersChange?.(clearedFilters);
   };
 
-  const hasActiveFilters = filters.search || filters.agentId || filters.status || filters.type || filters.dateRange.start || filters.dateRange.end;
-
   return (
-    <Card className="imobipro-card">
+    <Card className="imobipro-card shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Filter className="w-4 h-4" />
             Filtros
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {activeFiltersCount}
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-xs h-8 px-2"
+              >
                 <X className="w-3 h-3 mr-1" />
-                Limpar
+                <span className="hidden sm:inline">Limpar</span>
               </Button>
             )}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs h-8 px-2"
             >
-              {isExpanded ? 'Ocultar' : 'Mostrar'}
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-3 h-3 mr-1" />
+                  <span className="hidden sm:inline">Ocultar</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  <span className="hidden sm:inline">Mostrar</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
       </CardHeader>
       
       {isExpanded && (
-        <CardContent className="space-y-4">
-          {/* Busca */}
-          <div className="space-y-2">
-            <Label htmlFor="search">Buscar</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <CardContent className="pt-0">
+          <div className="space-y-4">
+            {/* Busca */}
+            <div className="space-y-2">
+              <Label htmlFor="search" className="text-sm font-medium">
+                Buscar
+              </Label>
               <Input
                 id="search"
-                placeholder="Buscar por título, cliente, propriedade..."
+                placeholder="Buscar por título, cliente ou propriedade..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10"
+                className="text-sm"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Filtro por Agente */}
-            <div className="space-y-2">
-              <Label htmlFor="agent">Agente</Label>
-              <Select value={filters.agentId} onValueChange={(value) => handleFilterChange('agentId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os agentes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os agentes</SelectItem>
-                  <SelectItem value="agent1">João Silva</SelectItem>
-                  <SelectItem value="agent2">Maria Santos</SelectItem>
-                  <SelectItem value="agent3">Pedro Costa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtro por Status */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtro por Tipo */}
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo</Label>
-              <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os tipos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
-                  <SelectItem value="visit">Visita</SelectItem>
-                  <SelectItem value="meeting">Reunião</SelectItem>
-                  <SelectItem value="negotiation">Negociação</SelectItem>
-                  <SelectItem value="followup">Follow-up</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Filtro por Período */}
-          <div className="space-y-2">
-            <Label>Período</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="startDate" className="text-sm">Data inicial</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={filters.dateRange.start?.toISOString().split('T')[0] || ''}
-                  onChange={(e) => handleDateRangeChange('start', e.target.value)}
-                />
+            {/* Filtros em Grid Responsivo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-sm font-medium">
+                  Status
+                </Label>
+                <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todos os status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os status</SelectItem>
+                    <SelectItem value={AppointmentStatus.SCHEDULED}>Agendado</SelectItem>
+                    <SelectItem value={AppointmentStatus.CONFIRMED}>Confirmado</SelectItem>
+                    <SelectItem value={AppointmentStatus.COMPLETED}>Concluído</SelectItem>
+                    <SelectItem value={AppointmentStatus.CANCELLED}>Cancelado</SelectItem>
+                    <SelectItem value={AppointmentStatus.NO_SHOW}>Não Compareceu</SelectItem>
+                    <SelectItem value={AppointmentStatus.RESCHEDULED}>Reagendado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="endDate" className="text-sm">Data final</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={filters.dateRange.end?.toISOString().split('T')[0] || ''}
-                  onChange={(e) => handleDateRangeChange('end', e.target.value)}
-                />
+
+              {/* Tipo */}
+              <div className="space-y-2">
+                <Label htmlFor="type" className="text-sm font-medium">
+                  Tipo
+                </Label>
+                <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todos os tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os tipos</SelectItem>
+                    <SelectItem value={AppointmentType.VIEWING}>Visita</SelectItem>
+                    <SelectItem value={AppointmentType.MEETING}>Reunião</SelectItem>
+                    <SelectItem value={AppointmentType.CALL}>Ligação</SelectItem>
+                    <SelectItem value={AppointmentType.OTHER}>Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Agente */}
+              <div className="space-y-2">
+                <Label htmlFor="agent" className="text-sm font-medium">
+                  Agente
+                </Label>
+                <Select value={filters.agent} onValueChange={(value) => handleFilterChange('agent', value)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todos os agentes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os agentes</SelectItem>
+                    <SelectItem value="agent1">João Silva</SelectItem>
+                    <SelectItem value="agent2">Maria Santos</SelectItem>
+                    <SelectItem value="agent3">Pedro Costa</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
 
-          {/* Filtros Ativos */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t">
-              <span className="text-sm text-muted-foreground">Filtros ativos:</span>
-              {filters.search && (
-                <Badge variant="secondary" className="text-xs">
-                  Busca: {filters.search}
-                </Badge>
-              )}
-              {filters.agentId && (
-                <Badge variant="secondary" className="text-xs">
-                  Agente: {filters.agentId}
-                </Badge>
-              )}
-              {filters.status && (
-                <Badge variant="secondary" className="text-xs">
-                  Status: {filters.status}
-                </Badge>
-              )}
-              {filters.type && (
-                <Badge variant="secondary" className="text-xs">
-                  Tipo: {filters.type}
-                </Badge>
-              )}
-              {filters.dateRange.start && (
-                <Badge variant="secondary" className="text-xs">
-                  De: {filters.dateRange.start.toLocaleDateString()}
-                </Badge>
-              )}
-              {filters.dateRange.end && (
-                <Badge variant="secondary" className="text-xs">
-                  Até: {filters.dateRange.end.toLocaleDateString()}
-                </Badge>
-              )}
+            {/* Datas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateFrom" className="text-sm font-medium">
+                  Data Inicial
+                </Label>
+                <Input
+                  id="dateFrom"
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateTo" className="text-sm font-medium">
+                  Data Final
+                </Label>
+                <Input
+                  id="dateTo"
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  className="text-sm"
+                />
+              </div>
             </div>
-          )}
+
+            {/* Filtros Ativos */}
+            {activeFiltersCount > 0 && (
+              <div className="pt-2 border-t border-border">
+                <div className="flex flex-wrap gap-2">
+                  {filters.search && (
+                    <Badge variant="outline" className="text-xs">
+                      Busca: {filters.search}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('search', '')}
+                      />
+                    </Badge>
+                  )}
+                  {filters.status && (
+                    <Badge variant="outline" className="text-xs">
+                      Status: {filters.status}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('status', '')}
+                      />
+                    </Badge>
+                  )}
+                  {filters.type && (
+                    <Badge variant="outline" className="text-xs">
+                      Tipo: {filters.type}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('type', '')}
+                      />
+                    </Badge>
+                  )}
+                  {filters.agent && (
+                    <Badge variant="outline" className="text-xs">
+                      Agente: {filters.agent}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('agent', '')}
+                      />
+                    </Badge>
+                  )}
+                  {filters.dateFrom && (
+                    <Badge variant="outline" className="text-xs">
+                      De: {filters.dateFrom}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('dateFrom', '')}
+                      />
+                    </Badge>
+                  )}
+                  {filters.dateTo && (
+                    <Badge variant="outline" className="text-xs">
+                      Até: {filters.dateTo}
+                      <X 
+                        className="w-3 h-3 ml-1 cursor-pointer" 
+                        onClick={() => handleFilterChange('dateTo', '')}
+                      />
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       )}
     </Card>

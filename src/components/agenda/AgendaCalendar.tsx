@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Plus, Filter, Settings } from 'lucide-react';
 import { FullCalendarEvent, Appointment, AppointmentStatus, AgentSchedule } from '@/types/agenda';
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
 import AppointmentModal from './AppointmentModal';
@@ -38,6 +38,7 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<FullCalendarEvent | null>(null);
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth');
+  const [showFilters, setShowFilters] = useState(false);
   
   const { 
     isConnected, 
@@ -132,63 +133,101 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   }, [appointments, onAppointmentUpdate]);
 
   return (
-    <div className="space-y-6">
-      {/* Header com controles */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
+    <div className="space-y-4">
+      {/* Header - Responsivo e Limpo */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Controles de Visualização */}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
             <Button
               variant={view === 'dayGridMonth' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('dayGridMonth')}
+              className="text-xs lg:text-sm"
             >
-              Mês
+              <span className="hidden sm:inline">Mês</span>
+              <span className="sm:hidden">M</span>
             </Button>
             <Button
               variant={view === 'timeGridWeek' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridWeek')}
+              className="text-xs lg:text-sm"
             >
-              Semana
+              <span className="hidden sm:inline">Semana</span>
+              <span className="sm:hidden">S</span>
             </Button>
             <Button
               variant={view === 'timeGridDay' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridDay')}
+              className="text-xs lg:text-sm"
             >
-              Dia
+              <span className="hidden sm:inline">Dia</span>
+              <span className="sm:hidden">D</span>
             </Button>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Badge variant={isConnected ? 'default' : 'secondary'}>
+          {/* Status Google Calendar - Menor */}
+          <div className="flex items-center gap-2 ml-4">
+            <Badge variant={isConnected ? 'default' : 'secondary'} className="text-xs">
               <Calendar className="w-3 h-3 mr-1" />
-              {isConnected ? 'Google Calendar Conectado' : 'Google Calendar Desconectado'}
+              <span className="hidden sm:inline">
+                {isConnected ? 'Google Conectado' : 'Google Desconectado'}
+              </span>
+              <span className="sm:hidden">
+                {isConnected ? 'GC' : 'GD'}
+              </span>
             </Badge>
             {!isConnected && (
-              <Button size="sm" onClick={connectGoogleCalendar}>
-                Conectar
+              <Button size="sm" onClick={connectGoogleCalendar} className="text-xs">
+                <span className="hidden sm:inline">Conectar</span>
+                <span className="sm:hidden">+</span>
               </Button>
             )}
           </div>
         </div>
 
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Agendamento
-        </Button>
+        {/* Ações - Lado Direito */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-xs lg:text-sm"
+          >
+            <Filter className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Filtros</span>
+          </Button>
+          
+          <Button onClick={() => setIsModalOpen(true)} className="text-xs lg:text-sm">
+            <Plus className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Novo</span>
+            <span className="sm:hidden">+</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Filtros */}
-      <AgendaFilters />
+      {/* Filtros - Colapsável */}
+      {showFilters && (
+        <div className="transition-all duration-300 ease-in-out">
+          <AgendaFilters />
+        </div>
+      )}
 
-      {/* Calendário */}
-      <Card className="imobipro-card">
-        <CardHeader>
-          <CardTitle>Agenda</CardTitle>
+      {/* Calendário - Elemento Principal */}
+      <Card className="imobipro-card shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
+            <Calendar className="w-4 h-4 lg:w-5 lg:h-5" />
+            Agenda
+            {isLoading && (
+              <div className="ml-2 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            )}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[600px]">
+        <CardContent className="p-4 lg:p-6">
+          <div className="h-[500px] lg:h-[600px]">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               headerToolbar={{
@@ -229,6 +268,20 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
                 hour: '2-digit',
                 minute: '2-digit',
                 meridiem: false
+              }}
+              views={{
+                dayGridMonth: {
+                  dayMaxEvents: 3,
+                  eventDisplay: 'block'
+                },
+                timeGridWeek: {
+                  slotMinWidth: 60,
+                  dayMaxEvents: 5
+                },
+                timeGridDay: {
+                  slotMinWidth: 80,
+                  dayMaxEvents: 10
+                }
               }}
             />
           </div>
