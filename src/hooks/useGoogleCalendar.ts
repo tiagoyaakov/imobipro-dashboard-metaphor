@@ -5,14 +5,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import type { UserWithGoogleCalendar } from '@/types/agenda';
-import { 
-  googleCalendarAuth, 
-  generateAuthUrlWithValidation, 
-  processAuthCallback 
-} from '@/integrations/google-calendar/auth';
-import { createGoogleCalendarClient } from '@/integrations/google-calendar/client';
-import { createGoogleCalendarSync } from '@/integrations/google-calendar/sync';
-import { createGoogleCalendarWebhooks } from '@/integrations/google-calendar/webhooks';
 import type { 
   UseGoogleCalendarReturn,
   GoogleCalendarEvent,
@@ -49,7 +41,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const { authUrl } = await generateAuthUrlWithValidation(user.id);
+      const response = await fetch('/api/google-calendar/auth-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao gerar URL de autenticação');
+      }
+
+      const { authUrl } = await response.json();
       return authUrl;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -73,17 +75,15 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const tokens = await processAuthCallback(code, user.id);
+      const response = await fetch('/api/google-calendar/auth-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId: user.id })
+      });
 
-      // TODO: Salvar tokens no banco de dados
-      // await prisma.user.update({
-      //   where: { id: user.id },
-      //   data: {
-      //     googleRefreshToken: tokens.refresh_token,
-      //     googleAccessToken: tokens.access_token,
-      //     googleTokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null
-      //   }
-      // });
+      if (!response.ok) {
+        throw new Error('Falha na autenticação');
+      }
 
       setIsConnected(true);
       console.log('Google Calendar conectado com sucesso');
@@ -108,18 +108,15 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      await googleCalendarAuth.revokeTokens();
+      const response = await fetch('/api/google-calendar/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
 
-      // TODO: Limpar tokens do banco de dados
-      // await prisma.user.update({
-      //   where: { id: user.id },
-      //   data: {
-      //     googleRefreshToken: null,
-      //     googleAccessToken: null,
-      //     googleTokenExpiry: null,
-      //     googleCalendarId: null
-      //   }
-      // });
+      if (!response.ok) {
+        throw new Error('Falha ao desconectar');
+      }
 
       setIsConnected(false);
       console.log('Google Calendar desconectado com sucesso');
@@ -149,8 +146,16 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const sync = createGoogleCalendarSync(googleCalendarAuth);
-      await sync.syncAppointmentToGoogle(appointmentId);
+      const response = await fetch('/api/google-calendar/sync-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId, userId: user.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha na sincronização');
+      }
+
       console.log('Agendamento sincronizado com sucesso');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -178,8 +183,16 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const calendars = await client.listCalendars();
+      const response = await fetch('/api/google-calendar/calendars', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao listar calendários');
+      }
+
+      const calendars = await response.json();
       return calendars;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -217,8 +230,23 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const events = await client.listEvents(calendarId, params);
+      const queryParams = new URLSearchParams();
+      queryParams.append('calendarId', calendarId);
+      if (params.timeMin) queryParams.append('timeMin', params.timeMin);
+      if (params.timeMax) queryParams.append('timeMax', params.timeMax);
+      if (params.maxResults) queryParams.append('maxResults', params.maxResults.toString());
+      if (params.q) queryParams.append('q', params.q);
+
+      const response = await fetch(`/api/google-calendar/events?${queryParams}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao listar eventos');
+      }
+
+      const events = await response.json();
       return events;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -257,8 +285,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const event = await client.createEvent(calendarId, eventData);
+      const response = await fetch('/api/google-calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventData, calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao criar evento');
+      }
+
+      const event = await response.json();
       return event;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -293,8 +330,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const event = await client.updateEvent(calendarId, eventId, eventData);
+      const response = await fetch(`/api/google-calendar/events/${eventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventData, calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao atualizar evento');
+      }
+
+      const event = await response.json();
       return event;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -326,8 +372,16 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      await client.deleteEvent(calendarId, eventId);
+      const response = await fetch(`/api/google-calendar/events/${eventId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao deletar evento');
+      }
+
       console.log('Evento deletado com sucesso');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -356,8 +410,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const sync = createGoogleCalendarSync(googleCalendarAuth);
-      const result = await sync.fullSync(user.id, calendarId);
+      const response = await fetch('/api/google-calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha na sincronização completa');
+      }
+
+      const result = await response.json();
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -390,8 +453,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const webhooks = createGoogleCalendarWebhooks(googleCalendarAuth);
-      const webhook = await webhooks.setupWebhook(calendarId, webhookUrl, user.id);
+      const response = await fetch('/api/google-calendar/webhooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ webhookUrl, calendarId, userId: user.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao configurar webhook');
+      }
+
+      const webhook = await response.json();
       return webhook;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -418,9 +490,18 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     }
 
     try {
-      const webhooks = createGoogleCalendarWebhooks(googleCalendarAuth);
-      const result = await webhooks.processWebhookNotification(notification, user.id);
-      return result;
+      const response = await fetch('/api/google-calendar/webhook-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification, userId: user.id })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao processar webhook');
+      }
+
+      const result = await response.json();
+      return result.success;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
@@ -452,8 +533,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const isAvailable = await client.checkAvailability(calendarId, startTime, endTime);
+      const response = await fetch('/api/google-calendar/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startTime, endTime, calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao verificar disponibilidade');
+      }
+
+      const { isAvailable } = await response.json();
       return isAvailable;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -488,8 +578,17 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     setError(null);
 
     try {
-      const client = createGoogleCalendarClient(googleCalendarAuth);
-      const stats = await client.getCalendarStats(calendarId, timeMin, timeMax);
+      const response = await fetch('/api/google-calendar/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeMin, timeMax, calendarId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao obter estatísticas');
+      }
+
+      const stats = await response.json();
       return stats;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
@@ -599,9 +698,15 @@ export const useGoogleCalendarAutoSync = (enabled: boolean = true) => {
 
     setIsSyncing(true);
     try {
-      const sync = createGoogleCalendarSync(googleCalendarAuth);
-      await sync.fullSync(user.id);
-      setLastSync(new Date());
+      const response = await fetch('/api/google-calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+
+      if (response.ok) {
+        setLastSync(new Date());
+      }
     } catch (error) {
       console.error('Erro na sincronização automática:', error);
     } finally {

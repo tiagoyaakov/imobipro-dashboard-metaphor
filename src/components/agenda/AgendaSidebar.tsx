@@ -4,18 +4,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, Clock, MapPin, User, Building, TrendingUp, AlertCircle } from 'lucide-react';
-import { Appointment } from '@/types/agenda';
+import { Appointment, AppointmentStatus } from '@/types/agenda';
 
 interface AgendaSidebarProps {
   appointments?: Appointment[];
   selectedDate?: Date;
   onAppointmentClick?: (appointment: Appointment) => void;
+  isLoading?: boolean;
 }
 
 const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
   appointments = [],
   selectedDate,
-  onAppointmentClick
+  onAppointmentClick,
+  isLoading = false
 }) => {
   const today = new Date();
   const tomorrow = new Date(today);
@@ -37,36 +39,40 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
     total: appointments.length,
     today: todayAppointments.length,
     tomorrow: tomorrowAppointments.length,
-    pending: appointments.filter(a => a.status === 'pending').length,
-    confirmed: appointments.filter(a => a.status === 'confirmed').length,
-    completed: appointments.filter(a => a.status === 'completed').length
+    pending: appointments.filter(a => a.status === AppointmentStatus.SCHEDULED).length,
+    confirmed: appointments.filter(a => a.status === AppointmentStatus.CONFIRMED).length,
+    completed: appointments.filter(a => a.status === AppointmentStatus.COMPLETED).length
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
-      case 'confirmed':
+      case AppointmentStatus.CONFIRMED:
         return 'bg-green-500';
-      case 'pending':
+      case AppointmentStatus.SCHEDULED:
         return 'bg-yellow-500';
-      case 'cancelled':
+      case AppointmentStatus.CANCELLED:
         return 'bg-red-500';
-      case 'completed':
+      case AppointmentStatus.COMPLETED:
         return 'bg-blue-500';
       default:
         return 'bg-gray-500';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: AppointmentStatus) => {
     switch (status) {
-      case 'confirmed':
+      case AppointmentStatus.CONFIRMED:
         return 'Confirmado';
-      case 'pending':
-        return 'Pendente';
-      case 'cancelled':
+      case AppointmentStatus.SCHEDULED:
+        return 'Agendado';
+      case AppointmentStatus.CANCELLED:
         return 'Cancelado';
-      case 'completed':
+      case AppointmentStatus.COMPLETED:
         return 'Concluído';
+      case AppointmentStatus.NO_SHOW:
+        return 'Não Compareceu';
+      case AppointmentStatus.RESCHEDULED:
+        return 'Reagendado';
       default:
         return status;
     }
@@ -78,6 +84,29 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
       minute: '2-digit'
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="imobipro-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Estatísticas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="animate-pulse space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="h-12 bg-gray-200 rounded"></div>
+                <div className="h-12 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -121,22 +150,27 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
         </CardHeader>
         <CardContent>
           {todayAppointments.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhum agendamento para hoje</p>
-            </div>
+            <p className="text-muted-foreground text-sm">Nenhum agendamento para hoje</p>
           ) : (
             <div className="space-y-3">
-              {todayAppointments.slice(0, 5).map((appointment) => (
+              {todayAppointments.slice(0, 3).map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="p-3 border border-border rounded-lg hover:bg-muted/20 transition-colors cursor-pointer"
+                  className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   onClick={() => onAppointmentClick?.(appointment)}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-sm text-foreground line-clamp-1">
-                      {appointment.title}
-                    </h4>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm text-foreground line-clamp-1">
+                        {appointment.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(appointment.startTime)}
+                        </span>
+                      </div>
+                    </div>
                     <Badge 
                       variant="secondary" 
                       className={`text-xs ${getStatusColor(appointment.status)}`}
@@ -144,31 +178,11 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
                       {getStatusText(appointment.status)}
                     </Badge>
                   </div>
-                  
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                    <Clock className="w-3 h-3" />
-                    {formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}
-                  </div>
-                  
-                  {appointment.clientName && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <User className="w-3 h-3" />
-                      {appointment.clientName}
-                    </div>
-                  )}
-                  
-                  {appointment.location && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="w-3 h-3" />
-                      <span className="line-clamp-1">{appointment.location}</span>
-                    </div>
-                  )}
                 </div>
               ))}
-              
-              {todayAppointments.length > 5 && (
+              {todayAppointments.length > 3 && (
                 <Button variant="outline" size="sm" className="w-full">
-                  Ver mais ({todayAppointments.length - 5})
+                  Ver mais ({todayAppointments.length - 3})
                 </Button>
               )}
             </div>
@@ -186,22 +200,27 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
         </CardHeader>
         <CardContent>
           {tomorrowAppointments.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhum agendamento para amanhã</p>
-            </div>
+            <p className="text-muted-foreground text-sm">Nenhum agendamento para amanhã</p>
           ) : (
             <div className="space-y-3">
               {tomorrowAppointments.slice(0, 3).map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="p-3 border border-border rounded-lg hover:bg-muted/20 transition-colors cursor-pointer"
+                  className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   onClick={() => onAppointmentClick?.(appointment)}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-sm text-foreground line-clamp-1">
-                      {appointment.title}
-                    </h4>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm text-foreground line-clamp-1">
+                        {appointment.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(appointment.startTime)}
+                        </span>
+                      </div>
+                    </div>
                     <Badge 
                       variant="secondary" 
                       className={`text-xs ${getStatusColor(appointment.status)}`}
@@ -209,21 +228,8 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
                       {getStatusText(appointment.status)}
                     </Badge>
                   </div>
-                  
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    {formatTime(appointment.startTime)}
-                  </div>
-                  
-                  {appointment.clientName && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <User className="w-3 h-3" />
-                      {appointment.clientName}
-                    </div>
-                  )}
                 </div>
               ))}
-              
               {tomorrowAppointments.length > 3 && (
                 <Button variant="outline" size="sm" className="w-full">
                   Ver mais ({tomorrowAppointments.length - 3})
@@ -243,21 +249,18 @@ const AgendaSidebar: React.FC<AgendaSidebarProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-yellow-500" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">3 agendamentos pendentes</p>
-                <p className="text-xs text-muted-foreground">Requerem confirmação</p>
-              </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                3 agendamentos pendentes de confirmação
+              </span>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <Calendar className="w-4 h-4 text-blue-500" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Sincronização Google Calendar</p>
-                <p className="text-xs text-muted-foreground">Atualizada há 5 minutos</p>
-              </div>
+            <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-800 dark:text-blue-200">
+                Reunião de equipe em 30 minutos
+              </span>
             </div>
           </div>
         </CardContent>

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, User, Building, Trash2, Save } from 'lucide-react';
-import { Appointment } from '@/types/agenda';
+import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface AppointmentModalProps {
   onCreate?: (appointment: Partial<Appointment>) => void;
   onUpdate?: (id: string, appointment: Partial<Appointment>) => void;
   onDelete?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 const AppointmentModal: React.FC<AppointmentModalProps> = ({
@@ -26,22 +27,21 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   selectedDate,
   onCreate,
   onUpdate,
-  onDelete
+  onDelete,
+  isLoading = false
 }) => {
   const isEditing = !!appointment?.id;
   
   const [formData, setFormData] = useState<Partial<Appointment>>({
     title: '',
     description: '',
-    type: 'visit',
-    status: 'pending',
+    type: AppointmentType.PROPERTY_VIEWING,
+    status: AppointmentStatus.SCHEDULED,
     startTime: new Date(),
     endTime: new Date(),
-    clientName: '',
-    clientEmail: '',
-    clientPhone: '',
+    agentId: '',
+    contactId: '',
     propertyId: '',
-    location: '',
     notes: ''
   });
 
@@ -142,10 +142,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="visit">Visita</SelectItem>
-                    <SelectItem value="meeting">Reunião</SelectItem>
-                    <SelectItem value="negotiation">Negociação</SelectItem>
-                    <SelectItem value="followup">Follow-up</SelectItem>
+                    <SelectItem value={AppointmentType.PROPERTY_VIEWING}>Visita</SelectItem>
+                    <SelectItem value={AppointmentType.CLIENT_MEETING}>Reunião</SelectItem>
+                    <SelectItem value={AppointmentType.NEGOTIATION}>Negociação</SelectItem>
+                    <SelectItem value={AppointmentType.FOLLOW_UP}>Follow-up</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,10 +198,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
+                  <SelectItem value={AppointmentStatus.SCHEDULED}>Pendente</SelectItem>
+                  <SelectItem value={AppointmentStatus.CONFIRMED}>Confirmado</SelectItem>
+                  <SelectItem value={AppointmentStatus.CANCELLED}>Cancelado</SelectItem>
+                  <SelectItem value={AppointmentStatus.COMPLETED}>Concluído</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -211,46 +211,36 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Cliente</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="clientName">Nome *</Label>
+                <Label htmlFor="agentId">ID do Agente *</Label>
                 <Input
-                  id="clientName"
-                  value={formData.clientName}
-                  onChange={(e) => handleInputChange('clientName', e.target.value)}
-                  placeholder="Nome do cliente"
+                  id="agentId"
+                  value={formData.agentId || ''}
+                  onChange={(e) => handleInputChange('agentId', e.target.value)}
+                  placeholder="ID do agente"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clientEmail">Email</Label>
+                <Label htmlFor="contactId">ID do Contato *</Label>
                 <Input
-                  id="clientEmail"
-                  type="email"
-                  value={formData.clientEmail}
-                  onChange={(e) => handleInputChange('clientEmail', e.target.value)}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="clientPhone">Telefone</Label>
-                <Input
-                  id="clientPhone"
-                  value={formData.clientPhone}
-                  onChange={(e) => handleInputChange('clientPhone', e.target.value)}
-                  placeholder="(11) 99999-9999"
+                  id="contactId"
+                  value={formData.contactId || ''}
+                  onChange={(e) => handleInputChange('contactId', e.target.value)}
+                  placeholder="ID do contato"
+                  required
                 />
               </div>
             </div>
           </div>
 
-          {/* Propriedade e Localização */}
+          {/* Propriedade */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Propriedade e Localização</h3>
+            <h3 className="text-lg font-semibold">Propriedade</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="propertyId">Propriedade</Label>
                 <Select value={formData.propertyId} onValueChange={(value) => handleInputChange('propertyId', value)}>
@@ -263,16 +253,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <SelectItem value="prop3">Cobertura Vila Madalena - R$ 1.200.000</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Localização</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  placeholder="Endereço ou local específico"
-                />
               </div>
             </div>
           </div>
@@ -298,9 +278,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   variant="destructive"
                   onClick={handleDelete}
                   className="flex items-center gap-2"
+                  disabled={isLoading}
                 >
                   <Trash2 className="w-4 h-4" />
-                  Excluir
+                  {isLoading ? 'Excluindo...' : 'Excluir'}
                 </Button>
               )}
             </div>
@@ -309,9 +290,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" className="flex items-center gap-2">
+              <Button type="submit" className="flex items-center gap-2" disabled={isLoading}>
                 <Save className="w-4 h-4" />
-                {isEditing ? 'Atualizar' : 'Criar'}
+                {isLoading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')}
               </Button>
             </div>
           </DialogFooter>

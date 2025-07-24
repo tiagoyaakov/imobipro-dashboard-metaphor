@@ -3,28 +3,36 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import googleCalendarPlugin from '@fullcalendar/google-calendar';
+// import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
-import { FullCalendarEvent, Appointment } from '@/types/agenda';
+import { FullCalendarEvent, Appointment, AppointmentStatus, AgentSchedule } from '@/types/agenda';
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
 import AppointmentModal from './AppointmentModal';
 import AgendaFilters from './AgendaFilters';
 
 interface AgendaCalendarProps {
   appointments?: Appointment[];
+  agentSchedules?: AgentSchedule[];
+  onDateSelect?: (date: Date) => void;
+  onEventClick?: (appointment: Appointment) => void;
   onAppointmentCreate?: (appointment: Partial<Appointment>) => void;
   onAppointmentUpdate?: (id: string, appointment: Partial<Appointment>) => void;
   onAppointmentDelete?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   appointments = [],
+  agentSchedules = [],
+  onDateSelect,
+  onEventClick,
   onAppointmentCreate,
   onAppointmentUpdate,
-  onAppointmentDelete
+  onAppointmentDelete,
+  isLoading = false
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,10 +41,10 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   
   const { 
     isConnected, 
-    calendars, 
-    events: googleEvents,
-    connect,
-    disconnect 
+    isLoading: googleLoading,
+    error: googleError,
+    connectGoogleCalendar,
+    disconnectGoogleCalendar
   } = useGoogleCalendar();
 
   // Converter appointments para eventos do FullCalendar
@@ -48,11 +56,10 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
     extendedProps: {
       type: appointment.type,
       status: appointment.status,
-      clientName: appointment.clientName,
+      contactId: appointment.contactId,
       propertyId: appointment.propertyId,
       agentId: appointment.agentId,
-      description: appointment.description,
-      location: appointment.location
+      notes: appointment.notes
     },
     backgroundColor: getEventColor(appointment.status),
     borderColor: getEventColor(appointment.status),
@@ -60,16 +67,20 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   }));
 
   // Função para obter cor baseada no status
-  function getEventColor(status: string): string {
+  function getEventColor(status: AppointmentStatus): string {
     switch (status) {
-      case 'confirmed':
+      case AppointmentStatus.CONFIRMED:
         return '#10b981'; // green
-      case 'pending':
+      case AppointmentStatus.SCHEDULED:
         return '#f59e0b'; // yellow
-      case 'cancelled':
+      case AppointmentStatus.CANCELLED:
         return '#ef4444'; // red
-      case 'completed':
+      case AppointmentStatus.COMPLETED:
         return '#3b82f6'; // blue
+      case AppointmentStatus.NO_SHOW:
+        return '#6b7280'; // gray
+      case AppointmentStatus.RESCHEDULED:
+        return '#8b5cf6'; // purple
       default:
         return '#6b7280'; // gray
     }
@@ -79,13 +90,22 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   const handleDateSelect = useCallback((selectInfo: { start: Date }) => {
     setSelectedDate(selectInfo.start);
     setSelectedEvent(null);
-    setIsModalOpen(true);
-  }, []);
+    if (onDateSelect) {
+      onDateSelect(selectInfo.start);
+    } else {
+      setIsModalOpen(true);
+    }
+  }, [onDateSelect]);
 
   const handleEventClick = useCallback((clickInfo: { event: FullCalendarEvent }) => {
-    setSelectedEvent(clickInfo.event);
-    setIsModalOpen(true);
-  }, []);
+    const appointment = appointments.find(a => a.id === clickInfo.event.id);
+    if (appointment && onEventClick) {
+      onEventClick(appointment);
+    } else {
+      setSelectedEvent(clickInfo.event);
+      setIsModalOpen(true);
+    }
+  }, [appointments, onEventClick]);
 
   const handleEventDrop = useCallback((dropInfo: { event: FullCalendarEvent }) => {
     const event = dropInfo.event;
@@ -146,7 +166,7 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
               {isConnected ? 'Google Calendar Conectado' : 'Google Calendar Desconectado'}
             </Badge>
             {!isConnected && (
-              <Button size="sm" onClick={connect}>
+              <Button size="sm" onClick={connectGoogleCalendar}>
                 Conectar
               </Button>
             )}
@@ -170,7 +190,7 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
         <CardContent>
           <div className="h-[600px]">
             <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, googleCalendarPlugin]}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               headerToolbar={{
                 left: 'prev,next today',
                 center: 'title',
@@ -226,15 +246,13 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
         appointment={selectedEvent ? {
           id: selectedEvent.id,
           title: selectedEvent.title,
-          startTime: selectedEvent.start,
-          endTime: selectedEvent.end,
+          startTime: selectedEvent.start instanceof Date ? selectedEvent.start : new Date(selectedEvent.start),
+          endTime: selectedEvent.end instanceof Date ? selectedEvent.end : new Date(selectedEvent.end),
           type: selectedEvent.extendedProps.type,
           status: selectedEvent.extendedProps.status,
-          clientName: selectedEvent.extendedProps.clientName,
           propertyId: selectedEvent.extendedProps.propertyId,
           agentId: selectedEvent.extendedProps.agentId,
-          description: selectedEvent.extendedProps.description,
-          location: selectedEvent.extendedProps.location
+          notes: selectedEvent.extendedProps.notes
         } : undefined}
         selectedDate={selectedDate}
         onCreate={onAppointmentCreate}
