@@ -10,10 +10,21 @@ export class GoogleCalendarAuth {
   private oauth2Client: OAuth2Client;
 
   constructor() {
+    // Usar variáveis de ambiente adequadas (cliente ou servidor)
+    const clientId = typeof window !== 'undefined' 
+      ? import.meta.env.VITE_GOOGLE_CLIENT_ID 
+      : process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = typeof window !== 'undefined'
+      ? import.meta.env.VITE_GOOGLE_CLIENT_SECRET
+      : process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = typeof window !== 'undefined'
+      ? import.meta.env.VITE_GOOGLE_REDIRECT_URI
+      : process.env.GOOGLE_REDIRECT_URI;
+
     this.oauth2Client = new google.auth.OAuth2(
-      import.meta.env.VITE_GOOGLE_CLIENT_ID,
-      import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-      import.meta.env.VITE_GOOGLE_REDIRECT_URI
+      clientId,
+      clientSecret,
+      redirectUri
     );
 
     // Configurar refresh token automaticamente
@@ -191,19 +202,40 @@ export const googleCalendarAuth = new GoogleCalendarAuth();
  * @returns true se configuradas, false caso contrário
  */
 export function validateGoogleCalendarConfig(): boolean {
-  const requiredEnvVars = [
-    'VITE_GOOGLE_CLIENT_ID',
-    'VITE_GOOGLE_CLIENT_SECRET',
-    'VITE_GOOGLE_REDIRECT_URI'
-  ];
+  const isClient = typeof window !== 'undefined';
+  
+  if (isClient) {
+    // Validação no cliente
+    const requiredVars = {
+      'VITE_GOOGLE_CLIENT_ID': import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      'VITE_GOOGLE_CLIENT_SECRET': import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+      'VITE_GOOGLE_REDIRECT_URI': import.meta.env.VITE_GOOGLE_REDIRECT_URI
+    };
 
-  const missingVars = requiredEnvVars.filter(
-    varName => !import.meta.env[varName]
-  );
+    const missingVars = Object.entries(requiredVars)
+      .filter(([_, value]) => !value)
+      .map(([key, _]) => key);
 
-  if (missingVars.length > 0) {
-    console.error('Variáveis de ambiente do Google Calendar não configuradas:', missingVars);
-    return false;
+    if (missingVars.length > 0) {
+      console.error('Variáveis de ambiente do Google Calendar não configuradas (cliente):', missingVars);
+      return false;
+    }
+  } else {
+    // Validação no servidor
+    const requiredVars = {
+      'GOOGLE_CLIENT_ID': process.env.GOOGLE_CLIENT_ID,
+      'GOOGLE_CLIENT_SECRET': process.env.GOOGLE_CLIENT_SECRET,
+      'GOOGLE_REDIRECT_URI': process.env.GOOGLE_REDIRECT_URI
+    };
+
+    const missingVars = Object.entries(requiredVars)
+      .filter(([_, value]) => !value)
+      .map(([key, _]) => key);
+
+    if (missingVars.length > 0) {
+      console.error('Variáveis de ambiente do Google Calendar não configuradas (servidor):', missingVars);
+      return false;
+    }
   }
 
   return true;

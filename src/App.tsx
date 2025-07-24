@@ -22,6 +22,7 @@ const Usuarios = lazy(() => import("./pages/Usuarios"));
 const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const GoogleCalendarCallback = lazy(() => import("./pages/GoogleCalendarCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configuração do QueryClient com otimizações
@@ -154,6 +155,16 @@ const App = () => (
                 } 
               />
             </Route>
+
+            {/* ROTA DE CALLBACK GOOGLE CALENDAR - FORA DO LAYOUT */}
+            <Route 
+              path="/google-calendar/callback" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <GoogleCalendarCallback />
+                </Suspense>
+              } 
+            />
 
             {/* ROTA 404 GLOBAL */}
             <Route 

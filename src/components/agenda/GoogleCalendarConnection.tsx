@@ -1,0 +1,330 @@
+import React, { useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Calendar,
+  ExternalLink, 
+  RefreshCw, 
+  CheckCircle, 
+  AlertCircle,
+  Unlink,
+  Settings
+} from 'lucide-react';
+import { useGoogleCalendar, useGoogleCalendarStatus } from '@/hooks';
+
+interface GoogleCalendarConnectionProps {
+  className?: string;
+}
+
+const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({ 
+  className = '' 
+}) => {
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  const { isConnected, isChecking } = useGoogleCalendarStatus();
+  const { 
+    isLoading,
+    error,
+    connectGoogleCalendar,
+    disconnectGoogleCalendar,
+    fullSync,
+    clearError
+  } = useGoogleCalendar();
+
+  /**
+   * Iniciar processo de conexão com Google Calendar
+   */
+  const handleConnect = useCallback(async () => {
+    if (isConnecting || isConnected) return;
+    
+    setIsConnecting(true);
+    setConnectionError(null);
+    clearError();
+
+    try {
+      // 1. Obter URL de autorização
+      const authUrl = await connectGoogleCalendar();
+      
+      // 2. Abrir popup ou nova aba para autorização
+      const popup = window.open(
+        authUrl, 
+        'google-calendar-auth', 
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        throw new Error('Pop-up bloqueado. Permita pop-ups e tente novamente.');
+      }
+
+      // 3. Monitorar callback
+      const checkCallback = setInterval(() => {
+        try {
+          // Verificar se o popup foi fechado ou redirecionado
+          if (popup.closed) {
+            clearInterval(checkCallback);
+            setIsConnecting(false);
+            
+            // Verificar se a conexão foi bem-sucedida
+            setTimeout(() => {
+              window.location.reload(); // Recarregar para atualizar status
+            }, 1000);
+            return;
+          }
+
+          // Verificar URL do popup para callback
+          const currentUrl = popup.location?.href;
+          if (currentUrl && currentUrl.includes('/agenda') && currentUrl.includes('code=')) {
+            // OAuth callback detectado
+            const urlParams = new URLSearchParams(currentUrl.split('?')[1]);
+            const code = urlParams.get('code');
+            
+            if (code) {
+              popup.close();
+              clearInterval(checkCallback);
+              // O callback será processado pela página
+              setIsConnecting(false);
+              
+              // Aguardar processamento e recarregar
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+            }
+          }
+        } catch (error) {
+          // Cross-origin error é esperado - popup ainda está em outro domínio
+          // Continuar monitorando
+        }
+      }, 1000);
+
+      // Timeout após 5 minutos
+      setTimeout(() => {
+        if (!popup.closed) {
+          popup.close();
+          clearInterval(checkCallback);
+          setIsConnecting(false);
+          setConnectionError('Tempo limite de autorização expirado. Tente novamente.');
+        }
+      }, 5 * 60 * 1000);
+
+    } catch (error) {
+      console.error('Erro ao conectar Google Calendar:', error);
+      setConnectionError(
+        error instanceof Error 
+          ? error.message 
+          : 'Erro desconhecido ao conectar com Google Calendar'
+      );
+      setIsConnecting(false);
+    }
+  }, [isConnecting, isConnected, connectGoogleCalendar, clearError]);
+
+  /**
+   * Desconectar Google Calendar
+   */
+  const handleDisconnect = useCallback(async () => {
+    if (!isConnected) return;
+
+    try {
+      await disconnectGoogleCalendar();
+      window.location.reload(); // Recarregar para atualizar status
+    } catch (error) {
+      console.error('Erro ao desconectar:', error);
+      setConnectionError(
+        error instanceof Error 
+          ? error.message 
+          : 'Erro ao desconectar Google Calendar'
+      );
+    }
+  }, [isConnected, disconnectGoogleCalendar]);
+
+  /**
+   * Sincronizar manualmente
+   */
+  const handleSync = useCallback(async () => {
+    if (!isConnected) return;
+
+    try {
+      await fullSync();
+      // Feedback de sucesso
+      alert('Sincronização realizada com sucesso!');
+    } catch (error) {
+      console.error('Erro na sincronização:', error);
+      setConnectionError(
+        error instanceof Error 
+          ? error.message 
+          : 'Erro na sincronização'
+      );
+    }
+  }, [isConnected, fullSync]);
+
+  /**
+   * Limpar erro
+   */
+  const handleClearError = useCallback(() => {
+    setConnectionError(null);
+    clearError();
+  }, [clearError]);
+
+  return (
+    <Card className={`${className} border-2`}>
+      <CardContent className="p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">Google Calendar</h3>
+              <p className="text-sm text-muted-foreground">
+                Sincronize agendamentos automaticamente
+              </p>
+            </div>
+          </div>
+          
+          {/* Status Badge */}
+          {isChecking ? (
+            <Badge variant="outline" className="animate-pulse">
+              <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+              Verificando...
+            </Badge>
+          ) : isConnected ? (
+            <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Conectado
+            </Badge>
+          ) : (
+            <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Desconectado
+            </Badge>
+          )}
+        </div>
+
+        <Separator className="mb-4" />
+
+        {/* Error Display */}
+        {(connectionError || error) && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{connectionError || error}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleClearError}
+                className="h-auto p-1 text-xs"
+              >
+                Fechar
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Connection Status & Actions */}
+        <div className="space-y-4">
+          {isConnected ? (
+            /* Connected State */
+            <div className="space-y-3">
+              <div className="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                    Sincronização Ativa
+                  </span>
+                </div>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  Seus agendamentos são sincronizados automaticamente com o Google Calendar.
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleSync}
+                  disabled={isLoading}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Sincronizar Agora
+                </Button>
+                
+                <Button 
+                  onClick={handleDisconnect}
+                  disabled={isLoading}
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10"
+                >
+                  <Unlink className="w-4 h-4 mr-2" />
+                  Desconectar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Disconnected State */
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Conectar Google Calendar
+                  </span>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
+                  Conecte sua conta do Google para sincronizar agendamentos automaticamente 
+                  entre o ImobiPRO e seu Google Calendar.
+                </p>
+                
+                <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                  <li>• Sincronização automática de agendamentos</li>
+                  <li>• Notificações do Google Calendar</li>
+                  <li>• Acesso em qualquer dispositivo</li>
+                  <li>• Backup automático dos eventos</li>
+                </ul>
+              </div>
+              
+              <Button 
+                onClick={handleConnect}
+                disabled={isConnecting || isChecking}
+                size="lg"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isConnecting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Conectando...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Conectar Google Calendar
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Info */}
+        <div className="mt-4 pt-4 border-t border-border">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Settings className="w-3 h-3" />
+            <span>
+              {isConnected 
+                ? 'Configurações avançadas disponíveis após conexão'
+                : 'Conecte-se para acessar configurações avançadas'
+              }
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default GoogleCalendarConnection;

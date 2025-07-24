@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { AgendaCalendar, AgendaSidebar, AppointmentModal } from '@/components/agenda';
+import { AgendaCalendar, AgendaSidebar, AppointmentModal, GoogleCalendarConnection } from '@/components/agenda';
 import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
 import { useAppointments, useAgentSchedules, useGoogleCalendarStatus } from '@/hooks';
 import { Button } from '@/components/ui/button';
@@ -287,36 +287,8 @@ export default function Agenda() {
         isLoading={false}
       />
       
-      {/* Status da Integração - Dinâmico */}
-      <div className="mt-8 p-4 bg-muted/30 rounded-lg">
-        <div className="flex items-center gap-2 mb-2">
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            GOOGLE CALENDAR
-          </Badge>
-          {googleCalendarChecking ? (
-            <Badge variant="outline">
-              Verificando...
-            </Badge>
-          ) : googleCalendarConnected ? (
-            <Badge variant="default" className="bg-green-100 text-green-800">
-              Conectado
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="bg-red-100 text-red-800">
-              Desconectado
-            </Badge>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {googleCalendarChecking 
-            ? 'Verificando status da conexão...'
-            : googleCalendarConnected 
-              ? 'Agendamentos sincronizados automaticamente com Google Calendar.'
-              : 'Configure a integração com Google Calendar para sincronização automática.'
-          }
-          {isLoading && ' Carregando dados...'}
-        </p>
-      </div>
+      {/* Componente de Conexão Google Calendar */}
+      <GoogleCalendarConnection className="mt-8" />
     </div>
   );
 }
