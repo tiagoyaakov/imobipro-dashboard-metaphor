@@ -61,7 +61,11 @@ export const useGoogleCalendarDirect = () => {
    * @param code - Código de autorização
    */
   const handleAuthCallback = useCallback(async (code: string): Promise<void> => {
+    console.log('🔐 [useGoogleCalendarDirect] Iniciando handleAuthCallback com código:', code.substring(0, 20) + '...');
+    console.log('🔐 [useGoogleCalendarDirect] Estado do usuário:', { userId: user?.id, user });
+
     if (!user?.id) {
+      console.error('🔐 [useGoogleCalendarDirect] Usuário não autenticado');
       throw new Error('Usuário não autenticado');
     }
 
@@ -69,22 +73,32 @@ export const useGoogleCalendarDirect = () => {
     setError(null);
 
     try {
+      console.log('🔐 [useGoogleCalendarDirect] Trocando código por tokens...');
       // Trocar código por tokens
       const tokens = await googleCalendarAuthClient.exchangeCodeForTokens(code);
       
+      console.log('🔐 [useGoogleCalendarDirect] Tokens obtidos com sucesso:', {
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        tokenType: tokens.token_type,
+        expiresIn: tokens.expires_in
+      });
+      
       // TODO: Salvar tokens no banco de dados ou localStorage
       // Por enquanto, simular salvamento
-      console.log('Tokens obtidos:', tokens);
+      console.log('🔐 [useGoogleCalendarDirect] Simulando salvamento de tokens...');
       
       // Simular usuário com Google Calendar conectado
       // Em uma implementação real, isso seria salvo no banco
       if (user && 'googleRefreshToken' in user) {
         (user as any).googleRefreshToken = tokens.refresh_token;
+        console.log('🔐 [useGoogleCalendarDirect] Refresh token salvo no objeto do usuário');
       }
       
       setIsConnected(true);
-      console.log('Google Calendar conectado com sucesso');
+      console.log('🔐 [useGoogleCalendarDirect] Google Calendar conectado com sucesso!');
     } catch (err) {
+      console.error('🔐 [useGoogleCalendarDirect] Erro ao processar callback:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
       throw new Error(`Falha na autenticação: ${errorMessage}`);

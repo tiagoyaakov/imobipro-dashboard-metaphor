@@ -59,26 +59,48 @@ export class GoogleCalendarAuthClient {
     expires_in: number;
     token_type: string;
   }> {
+    console.log('🔐 [GoogleCalendarAuthClient] Iniciando troca de código por tokens');
+    console.log('🔐 [GoogleCalendarAuthClient] Configuração:', {
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      hasClientSecret: !!this.clientSecret,
+      codeLength: code.length
+    });
+
+    const requestBody = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: this.redirectUri,
+    });
+
+    console.log('🔐 [GoogleCalendarAuthClient] Enviando request para Google OAuth...');
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+      body: requestBody,
     });
+
+    console.log('🔐 [GoogleCalendarAuthClient] Response status:', response.status);
 
     if (!response.ok) {
       const error = await response.text();
+      console.error('🔐 [GoogleCalendarAuthClient] Erro na resposta:', error);
       throw new Error(`Falha ao trocar código por tokens: ${error}`);
     }
 
-    return response.json();
+    const tokens = await response.json();
+    console.log('🔐 [GoogleCalendarAuthClient] Tokens recebidos com sucesso:', {
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      tokenType: tokens.token_type
+    });
+
+    return tokens;
   }
 
   /**

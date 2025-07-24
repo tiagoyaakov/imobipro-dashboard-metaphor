@@ -24,14 +24,24 @@ const GoogleCalendarCallback: React.FC = () => {
   useEffect(() => {
     const processCallback = async () => {
       try {
+        console.log('🔐 [GoogleCalendarCallback] Iniciando processamento do callback');
+        console.log('🔐 [GoogleCalendarCallback] Estado da autenticação:', {
+          authLoading,
+          isAuthenticated,
+          userId: user?.id,
+          locationSearch: location.search
+        });
+
         // Aguardar carregamento da autenticação
         if (authLoading) {
           setMessage('Verificando autenticação...');
+          console.log('🔐 [GoogleCalendarCallback] Aguardando carregamento da autenticação...');
           return;
         }
 
         // Verificar se usuário está autenticado
         if (!isAuthenticated || !user) {
+          console.error('🔐 [GoogleCalendarCallback] Usuário não autenticado:', { isAuthenticated, user });
           setStatus('error');
           setMessage('Usuário não autenticado. Faça login e tente novamente.');
           setTimeout(() => navigate('/'), 3000);
@@ -44,8 +54,16 @@ const GoogleCalendarCallback: React.FC = () => {
         const error = urlParams.get('error');
         const state = urlParams.get('state');
 
+        console.log('🔐 [GoogleCalendarCallback] Parâmetros da URL:', {
+          code: code ? `${code.substring(0, 20)}...` : null,
+          error,
+          state,
+          fullUrl: window.location.href
+        });
+
         // Verificar se houve erro na autorização
         if (error) {
+          console.error('🔐 [GoogleCalendarCallback] Erro na autorização:', error);
           setStatus('error');
           setMessage(`Autorização negada: ${error}`);
           return;
@@ -53,11 +71,13 @@ const GoogleCalendarCallback: React.FC = () => {
 
         // Verificar se o código foi recebido
         if (!code) {
+          console.error('🔐 [GoogleCalendarCallback] Código de autorização não encontrado');
           setStatus('error');
           setMessage('Código de autorização não encontrado.');
           return;
         }
 
+        console.log('🔐 [GoogleCalendarCallback] Processando código de autorização...');
         setMessage('Configurando conexão com Google Calendar...');
         
         // Processar callback
@@ -82,14 +102,16 @@ const GoogleCalendarCallback: React.FC = () => {
         }, 3000);
         
       } catch (error) {
-        console.error('Erro no callback do Google Calendar:', error);
+        console.error('🔐 [GoogleCalendarCallback] Erro no callback do Google Calendar:', error);
+        console.error('🔐 [GoogleCalendarCallback] Stack trace:', error instanceof Error ? error.stack : 'N/A');
         
         setStatus('error');
-        setMessage(
-          error instanceof Error 
-            ? `Erro: ${error.message}`
-            : 'Erro desconhecido ao processar autorização'
-        );
+        const errorMessage = error instanceof Error 
+          ? `Erro: ${error.message}`
+          : 'Erro desconhecido ao processar autorização';
+        
+        console.error('🔐 [GoogleCalendarCallback] Mensagem de erro para usuário:', errorMessage);
+        setMessage(errorMessage);
         
         // Se estamos em popup, notificar erro e fechar
         if (window.opener) {
