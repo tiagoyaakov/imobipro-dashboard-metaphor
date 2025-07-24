@@ -38,35 +38,39 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
     return <AuthVerifyingSpinner />;
   }
 
-  // Se não está autenticado, redirecionar para login
-  if (!isAuthenticated || !user) {
-    return (
-      <Navigate 
-        to={redirectTo} 
-        state={{ from: location.pathname }} 
-        replace 
-      />
-    );
-  }
+  // TEMPORÁRIO: Bypass da verificação de autenticação
+  console.log('🔐 [PrivateRoute] Bypass temporário ativo - permitindo acesso sem autenticação');
+  
+  // if (!isAuthenticated || !user) {
+  //   return (
+  //     <Navigate 
+  //       to={redirectTo} 
+  //       state={{ from: location.pathname }} 
+  //       replace 
+  //     />
+  //   );
+  // }
 
-  // Se tem roles específicas, verificar permissão (baseada no usuário efetivo)
-  if (allowedRoles && allowedRoles.length > 0) {
-    const hasPermission = allowedRoles.includes(user.role as UserRole);
-    
-    if (!hasPermission) {
-      return (
-        <Navigate 
-          to="/unauthorized" 
-          state={{ 
-            from: location.pathname,
-            requiredRoles: allowedRoles,
-            userRole: user.role 
-          }} 
-          replace 
-        />
-      );
-    }
-  }
+  // TEMPORÁRIO: Bypass da verificação de roles também
+  console.log('🔐 [PrivateRoute] Bypass de roles temporário ativo');
+  
+  // if (allowedRoles && allowedRoles.length > 0) {
+  //   const hasPermission = allowedRoles.includes(user.role as UserRole);
+  //   
+  //   if (!hasPermission) {
+  //     return (
+  //       <Navigate 
+  //         to="/unauthorized" 
+  //         state={{ 
+  //           from: location.pathname,
+  //           requiredRoles: allowedRoles,
+  //           userRole: user.role 
+  //         }} 
+  //         replace 
+  //       />
+  //     );
+  //   }
+  // }
 
   // Usuário autenticado e com permissão
   return <>{children}</>;
