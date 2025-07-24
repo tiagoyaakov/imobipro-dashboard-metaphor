@@ -1,12 +1,15 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { AppFooter } from './AppFooter';
 
 // -----------------------------------------------------------
 // Layout Público para Páginas Legais
 // -----------------------------------------------------------
 
-const PublicLayout = () => {
+interface PublicLayoutProps {
+  children: React.ReactNode;
+}
+
+const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header simples */}
@@ -25,7 +28,7 @@ const PublicLayout = () => {
 
       {/* Conteúdo principal */}
       <main className="flex-1">
-        <Outlet />
+        {children}
       </main>
 
       {/* Footer */}

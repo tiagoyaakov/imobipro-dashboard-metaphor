@@ -23,8 +23,8 @@ const Usuarios = lazy(() => import("./pages/Usuarios"));
 const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
-const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+const PrivacyPolicySimple = lazy(() => import("./pages/legal/PrivacyPolicySimple"));
+const TermsOfServiceSimple = lazy(() => import("./pages/legal/TermsOfServiceSimple"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configuração do QueryClient com otimizações
@@ -51,24 +51,22 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Rotas Públicas - Páginas Legais */}
-            <Route path="/legal" element={<PublicLayout />}>
-              <Route 
-                path="privacy-policy" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <PrivacyPolicy />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="terms-of-service" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <TermsOfService />
-                  </Suspense>
-                } 
-              />
-            </Route>
+            <Route 
+              path="/legal/privacy-policy" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <PrivacyPolicySimple />
+                </Suspense>
+              } 
+            />
+            <Route 
+              path="/legal/terms-of-service" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <TermsOfServiceSimple />
+                </Suspense>
+              } 
+            />
 
             {/* Rotas Protegidas - Dashboard */}
             <Route path="/" element={<DashboardLayout />}>
