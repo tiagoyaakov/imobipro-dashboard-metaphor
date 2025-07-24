@@ -50,7 +50,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Rotas Públicas - Páginas Legais */}
+            {/* IMPORTANTE: Rotas específicas DEVEM vir ANTES das rotas genéricas */}
+            
+            {/* Rotas Públicas - Páginas Legais (MUITO ESPECÍFICAS) */}
             <Route 
               path="/legal/privacy-policy" 
               element={
@@ -68,8 +70,8 @@ const App = () => (
               } 
             />
 
-            {/* Rotas Protegidas - Dashboard */}
-            <Route path="/" element={<DashboardLayout />}>
+            {/* Rotas Protegidas - Dashboard (ROTA GENÉRICA) */}
+            <Route path="/*" element={<DashboardLayout />}>
               <Route 
                 index 
                 element={
@@ -174,17 +176,17 @@ const App = () => (
                   </Suspense>
                 } 
               />
+              
+              {/* Rota 404 dentro do DashboardLayout */}
+              <Route 
+                path="*" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <NotFound />
+                  </Suspense>
+                } 
+              />
             </Route>
-
-            {/* Rota 404 */}
-            <Route 
-              path="*" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <NotFound />
-                </Suspense>
-              } 
-            />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
