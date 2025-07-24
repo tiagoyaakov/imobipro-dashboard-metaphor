@@ -185,7 +185,7 @@ model Appointment {
   endTime     DateTime         // Novo: campo para fim do agendamento
   date        DateTime         // Manter para compatibilidade
   type        AppointmentType  @default(VISIT)
-  status      AppointmentStatus @default(PENDING)
+  status      AppointmentStatus @default(SCHEDULED)
   notes       String?          // Novo: observações do agendamento
 
   agentId     String

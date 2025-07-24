@@ -2,6 +2,23 @@
 // TIPOS DO MÓDULO DE AGENDA - IMOBIPRO DASHBOARD
 // =====================================================
 
+// Enums
+export enum AppointmentType {
+  VISIT = 'VISIT',
+  MEETING = 'MEETING', 
+  CALL = 'CALL',
+  OTHER = 'OTHER'
+}
+
+export enum AppointmentStatus {
+  CONFIRMED = 'CONFIRMED',
+  SCHEDULED = 'SCHEDULED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  NO_SHOW = 'NO_SHOW',
+  RESCHEDULED = 'RESCHEDULED'
+}
+
 // Configuração de horário por dia da semana
 export interface DaySchedule {
   start: string;      // "09:00"
@@ -51,14 +68,43 @@ export interface GoogleCalendarWebhook {
   updatedAt: Date;
 }
 
+// Modelo base Appointment
+export interface Appointment {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+  date: Date; // Manter para compatibilidade
+  type: AppointmentType;
+  status: AppointmentStatus;
+  notes?: string;
+  
+  // Relacionamentos
+  agentId: string;
+  contactId: string;
+  propertyId?: string;
+  
+  // Integração Google Calendar
+  googleCalendarEventId?: string;
+  n8nWorkflowId?: string;
+  autoAssigned: boolean;
+  
+  // Relacionamento com slot
+  availabilitySlotId?: string;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Extensões do modelo Appointment
 export interface AppointmentWithSlot {
   id: string;
   title: string;
   description?: string;
   date: Date;
-  type: 'VISIT' | 'MEETING' | 'CALL' | 'OTHER';
-  status: 'CONFIRMED' | 'PENDING' | 'COMPLETED' | 'CANCELED';
+  type: AppointmentType;
+  status: AppointmentStatus;
   
   // Relacionamentos
   agentId: string;
@@ -218,4 +264,20 @@ export interface NotificationTemplate {
   subject: string;
   body: string;
   variables: string[]; // ['{agent_name}', '{client_name}', '{property_title}']
+}
+
+// Evento do FullCalendar
+export interface FullCalendarEvent {
+  id: string;
+  title: string;
+  start: Date | string;
+  end: Date | string;
+  extendedProps: {
+    type: AppointmentType;
+    status: AppointmentStatus;
+    contactId: string;
+    propertyId?: string;
+    agentId: string;
+    notes?: string;
+  };
 } 
