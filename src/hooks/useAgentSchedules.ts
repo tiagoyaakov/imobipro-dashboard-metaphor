@@ -508,8 +508,8 @@ const deleteAgentSchedule = async (agentId: string): Promise<void> => {
   }
 };
 
-// Hook principal
-export const useAgentSchedules = (agentId?: string) => {
+// Hook principal para gerenciar horário de um agente específico
+export const useAgentScheduleManager = (agentId?: string) => {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
