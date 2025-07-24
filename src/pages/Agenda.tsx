@@ -7,6 +7,7 @@ export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Hooks para gerenciamento de dados
   const {
@@ -19,15 +20,17 @@ export default function Agenda() {
   } = useAppointments();
 
   const {
-    agentSchedules,
+    data: agentSchedulesData,
     isLoading: schedulesLoading,
     error: schedulesError
   } = useAgentSchedules();
 
+  const agentSchedules = agentSchedulesData || [];
+
   // Handlers para manipulação de appointments
   const handleAppointmentCreate = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      await createAppointment.mutateAsync(appointmentData);
+      await createAppointment(appointmentData);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -37,7 +40,7 @@ export default function Agenda() {
 
   const handleAppointmentUpdate = async (id: string, appointmentData: Partial<Appointment>) => {
     try {
-      await updateAppointment.mutateAsync({ id, ...appointmentData });
+      await updateAppointment(id, appointmentData);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -47,7 +50,7 @@ export default function Agenda() {
 
   const handleAppointmentDelete = async (id: string) => {
     try {
-      await deleteAppointment.mutateAsync(id);
+      await deleteAppointment(id);
       setIsModalOpen(false);
       setSelectedAppointment(null);
     } catch (error) {
@@ -84,7 +87,7 @@ export default function Agenda() {
             Erro ao carregar agenda
           </h3>
           <p className="text-gray-600">
-            {appointmentsError?.message || schedulesError?.message}
+            {appointmentsError?.toString() || schedulesError?.toString() || 'Erro desconhecido'}
           </p>
         </div>
       </div>
@@ -93,23 +96,58 @@ export default function Agenda() {
 
   return (
     <div className="flex h-full bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+      {/* Sidebar - Responsivo */}
+      <div className={`
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+        fixed lg:relative
+        z-40 lg:z-auto
+        w-80 lg:w-80
+        h-full
+        bg-white dark:bg-gray-800 
+        border-r border-gray-200 dark:border-gray-700
+        transition-transform duration-300 ease-in-out
+        lg:transition-none
+      `}>
         <AgendaSidebar 
           appointments={appointments || []}
           isLoading={isLoading}
+          onAppointmentClick={handleEventClick}
         />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <AgendaCalendar
-          appointments={appointments || []}
-          agentSchedules={agentSchedules || []}
-          onDateSelect={handleDateSelect}
-          onEventClick={handleEventClick}
-          isLoading={isLoading}
+      {/* Overlay para mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
         />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header com toggle da sidebar */}
+        <div className="lg:hidden p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span>Menu</span>
+          </button>
+        </div>
+
+        <div className="flex-1 p-4 lg:p-6">
+          <AgendaCalendar
+            appointments={appointments || []}
+            agentSchedules={agentSchedules}
+            onDateSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Modal */}
@@ -121,7 +159,7 @@ export default function Agenda() {
         onCreate={handleAppointmentCreate}
         onUpdate={handleAppointmentUpdate}
         onDelete={handleAppointmentDelete}
-        isLoading={createAppointment.isPending || updateAppointment.isPending || deleteAppointment.isPending}
+        isLoading={false} // Removido isPending pois não existe nas funções
       />
     </div>
   );
