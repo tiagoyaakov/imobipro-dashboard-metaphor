@@ -36,6 +36,12 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/google-calendar": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/react": "^6.1.18",
+    "@fullcalendar/timegrid": "^6.1.18",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^6.11.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -72,6 +78,8 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
+    "google-auth-library": "^10.1.0",
+    "googleapis": "^154.0.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",

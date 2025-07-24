@@ -36,3 +36,4 @@ oauth2.keys.json
 # Keep example files
 !.env.example
 .vercel
+.env
