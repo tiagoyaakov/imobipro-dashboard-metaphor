@@ -108,6 +108,12 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  // Google Calendar integration
+  googleRefreshToken   String?
+  googleAccessToken    String?
+  googleTokenExpiry    DateTime?
+  googleCalendarId     String?
+
   properties   Property[]
   contacts     Contact[]
   appointments Appointment[]
@@ -115,6 +121,10 @@ model User {
   activities   Activity[]
   messages     Message[]
   chats        Chat[]     @relation("ChatOwner")
+  
+  // Agenda module relationships
+  agentSchedule    AgentSchedule?
+  availabilitySlots AvailabilitySlot[]
 }
 
 model Property {
@@ -182,6 +192,15 @@ model Appointment {
   propertyId  String?
   property    Property?        @relation(fields: [propertyId], references: [id])
 
+  // Google Calendar integration
+  googleCalendarEventId String?
+  n8nWorkflowId        String?
+  autoAssigned         Boolean @default(false)
+  
+  // Relacionamento com AvailabilitySlot
+  availabilitySlotId   String?
+  availabilitySlot     AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -242,4 +261,58 @@ model Message {
   sender    User     @relation(fields: [senderId], references: [id])
   chatId    String
   chat      Chat     @relation(fields: [chatId], references: [id])
+}
+
+// -----------------------------------------------------------
+// Agenda Module Models
+// -----------------------------------------------------------
+
+// Horários de trabalho dos corretores
+model AgentSchedule {
+  id        String   @id @default(uuid())
+  agentId   String   @unique
+  agent     User     @relation(fields: [agentId], references: [id])
+  
+  // Configuração por dia da semana
+  monday    Json?    // { start: "09:00", end: "18:00", available: true }
+  tuesday   Json?
+  wednesday Json?
+  thursday  Json?
+  friday    Json?
+  saturday  Json?
+  sunday    Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Slots de disponibilidade
+model AvailabilitySlot {
+  id          String   @id @default(uuid())
+  agentId     String
+  agent       User     @relation(fields: [agentId], references: [id])
+  
+  date        DateTime
+  startTime   String   // "09:00"
+  endTime     String   // "18:00"
+  isAvailable Boolean  @default(true)
+  isBooked    Boolean  @default(false)
+  
+  // Relacionamento com Appointment (um slot pode ter um agendamento)
+  appointments Appointment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Webhooks do Google Calendar
+model GoogleCalendarWebhook {
+  id          String   @id @default(uuid())
+  calendarId  String
+  webhookUrl  String
+  resourceId  String
+  expiration  DateTime
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

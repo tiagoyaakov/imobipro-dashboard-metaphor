@@ -456,3 +456,226 @@ export const findNextAvailableSlot = (
 
   return daySchedule.start;
 }; 
+
+// =====================================================
+// HOOK: GERENCIAMENTO DE HORÁRIOS DE TRABALHO
+// =====================================================
+
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AgentSchedule, AgentScheduleForm, DaySchedule } from '@/types/agenda';
+
+// API functions
+const fetchAgentSchedule = async (agentId: string): Promise<AgentSchedule | null> => {
+  const response = await fetch(`/api/agent-schedules/${agentId}`);
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error('Erro ao buscar horários do corretor');
+  }
+  return response.json();
+};
+
+const createAgentSchedule = async (data: AgentScheduleForm): Promise<AgentSchedule> => {
+  const response = await fetch('/api/agent-schedules', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Erro ao criar horários do corretor');
+  }
+  return response.json();
+};
+
+const updateAgentSchedule = async (agentId: string, data: Partial<AgentScheduleForm>): Promise<AgentSchedule> => {
+  const response = await fetch(`/api/agent-schedules/${agentId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Erro ao atualizar horários do corretor');
+  }
+  return response.json();
+};
+
+const deleteAgentSchedule = async (agentId: string): Promise<void> => {
+  const response = await fetch(`/api/agent-schedules/${agentId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Erro ao deletar horários do corretor');
+  }
+};
+
+// Hook principal
+export const useAgentSchedules = (agentId?: string) => {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+
+  // Query para buscar horários
+  const {
+    data: schedule,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['agent-schedule', agentId],
+    queryFn: () => fetchAgentSchedule(agentId!),
+    enabled: !!agentId,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  // Mutation para criar horários
+  const createMutation = useMutation({
+    mutationFn: createAgentSchedule,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['agent-schedule', data.agentId], data);
+      queryClient.invalidateQueries({ queryKey: ['agent-schedules'] });
+      setError(null);
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  // Mutation para atualizar horários
+  const updateMutation = useMutation({
+    mutationFn: ({ agentId, data }: { agentId: string; data: Partial<AgentScheduleForm> }) =>
+      updateAgentSchedule(agentId, data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['agent-schedule', data.agentId], data);
+      queryClient.invalidateQueries({ queryKey: ['agent-schedules'] });
+      setError(null);
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  // Mutation para deletar horários
+  const deleteMutation = useMutation({
+    mutationFn: deleteAgentSchedule,
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['agent-schedule', agentId] });
+      queryClient.invalidateQueries({ queryKey: ['agent-schedules'] });
+      setError(null);
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  // Funções auxiliares
+  const createSchedule = async (data: AgentScheduleForm) => {
+    await createMutation.mutateAsync(data);
+  };
+
+  const updateSchedule = async (data: Partial<AgentScheduleForm>) => {
+    if (!agentId) throw new Error('ID do corretor é obrigatório');
+    await updateMutation.mutateAsync({ agentId, data });
+  };
+
+  const deleteSchedule = async () => {
+    if (!agentId) throw new Error('ID do corretor é obrigatório');
+    await deleteMutation.mutateAsync(agentId);
+  };
+
+  const clearError = () => setError(null);
+
+  // Validação de horários
+  const validateDaySchedule = (daySchedule: DaySchedule): boolean => {
+    if (!daySchedule.available) return true;
+    
+    const start = daySchedule.start;
+    const end = daySchedule.end;
+    
+    if (!start || !end) return false;
+    
+    const startTime = new Date(`2000-01-01T${start}`);
+    const endTime = new Date(`2000-01-01T${end}`);
+    
+    return startTime < endTime;
+  };
+
+  const validateSchedule = (schedule: AgentScheduleForm): string[] => {
+    const errors: string[] = [];
+    
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+    
+    days.forEach(day => {
+      const daySchedule = schedule[day];
+      if (daySchedule && !validateDaySchedule(daySchedule)) {
+        errors.push(`Horário inválido para ${day}`);
+      }
+    });
+    
+    return errors;
+  };
+
+  // Geração de horário padrão
+  const generateDefaultSchedule = (): AgentScheduleForm => ({
+    agentId: agentId || '',
+    monday: { start: '09:00', end: '18:00', available: true },
+    tuesday: { start: '09:00', end: '18:00', available: true },
+    wednesday: { start: '09:00', end: '18:00', available: true },
+    thursday: { start: '09:00', end: '18:00', available: true },
+    friday: { start: '09:00', end: '18:00', available: true },
+    saturday: { start: '09:00', end: '17:00', available: true },
+    sunday: { start: '10:00', end: '16:00', available: false },
+  });
+
+  return {
+    // Data
+    schedule,
+    isLoading,
+    error,
+    
+    // Mutations
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    
+    // Utils
+    refetch,
+    clearError,
+    validateSchedule,
+    generateDefaultSchedule,
+  };
+};
+
+// Hook para listar todos os horários (admin)
+export const useAllAgentSchedules = () => {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAllSchedules = async (): Promise<AgentSchedule[]> => {
+    const response = await fetch('/api/agent-schedules');
+    if (!response.ok) {
+      throw new Error('Erro ao buscar horários dos corretores');
+    }
+    return response.json();
+  };
+
+  const {
+    data: schedules,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['agent-schedules'],
+    queryFn: fetchAllSchedules,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  const clearError = () => setError(null);
+
+  return {
+    schedules,
+    isLoading,
+    error,
+    refetch,
+    clearError,
+  };
+}; 
