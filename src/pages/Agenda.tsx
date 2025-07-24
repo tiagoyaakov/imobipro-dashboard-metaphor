@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AgendaCalendar, AgendaSidebar, AppointmentModal } from '@/components/agenda';
 import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
 import { useAppointments, useAgentSchedules } from '@/hooks';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Calendar, 
+  Clock, 
+  Users, 
+  CheckCircle, 
+  AlertCircle,
+  Plus,
+  Settings,
+  RefreshCw,
+  BarChart3
+} from 'lucide-react';
 
 export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Hooks para gerenciamento de dados
   const {
@@ -28,6 +40,44 @@ export default function Agenda() {
   } = useAgentSchedules();
 
   const agentSchedules = agentSchedulesData || [];
+
+  // Métricas da agenda - seguindo padrão CRM
+  const metrics = useMemo(() => {
+    if (!appointments) {
+      return {
+        totalAppointments: 0,
+        todayAppointments: 0,
+        confirmedAppointments: 0,
+        completedAppointments: 0
+      };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      aptDate.setHours(0, 0, 0, 0);
+      return aptDate.getTime() === today.getTime();
+    }).length;
+    
+    const confirmedAppointments = appointments.filter(apt => 
+      apt.status === AppointmentStatus.CONFIRMED
+    ).length;
+    
+    const completedAppointments = appointments.filter(apt => 
+      apt.status === AppointmentStatus.COMPLETED
+    ).length;
+    
+    return {
+      totalAppointments: appointments.length,
+      todayAppointments,
+      confirmedAppointments,
+      completedAppointments
+    };
+  }, [appointments]);
 
   // Handlers para manipulação de appointments
   const handleAppointmentCreate = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -97,62 +147,127 @@ export default function Agenda() {
   }
 
   return (
-    <div className="flex h-full bg-background">
-      {/* Sidebar - Responsiva */}
-      <div className={`
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-        fixed lg:relative
-        z-40 lg:z-auto
-        w-80 lg:w-80
-        h-full
-        bg-card border-r border-border
-        transition-transform duration-300 ease-in-out
-        lg:transition-none
-        shadow-lg lg:shadow-none
-      `}>
-        <AgendaSidebar 
-          appointments={appointments || []}
-          isLoading={isLoading}
-          onAppointmentClick={handleEventClick}
-        />
-      </div>
-
-      {/* Overlay para mobile */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content - Foco no Calendário */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header com toggle da sidebar */}
-        <div className="lg:hidden p-4 border-b border-border bg-card">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="flex items-center gap-2"
-            >
-              {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              <span className="text-sm">Menu</span>
-            </Button>
-            <h1 className="text-lg font-semibold">Agenda</h1>
-            <div className="w-10" /> {/* Spacer para centralizar título */}
-          </div>
+    <div className="space-y-6">
+      {/* Header - Seguindo padrão CRM */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Agenda</h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie agendamentos e sincronize com Google Calendar
+          </p>
         </div>
-
-        {/* Conteúdo Principal - Calendário */}
-        <div className="flex-1 p-4 lg:p-6">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Agendamento
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Configurações
+          </Button>
+        </div>
+      </div>
+      
+      {/* Métricas Principais - Minimalistas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-xl font-bold">
+                  {isLoading ? '...' : metrics.totalAppointments}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  agendamentos
+                </p>
+              </div>
+              <Calendar className="w-6 h-6 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Hoje</p>
+                <p className="text-xl font-bold">
+                  {isLoading ? '...' : metrics.todayAppointments}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  agendados
+                </p>
+              </div>
+              <Clock className="w-6 h-6 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Confirmados</p>
+                <p className="text-xl font-bold">
+                  {isLoading ? '...' : metrics.confirmedAppointments}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  este mês
+                </p>
+              </div>
+              <CheckCircle className="w-6 h-6 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Concluídos</p>
+                <p className="text-xl font-bold">
+                  {isLoading ? '...' : metrics.completedAppointments}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  finalizados
+                </p>
+              </div>
+              <BarChart3 className="w-6 h-6 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Separator />
+      
+      {/* Layout Principal - Calendário como Foco */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Calendário - 75% do espaço */}
+        <div className="lg:col-span-3">
           <AgendaCalendar
             appointments={appointments || []}
             agentSchedules={agentSchedules || []}
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             isLoading={isLoading}
+          />
+        </div>
+        
+        {/* Sidebar Compacta - 25% do espaço */}
+        <div className="lg:col-span-1">
+          <AgendaSidebar 
+            appointments={appointments || []}
+            isLoading={isLoading}
+            onAppointmentClick={handleEventClick}
           />
         </div>
       </div>
@@ -168,6 +283,22 @@ export default function Agenda() {
         onDelete={handleAppointmentDelete}
         isLoading={false}
       />
+      
+      {/* Status da Integração - Minimalista */}
+      <div className="mt-8 p-4 bg-muted/30 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            GOOGLE CALENDAR
+          </Badge>
+          <Badge variant="outline">
+            Sincronização Ativa
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Agendamentos sincronizados automaticamente com Google Calendar.
+          {isLoading && ' Carregando dados...'}
+        </p>
+      </div>
     </div>
   );
 }

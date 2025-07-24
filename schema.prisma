@@ -52,9 +52,11 @@ enum AppointmentType {
 
 enum AppointmentStatus {
   CONFIRMED
-  PENDING
+  SCHEDULED    // Compatível com PENDING
   COMPLETED
-  CANCELED
+  CANCELLED    // Corrigir ortografia
+  NO_SHOW      // Adicionar status faltante
+  RESCHEDULED  // Adicionar status faltante
 }
 
 enum DealStage {
@@ -179,9 +181,12 @@ model Appointment {
   id          String           @id @default(uuid())
   title       String
   description String?
-  date        DateTime
+  startTime   DateTime         // Mudança: separar startTime de date para melhor compatibilidade
+  endTime     DateTime         // Novo: campo para fim do agendamento
+  date        DateTime         // Manter para compatibilidade
   type        AppointmentType  @default(VISIT)
   status      AppointmentStatus @default(PENDING)
+  notes       String?          // Novo: observações do agendamento
 
   agentId     String
   agent       User             @relation(fields: [agentId], references: [id])

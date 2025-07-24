@@ -133,101 +133,87 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   }, [appointments, onAppointmentUpdate]);
 
   return (
-    <div className="space-y-4">
-      {/* Header - Responsivo e Limpo */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Controles de Visualização */}
+    <div className="space-y-3">
+      {/* Header Compacto - Controles Essenciais */}
+      <div className="flex items-center justify-between">
+        {/* Controles de Visualização - Compactos */}
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
             <Button
               variant={view === 'dayGridMonth' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('dayGridMonth')}
-              className="text-xs lg:text-sm"
+              className="text-xs px-2"
             >
-              <span className="hidden sm:inline">Mês</span>
-              <span className="sm:hidden">M</span>
+              Mês
             </Button>
             <Button
               variant={view === 'timeGridWeek' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridWeek')}
-              className="text-xs lg:text-sm"
+              className="text-xs px-2"
             >
-              <span className="hidden sm:inline">Semana</span>
-              <span className="sm:hidden">S</span>
+              Semana
             </Button>
             <Button
               variant={view === 'timeGridDay' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridDay')}
-              className="text-xs lg:text-sm"
+              className="text-xs px-2"
             >
-              <span className="hidden sm:inline">Dia</span>
-              <span className="sm:hidden">D</span>
+              Dia
             </Button>
-          </div>
-          
-          {/* Status Google Calendar - Menor */}
-          <div className="flex items-center gap-2 ml-4">
-            <Badge variant={isConnected ? 'default' : 'secondary'} className="text-xs">
-              <Calendar className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">
-                {isConnected ? 'Google Conectado' : 'Google Desconectado'}
-              </span>
-              <span className="sm:hidden">
-                {isConnected ? 'GC' : 'GD'}
-              </span>
-            </Badge>
-            {!isConnected && (
-              <Button size="sm" onClick={connectGoogleCalendar} className="text-xs">
-                <span className="hidden sm:inline">Conectar</span>
-                <span className="sm:hidden">+</span>
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Ações - Lado Direito */}
+        {/* Status Google Calendar - Muito Compacto */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="text-xs lg:text-sm"
-          >
-            <Filter className="w-3 h-3 mr-1" />
-            <span className="hidden sm:inline">Filtros</span>
-          </Button>
-          
-          <Button onClick={() => setIsModalOpen(true)} className="text-xs lg:text-sm">
-            <Plus className="w-3 h-3 mr-1" />
-            <span className="hidden sm:inline">Novo</span>
-            <span className="sm:hidden">+</span>
-          </Button>
+          <Badge variant={isConnected ? 'default' : 'secondary'} className="text-xs px-2 py-1">
+            <Calendar className="w-3 h-3 mr-1" />
+            {isConnected ? 'Conectado' : 'Desconectado'}
+          </Badge>
+          {!isConnected && (
+            <Button size="sm" onClick={connectGoogleCalendar} className="text-xs px-2">
+              Conectar
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Filtros - Colapsável */}
+      {/* Filtros Colapsáveis - Só aparece quando solicitado */}
       {showFilters && (
         <div className="transition-all duration-300 ease-in-out">
           <AgendaFilters />
         </div>
       )}
 
-      {/* Calendário - Elemento Principal */}
+      {/* Calendário - Elemento Principal com Máximo Espaço */}
       <Card className="imobipro-card shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg lg:text-xl">
-            <Calendar className="w-4 h-4 lg:w-5 lg:h-5" />
-            Agenda
-            {isLoading && (
-              <div className="ml-2 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 lg:p-6">
-          <div className="h-[500px] lg:h-[600px]">
+        <CardContent className="p-3">
+          {/* Header do calendário minimalista */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              <h3 className="font-medium text-sm">Calendário de Agendamentos</h3>
+              {isLoading && (
+                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-xs px-2 h-7"
+              >
+                <Filter className="w-3 h-3 mr-1" />
+                Filtros
+              </Button>
+            </div>
+          </div>
+
+          {/* Calendário com altura otimizada */}
+          <div className="h-[550px] lg:h-[650px]">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               headerToolbar={{
@@ -271,16 +257,17 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
               }}
               views={{
                 dayGridMonth: {
-                  dayMaxEvents: 3,
-                  eventDisplay: 'block'
+                  dayMaxEvents: 4,
+                  eventDisplay: 'block',
+                  dayMaxEventRows: 4
                 },
                 timeGridWeek: {
                   slotMinWidth: 60,
-                  dayMaxEvents: 5
+                  dayMaxEvents: 8
                 },
                 timeGridDay: {
                   slotMinWidth: 80,
-                  dayMaxEvents: 10
+                  dayMaxEvents: 15
                 }
               }}
             />
