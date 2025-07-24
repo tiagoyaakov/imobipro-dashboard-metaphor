@@ -37,9 +37,12 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({
     });
   }, [forceMock]);
 
-  // Determinar qual provider usar baseado na configuração
-  const authMode = getAuthMode();
-  const shouldUseReal = !forceMock && authMode === 'real';
+  // FORÇAR USO DE MOCK TEMPORARIAMENTE
+  console.log('🔐 [UnifiedAuthProvider] Forçando uso de mock (temporário)');
+  const shouldUseReal = false; // Forçar mock
+  
+  // const authMode = getAuthMode();
+  // const shouldUseReal = !forceMock && authMode === 'real';
 
   if (shouldUseReal) {
     return (
