@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProviderMock } from "@/contexts/AuthContextMock";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import PublicLayout from "./components/layout/PublicLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
 // Lazy loading das páginas para melhor performance
@@ -49,6 +50,27 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Rotas Públicas - Páginas Legais */}
+            <Route path="/legal" element={<PublicLayout />}>
+              <Route 
+                path="privacy-policy" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <PrivacyPolicy />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="terms-of-service" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <TermsOfService />
+                  </Suspense>
+                } 
+              />
+            </Route>
+
+            {/* Rotas Protegidas - Dashboard */}
             <Route path="/" element={<DashboardLayout />}>
               <Route 
                 index 
@@ -154,23 +176,9 @@ const App = () => (
                   </Suspense>
                 } 
               />
-              <Route 
-                path="legal/privacy-policy" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <PrivacyPolicy />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="legal/terms-of-service" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <TermsOfService />
-                  </Suspense>
-                } 
-              />
             </Route>
+
+            {/* Rota 404 */}
             <Route 
               path="*" 
               element={

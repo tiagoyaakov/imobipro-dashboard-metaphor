@@ -1,8 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Shield, Eye, Lock, FileText } from 'lucide-react';
+import { Mail, Shield, Eye, Lock, FileText } from 'lucide-react';
 
 // -----------------------------------------------------------
 // Página de Política de Privacidade
@@ -11,26 +9,6 @@ import { ArrowLeft, Mail, Shield, Eye, Lock, FileText } from 'lucide-react';
 export const PrivacyPolicy: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <div className="bg-background border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar ao Dashboard
-                </Link>
-              </Button>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Shield className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-semibold">Política de Privacidade</h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Conteúdo Principal */}
       <div className="max-w-4xl mx-auto px-6 py-8">
         <Card className="shadow-lg">
@@ -260,16 +238,6 @@ export const PrivacyPolicy: React.FC = () => {
             </section>
           </CardContent>
         </Card>
-
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <Button variant="outline" asChild>
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao Dashboard
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );
