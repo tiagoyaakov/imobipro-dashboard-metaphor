@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, User, Building, Trash2, Save, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Building, Trash2, Save } from 'lucide-react';
 import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
 
 interface AppointmentModalProps {
@@ -110,44 +110,35 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             {isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}
-            {isEditing && (
-              <Badge variant="secondary" className="text-xs">
-                ID: {appointment?.id}
-              </Badge>
-            )}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Informações Básicas */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold">Informações Básicas</h3>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
+            <h3 className="text-lg font-semibold">Informações Básicas</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm font-medium">Título *</Label>
+                <Label htmlFor="title">Título *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Ex: Visita - Apartamento Centro"
                   required
-                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type" className="text-sm font-medium">Tipo *</Label>
+                <Label htmlFor="type">Tipo *</Label>
                 <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
-                  <SelectTrigger className="text-sm">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -161,55 +152,49 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-sm font-medium">Descrição</Label>
+              <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="Descrição detalhada do agendamento..."
                 rows={3}
-                className="text-sm"
               />
             </div>
           </div>
 
           {/* Data e Hora */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold">Data e Hora</h3>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
+            <h3 className="text-lg font-semibold">Data e Hora</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startTime" className="text-sm font-medium">Início *</Label>
+                <Label htmlFor="startTime">Início *</Label>
                 <Input
                   id="startTime"
                   type="datetime-local"
                   value={formData.startTime ? formatDateTimeForInput(formData.startTime) : ''}
                   onChange={(e) => handleDateTimeChange('startTime', e.target.value)}
                   required
-                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endTime" className="text-sm font-medium">Fim *</Label>
+                <Label htmlFor="endTime">Fim *</Label>
                 <Input
                   id="endTime"
                   type="datetime-local"
                   value={formData.endTime ? formatDateTimeForInput(formData.endTime) : ''}
                   onChange={(e) => handleDateTimeChange('endTime', e.target.value)}
                   required
-                  className="text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Label htmlFor="status">Status</Label>
               <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,88 +207,77 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             </div>
           </div>
 
-          {/* Participantes */}
+          {/* Cliente */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold">Participantes</h3>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
+            <h3 className="text-lg font-semibold">Cliente</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="agentId" className="text-sm font-medium">Agente *</Label>
-                <Select value={formData.agentId} onValueChange={(value) => handleInputChange('agentId', value)}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Selecione o agente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agent1">João Silva</SelectItem>
-                    <SelectItem value="agent2">Maria Santos</SelectItem>
-                    <SelectItem value="agent3">Pedro Costa</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="agentId">ID do Agente *</Label>
+                <Input
+                  id="agentId"
+                  value={formData.agentId || ''}
+                  onChange={(e) => handleInputChange('agentId', e.target.value)}
+                  placeholder="ID do agente"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contactId" className="text-sm font-medium">Cliente *</Label>
-                <Select value={formData.contactId} onValueChange={(value) => handleInputChange('contactId', value)}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Selecione o cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="contact1">Carlos Oliveira</SelectItem>
-                    <SelectItem value="contact2">Ana Silva</SelectItem>
-                    <SelectItem value="contact3">Roberto Santos</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="contactId">ID do Contato *</Label>
+                <Input
+                  id="contactId"
+                  value={formData.contactId || ''}
+                  onChange={(e) => handleInputChange('contactId', e.target.value)}
+                  placeholder="ID do contato"
+                  required
+                />
               </div>
             </div>
           </div>
 
           {/* Propriedade */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold">Propriedade</h3>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
+            <h3 className="text-lg font-semibold">Propriedade</h3>
             
-            <div className="space-y-2">
-              <Label htmlFor="propertyId" className="text-sm font-medium">Propriedade</Label>
-              <Select value={formData.propertyId} onValueChange={(value) => handleInputChange('propertyId', value)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Selecione a propriedade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="prop1">Apartamento Centro - R$ 500.000</SelectItem>
-                  <SelectItem value="prop2">Casa Jardins - R$ 800.000</SelectItem>
-                  <SelectItem value="prop3">Cobertura Vila Madalena - R$ 1.200.000</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="propertyId">Propriedade</Label>
+                <Select value={formData.propertyId} onValueChange={(value) => handleInputChange('propertyId', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a propriedade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="prop1">Apartamento Centro - R$ 500.000</SelectItem>
+                    <SelectItem value="prop2">Casa Jardins - R$ 800.000</SelectItem>
+                    <SelectItem value="prop3">Cobertura Vila Madalena - R$ 1.200.000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Observações */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm font-medium">Observações</Label>
+            <Label htmlFor="notes">Observações</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder="Observações adicionais..."
               rows={3}
-              className="text-sm"
             />
           </div>
 
           {/* Footer */}
-          <DialogFooter className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex gap-2 order-2 sm:order-1">
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
               {isEditing && (
                 <Button
                   type="button"
                   variant="destructive"
                   onClick={handleDelete}
-                  className="flex items-center gap-2 text-sm"
+                  className="flex items-center gap-2"
                   disabled={isLoading}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -312,20 +286,11 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               )}
             </div>
             
-            <div className="flex gap-2 order-1 sm:order-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose}
-                className="text-sm"
-              >
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
-                className="flex items-center gap-2 text-sm" 
-                disabled={isLoading}
-              >
+              <Button type="submit" className="flex items-center gap-2" disabled={isLoading}>
                 <Save className="w-4 h-4" />
                 {isLoading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')}
               </Button>

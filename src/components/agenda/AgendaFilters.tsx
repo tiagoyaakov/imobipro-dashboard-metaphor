@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Filter, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Filter, Search, X } from 'lucide-react';
 
 interface AgendaFiltersProps {
   onFiltersChange?: (filters: AgendaFilters) => void;
@@ -72,50 +72,26 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
   const hasActiveFilters = filters.search || filters.agentId || filters.status || filters.type || filters.dateRange.start || filters.dateRange.end;
 
   return (
-    <Card className="imobipro-card shadow-sm">
+    <Card className="imobipro-card">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2">
             <Filter className="w-4 h-4" />
             Filtros
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="text-xs">
-                {Object.values(filters).filter(v => 
-                  typeof v === 'string' ? v : 
-                  typeof v === 'object' && v !== null ? 
-                    (v.start || v.end) : false
-                ).length} ativo{Object.values(filters).filter(v => 
-                  typeof v === 'string' ? v : 
-                  typeof v === 'object' && v !== null ? 
-                    (v.start || v.end) : false
-                ).length > 1 ? 's' : ''}
-              </Badge>
-            )}
           </CardTitle>
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters} className="text-xs">
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 <X className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Limpar</span>
+                Limpar
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs"
             >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="w-3 h-3 mr-1" />
-                  <span className="hidden sm:inline">Ocultar</span>
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-3 h-3 mr-1" />
-                  <span className="hidden sm:inline">Mostrar</span>
-                </>
-              )}
+              {isExpanded ? 'Ocultar' : 'Mostrar'}
             </Button>
           </div>
         </div>
@@ -125,7 +101,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
         <CardContent className="space-y-4">
           {/* Busca */}
           <div className="space-y-2">
-            <Label htmlFor="search" className="text-sm font-medium">Buscar</Label>
+            <Label htmlFor="search">Buscar</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -138,11 +114,10 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
             </div>
           </div>
 
-          {/* Filtros principais */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Filtro por Agente */}
             <div className="space-y-2">
-              <Label htmlFor="agent" className="text-sm font-medium">Agente</Label>
+              <Label htmlFor="agent">Agente</Label>
               <Select value={filters.agentId} onValueChange={(value) => handleFilterChange('agentId', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os agentes" />
@@ -158,7 +133,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
 
             {/* Filtro por Status */}
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Label htmlFor="status">Status</Label>
               <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os status" />
@@ -175,7 +150,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
 
             {/* Filtro por Tipo */}
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-medium">Tipo</Label>
+              <Label htmlFor="type">Tipo</Label>
               <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todos os tipos" />
@@ -193,10 +168,10 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
 
           {/* Filtro por Período */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Período</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Label>Período</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="startDate" className="text-xs text-muted-foreground">Data inicial</Label>
+                <Label htmlFor="startDate" className="text-sm">Data inicial</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -205,7 +180,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="endDate" className="text-xs text-muted-foreground">Data final</Label>
+                <Label htmlFor="endDate" className="text-sm">Data final</Label>
                 <Input
                   id="endDate"
                   type="date"
@@ -218,7 +193,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({ onFiltersChange }) => {
 
           {/* Filtros Ativos */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
               <span className="text-sm text-muted-foreground">Filtros ativos:</span>
               {filters.search && (
                 <Badge variant="secondary" className="text-xs">

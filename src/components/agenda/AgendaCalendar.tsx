@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, User, Plus, Filter, Settings } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
 import { FullCalendarEvent, Appointment, AppointmentStatus, AgentSchedule } from '@/types/agenda';
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
 import AppointmentModal from './AppointmentModal';
@@ -38,7 +38,6 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<FullCalendarEvent | null>(null);
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth');
-  const [showFilters, setShowFilters] = useState(false);
   
   const { 
     isConnected, 
@@ -133,18 +132,15 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
   }, [appointments, onAppointmentUpdate]);
 
   return (
-    <div className="space-y-4">
-      {/* Header com controles - Responsivo */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* Controles principais */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {/* Botões de visualização */}
-          <div className="flex gap-1">
+    <div className="space-y-6">
+      {/* Header com controles */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
             <Button
               variant={view === 'dayGridMonth' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('dayGridMonth')}
-              className="text-xs sm:text-sm"
             >
               Mês
             </Button>
@@ -152,7 +148,6 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
               variant={view === 'timeGridWeek' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridWeek')}
-              className="text-xs sm:text-sm"
             >
               Semana
             </Button>
@@ -160,76 +155,40 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
               variant={view === 'timeGridDay' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('timeGridDay')}
-              className="text-xs sm:text-sm"
             >
               Dia
             </Button>
           </div>
           
-          {/* Status Google Calendar */}
           <div className="flex items-center gap-2">
-            <Badge variant={isConnected ? 'default' : 'secondary'} className="text-xs">
+            <Badge variant={isConnected ? 'default' : 'secondary'}>
               <Calendar className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">
-                {isConnected ? 'Google Calendar Conectado' : 'Google Calendar Desconectado'}
-              </span>
-              <span className="sm:hidden">
-                {isConnected ? 'Google Conectado' : 'Google Desconectado'}
-              </span>
+              {isConnected ? 'Google Calendar Conectado' : 'Google Calendar Desconectado'}
             </Badge>
             {!isConnected && (
-              <Button size="sm" onClick={connectGoogleCalendar} className="text-xs">
+              <Button size="sm" onClick={connectGoogleCalendar}>
                 Conectar
               </Button>
             )}
           </div>
         </div>
 
-        {/* Ações */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="text-xs sm:text-sm"
-          >
-            <Filter className="w-3 h-3 mr-1" />
-            <span className="hidden sm:inline">Filtros</span>
-          </Button>
-          
-          <Button 
-            onClick={() => setIsModalOpen(true)}
-            className="text-xs sm:text-sm"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            <span className="hidden sm:inline">Novo Agendamento</span>
-            <span className="sm:hidden">Novo</span>
-          </Button>
-        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Agendamento
+        </Button>
       </div>
 
-      {/* Filtros - Colapsável */}
-      {showFilters && (
-        <div className="transition-all duration-300 ease-in-out">
-          <AgendaFilters />
-        </div>
-      )}
+      {/* Filtros */}
+      <AgendaFilters />
 
       {/* Calendário */}
-      <Card className="imobipro-card shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="w-5 h-5" />
-            Agenda
-            {isLoading && (
-              <div className="ml-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              </div>
-            )}
-          </CardTitle>
+      <Card className="imobipro-card">
+        <CardHeader>
+          <CardTitle>Agenda</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="h-[500px] lg:h-[600px] xl:h-[700px]">
+        <CardContent>
+          <div className="h-[600px]">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               headerToolbar={{
@@ -270,24 +229,6 @@ const AgendaCalendar: React.FC<AgendaCalendarProps> = ({
                 hour: '2-digit',
                 minute: '2-digit',
                 meridiem: false
-              }}
-              // Responsividade
-              aspectRatio={1.35}
-              expandRows={true}
-              // Estilos customizados
-              eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
-              dayCellClassNames="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              // Configurações para mobile
-              views={{
-                dayGridMonth: {
-                  dayMaxEvents: window.innerWidth < 768 ? 2 : 4,
-                },
-                timeGridWeek: {
-                  slotMinWidth: window.innerWidth < 768 ? 60 : 80,
-                },
-                timeGridDay: {
-                  slotMinWidth: window.innerWidth < 768 ? 60 : 80,
-                }
               }}
             />
           </div>
