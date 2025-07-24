@@ -5,7 +5,13 @@
       "Bash(mkdir:*)",
       "Bash(rm:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpmx eslint:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm build:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
