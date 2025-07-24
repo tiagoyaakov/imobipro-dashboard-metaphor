@@ -22,6 +22,8 @@ const Usuarios = lazy(() => import("./pages/Usuarios"));
 const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configuração do QueryClient com otimizações
@@ -149,6 +151,22 @@ const App = () => (
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Configuracoes />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="legal/privacy-policy" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <PrivacyPolicy />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="legal/terms-of-service" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <TermsOfService />
                   </Suspense>
                 } 
               />

@@ -62,6 +62,630 @@
 - Atribuição aleatória de corretores
 - Configuração de horários de trabalho por corretor
 
+### **🔗 INTEGRAÇÃO GOOGLE CALENDAR API - PASSO A PASSO**
+
+#### **1. Configuração Inicial**
+
+**1.1. Instalação das Dependências**
+```bash
+# Instalar Google Calendar API client
+npm install @googleapis/calendar
+
+# Instalar dependências de autenticação
+npm install googleapis
+```
+
+**1.2. Configuração no Google Cloud Console**
+- Acessar [Google Cloud Console](https://console.cloud.google.com/)
+- Criar novo projeto ou selecionar existente
+- Habilitar Google Calendar API
+- Configurar OAuth 2.0 credentials:
+  - Tipo: Web Application
+  - Redirect URIs: `http://localhost:3000/oauth2callback` (desenvolvimento)
+  - Scopes necessários:
+    - `https://www.googleapis.com/auth/calendar`
+    - `https://www.googleapis.com/auth/calendar.events`
+
+**1.3. Arquivo de Configuração OAuth**
+```json
+// oauth2.keys.json
+{
+  "web": {
+    "redirect_uris": ["http://localhost:3000/oauth2callback"],
+    "client_id": "<YOUR_CLIENT_ID>",
+    "client_secret": "<YOUR_CLIENT_SECRET>",
+    "project_id": "<YOUR_PROJECT_ID>"
+  }
+}
+```
+
+#### **2. Implementação da Autenticação**
+
+**2.1. Configuração do Cliente OAuth2**
+```typescript
+// src/integrations/google-calendar/auth.ts
+import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
+
+export class GoogleCalendarAuth {
+  private oauth2Client: OAuth2Client;
+
+  constructor() {
+    this.oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    // Configurar refresh token automaticamente
+    this.oauth2Client.on('tokens', (tokens) => {
+      if (tokens.refresh_token) {
+        // Salvar refresh_token no banco de dados
+        this.saveRefreshToken(tokens.refresh_token);
+      }
+    });
+  }
+
+  // Gerar URL de autorização
+  generateAuthUrl(userId: string): string {
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar',
+      'https://www.googleapis.com/auth/calendar.events'
+    ];
+
+    return this.oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      state: userId, // Para identificar o usuário após callback
+      prompt: 'consent' // Força obtenção do refresh_token
+    });
+  }
+
+  // Trocar código por tokens
+  async exchangeCodeForTokens(code: string): Promise<any> {
+    try {
+      const { tokens } = await this.oauth2Client.getToken(code);
+      this.oauth2Client.setCredentials(tokens);
+      return tokens;
+    } catch (error) {
+      console.error('Erro ao trocar código por tokens:', error);
+      throw error;
+    }
+  }
+
+  // Configurar credenciais com refresh token
+  async setCredentialsFromRefreshToken(refreshToken: string): Promise<void> {
+    this.oauth2Client.setCredentials({
+      refresh_token: refreshToken
+    });
+  }
+
+  private async saveRefreshToken(refreshToken: string): Promise<void> {
+    // Implementar salvamento no banco de dados
+    // await prisma.user.update({
+    //   where: { id: userId },
+    //   data: { googleRefreshToken: refreshToken }
+    // });
+  }
+}
+```
+
+#### **3. Serviço de Integração com Google Calendar**
+
+**3.1. Cliente do Google Calendar**
+```typescript
+// src/integrations/google-calendar/client.ts
+import { google } from 'googleapis';
+import { GoogleCalendarAuth } from './auth';
+
+export class GoogleCalendarClient {
+  private calendar: any;
+  private auth: GoogleCalendarAuth;
+
+  constructor(auth: GoogleCalendarAuth) {
+    this.auth = auth;
+    this.calendar = google.calendar({
+      version: 'v3',
+      auth: auth.getOAuth2Client()
+    });
+  }
+
+  // Criar evento no Google Calendar
+  async createEvent(calendarId: string, eventData: {
+    summary: string;
+    description?: string;
+    start: { dateTime: string; timeZone: string };
+    end: { dateTime: string; timeZone: string };
+    attendees?: Array<{ email: string }>;
+    reminders?: {
+      useDefault: boolean;
+      overrides?: Array<{ method: string; minutes: number }>;
+    };
+  }): Promise<any> {
+    try {
+      const response = await this.calendar.events.insert({
+        calendarId,
+        requestBody: eventData,
+        sendUpdates: 'all' // Enviar notificações para participantes
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao criar evento:', error);
+      throw error;
+    }
+  }
+
+  // Buscar eventos
+  async listEvents(calendarId: string, params: {
+    timeMin?: string;
+    timeMax?: string;
+    maxResults?: number;
+    singleEvents?: boolean;
+    orderBy?: string;
+  } = {}): Promise<any> {
+    try {
+      const response = await this.calendar.events.list({
+        calendarId,
+        ...params,
+        singleEvents: true,
+        orderBy: 'startTime'
+      });
+
+      return response.data.items;
+    } catch (error) {
+      console.error('Erro ao listar eventos:', error);
+      throw error;
+    }
+  }
+
+  // Atualizar evento
+  async updateEvent(calendarId: string, eventId: string, eventData: any): Promise<any> {
+    try {
+      const response = await this.calendar.events.update({
+        calendarId,
+        eventId,
+        requestBody: eventData,
+        sendUpdates: 'all'
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao atualizar evento:', error);
+      throw error;
+    }
+  }
+
+  // Deletar evento
+  async deleteEvent(calendarId: string, eventId: string): Promise<void> {
+    try {
+      await this.calendar.events.delete({
+        calendarId,
+        eventId,
+        sendUpdates: 'all'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar evento:', error);
+      throw error;
+    }
+  }
+
+  // Buscar calendários do usuário
+  async listCalendars(): Promise<any> {
+    try {
+      const response = await this.calendar.calendarList.list();
+      return response.data.items;
+    } catch (error) {
+      console.error('Erro ao listar calendários:', error);
+      throw error;
+    }
+  }
+
+  // Criar calendário personalizado
+  async createCalendar(calendarData: {
+    summary: string;
+    description?: string;
+    timeZone?: string;
+  }): Promise<any> {
+    try {
+      const response = await this.calendar.calendars.insert({
+        requestBody: calendarData
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao criar calendário:', error);
+      throw error;
+    }
+  }
+}
+```
+
+#### **4. Sincronização Bidirecional**
+
+**4.1. Serviço de Sincronização**
+```typescript
+// src/integrations/google-calendar/sync.ts
+import { GoogleCalendarClient } from './client';
+import { prisma } from '@/lib/prisma';
+
+export class GoogleCalendarSync {
+  private client: GoogleCalendarClient;
+
+  constructor(client: GoogleCalendarClient) {
+    this.client = client;
+  }
+
+  // Sincronizar agendamento do banco para Google Calendar
+  async syncAppointmentToGoogle(appointmentId: string): Promise<void> {
+    try {
+      const appointment = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        include: {
+          agent: true,
+          contact: true,
+          property: true
+        }
+      });
+
+      if (!appointment || appointment.googleCalendarEventId) {
+        return; // Já sincronizado ou não encontrado
+      }
+
+      const eventData = {
+        summary: `Agendamento - ${appointment.property?.title || 'Imóvel'}`,
+        description: `
+          Cliente: ${appointment.contact?.name}
+          Corretor: ${appointment.agent?.name}
+          Propriedade: ${appointment.property?.title}
+          Observações: ${appointment.notes || 'Nenhuma'}
+        `,
+        start: {
+          dateTime: appointment.startTime.toISOString(),
+          timeZone: 'America/Sao_Paulo'
+        },
+        end: {
+          dateTime: appointment.endTime.toISOString(),
+          timeZone: 'America/Sao_Paulo'
+        },
+        attendees: [
+          { email: appointment.agent?.email },
+          { email: appointment.contact?.email }
+        ],
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 }, // 1 dia antes
+            { method: 'popup', minutes: 30 } // 30 min antes
+          ]
+        }
+      };
+
+      const googleEvent = await this.client.createEvent('primary', eventData);
+
+      // Atualizar agendamento com ID do evento Google
+      await prisma.appointment.update({
+        where: { id: appointmentId },
+        data: { googleCalendarEventId: googleEvent.id }
+      });
+
+    } catch (error) {
+      console.error('Erro na sincronização para Google Calendar:', error);
+      throw error;
+    }
+  }
+
+  // Sincronizar eventos do Google Calendar para o banco
+  async syncFromGoogleCalendar(userId: string, calendarId: string = 'primary'): Promise<void> {
+    try {
+      const timeMin = new Date();
+      const timeMax = new Date();
+      timeMax.setDate(timeMax.getDate() + 30); // Próximos 30 dias
+
+      const events = await this.client.listEvents(calendarId, {
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString()
+      });
+
+      for (const event of events) {
+        // Verificar se já existe no banco
+        const existingAppointment = await prisma.appointment.findFirst({
+          where: { googleCalendarEventId: event.id }
+        });
+
+        if (!existingAppointment) {
+          // Criar novo agendamento baseado no evento Google
+          await prisma.appointment.create({
+            data: {
+              title: event.summary,
+              notes: event.description,
+              startTime: new Date(event.start.dateTime),
+              endTime: new Date(event.end.dateTime),
+              googleCalendarEventId: event.id,
+              agentId: userId, // Assumir que é do usuário logado
+              status: 'CONFIRMED'
+            }
+          });
+        }
+      }
+
+    } catch (error) {
+      console.error('Erro na sincronização do Google Calendar:', error);
+      throw error;
+    }
+  }
+}
+```
+
+#### **5. Webhooks para Sincronização em Tempo Real**
+
+**5.1. Configuração de Webhooks**
+```typescript
+// src/integrations/google-calendar/webhooks.ts
+import { GoogleCalendarClient } from './client';
+import { prisma } from '@/lib/prisma';
+
+export class GoogleCalendarWebhooks {
+  private client: GoogleCalendarClient;
+
+  constructor(client: GoogleCalendarClient) {
+    this.client = client;
+  }
+
+  // Configurar webhook para um calendário
+  async setupWebhook(calendarId: string, webhookUrl: string): Promise<void> {
+    try {
+      const response = await this.client.calendar.events.watch({
+        calendarId,
+        requestBody: {
+          id: `imobipro-${calendarId}-${Date.now()}`,
+          type: 'web_hook',
+          address: webhookUrl,
+          params: {
+            ttl: '86400' // 24 horas
+          }
+        }
+      });
+
+      // Salvar informações do webhook no banco
+      await prisma.googleCalendarWebhook.create({
+        data: {
+          calendarId,
+          webhookUrl,
+          resourceId: response.data.resourceId,
+          expiration: new Date(response.data.expiration)
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro ao configurar webhook:', error);
+      throw error;
+    }
+  }
+
+  // Processar notificação de webhook
+  async processWebhookNotification(notification: any): Promise<void> {
+    try {
+      const { resourceId, resourceUri } = notification;
+
+      // Buscar eventos atualizados
+      const events = await this.client.listEvents('primary', {
+        timeMin: new Date().toISOString(),
+        maxResults: 10
+      });
+
+      // Sincronizar eventos atualizados
+      for (const event of events) {
+        await this.syncEventToDatabase(event);
+      }
+
+    } catch (error) {
+      console.error('Erro ao processar webhook:', error);
+      throw error;
+    }
+  }
+
+  private async syncEventToDatabase(event: any): Promise<void> {
+    // Implementar lógica de sincronização específica
+    // Baseado no tipo de mudança (criado, atualizado, deletado)
+  }
+}
+```
+
+#### **6. Integração com o Sistema de Agendamentos**
+
+**6.1. Hook Personalizado para Google Calendar**
+```typescript
+// src/hooks/useGoogleCalendar.ts
+import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
+
+export const useGoogleCalendar = () => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+
+  // Verificar se usuário tem Google Calendar conectado
+  useEffect(() => {
+    if (user?.googleRefreshToken) {
+      setIsConnected(true);
+    }
+  }, [user]);
+
+  // Conectar Google Calendar
+  const connectGoogleCalendar = async (): Promise<string> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/google-calendar/auth-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id })
+      });
+
+      const { authUrl } = await response.json();
+      return authUrl;
+    } catch (error) {
+      console.error('Erro ao gerar URL de autenticação:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Processar callback de autenticação
+  const handleAuthCallback = async (code: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/google-calendar/auth-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId: user?.id })
+      });
+
+      if (response.ok) {
+        setIsConnected(true);
+      }
+    } catch (error) {
+      console.error('Erro no callback de autenticação:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Sincronizar agendamento
+  const syncAppointment = async (appointmentId: string): Promise<void> => {
+    if (!isConnected) {
+      throw new Error('Google Calendar não conectado');
+    }
+
+    try {
+      await fetch('/api/google-calendar/sync-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId })
+      });
+    } catch (error) {
+      console.error('Erro na sincronização:', error);
+      throw error;
+    }
+  };
+
+  return {
+    isConnected,
+    isLoading,
+    connectGoogleCalendar,
+    handleAuthCallback,
+    syncAppointment
+  };
+};
+```
+
+#### **7. APIs para Integração**
+
+**7.1. Endpoint de Autenticação**
+```typescript
+// src/pages/api/google-calendar/auth-url.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { GoogleCalendarAuth } from '@/integrations/google-calendar/auth';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { userId } = req.body;
+    const auth = new GoogleCalendarAuth();
+    const authUrl = auth.generateAuthUrl(userId);
+
+    res.status(200).json({ authUrl });
+  } catch (error) {
+    console.error('Erro ao gerar URL de autenticação:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+```
+
+**7.2. Endpoint de Callback**
+```typescript
+// src/pages/api/google-calendar/auth-callback.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { GoogleCalendarAuth } from '@/integrations/google-calendar/auth';
+import { prisma } from '@/lib/prisma';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { code, userId } = req.body;
+    const auth = new GoogleCalendarAuth();
+    const tokens = await auth.exchangeCodeForTokens(code);
+
+    // Salvar tokens no banco
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        googleRefreshToken: tokens.refresh_token,
+        googleAccessToken: tokens.access_token,
+        googleTokenExpiry: new Date(tokens.expiry_date)
+      }
+    });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Erro no callback de autenticação:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+```
+
+#### **8. Variáveis de Ambiente Necessárias**
+
+```env
+# .env
+GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
+GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
+GOOGLE_CALENDAR_WEBHOOK_URL=https://your-domain.com/api/google-calendar/webhook
+```
+
+#### **9. Considerações de Segurança**
+
+1. **Armazenamento Seguro de Tokens**
+   - Criptografar refresh tokens no banco
+   - Usar variáveis de ambiente para credenciais
+   - Implementar rotação automática de tokens
+
+2. **Validação de Webhooks**
+   - Verificar assinatura dos webhooks do Google
+   - Implementar rate limiting
+   - Validar origem das requisições
+
+3. **Controle de Acesso**
+   - Verificar permissões do usuário antes de sincronizar
+   - Implementar Row Level Security (RLS)
+   - Logs de auditoria para todas as operações
+
+#### **10. Monitoramento e Logs**
+
+```typescript
+// src/integrations/google-calendar/monitoring.ts
+export class GoogleCalendarMonitoring {
+  static logSyncOperation(operation: string, details: any): void {
+    console.log(`[Google Calendar Sync] ${operation}:`, details);
+    // Implementar logging estruturado
+  }
+
+  static logError(operation: string, error: any): void {
+    console.error(`[Google Calendar Error] ${operation}:`, error);
+    // Implementar alertas e notificações
+  }
+}
+```
+
 ### **Novos Modelos Necessários**
 
 ```prisma
@@ -113,6 +737,29 @@ model Appointment {
   autoAssigned         Boolean @default(false)
   availabilitySlotId   String?
   availabilitySlot     AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+}
+
+// Webhooks do Google Calendar
+model GoogleCalendarWebhook {
+  id          String   @id @default(uuid())
+  calendarId  String
+  webhookUrl  String
+  resourceId  String
+  expiration  DateTime
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Estender User para tokens do Google
+model User {
+  // ... campos existentes ...
+  
+  // Google Calendar integration
+  googleRefreshToken   String?
+  googleAccessToken    String?
+  googleTokenExpiry    DateTime?
+  googleCalendarId     String?
 }
 ```
 

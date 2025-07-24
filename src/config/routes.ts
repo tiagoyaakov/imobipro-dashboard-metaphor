@@ -184,6 +184,24 @@ export const routeConfigs: RouteConfig[] = [
     requiredFeature: 'system-settings'
   },
 
+  // Páginas Legais (não aparecem no sidebar)
+  {
+    path: '/legal/privacy-policy',
+    name: 'privacy-policy',
+    title: 'Política de Privacidade',
+    description: 'Política de privacidade do ImobiPRO Dashboard',
+    showInSidebar: false,
+    allowedRoles: ['DEV_MASTER', 'ADMIN', 'AGENT']
+  },
+  {
+    path: '/legal/terms-of-service',
+    name: 'terms-of-service',
+    title: 'Termos de Serviço',
+    description: 'Termos de serviço do ImobiPRO Dashboard',
+    showInSidebar: false,
+    allowedRoles: ['DEV_MASTER', 'ADMIN', 'AGENT']
+  },
+
   // Perfil do Usuário - Todos os usuários autenticados
   {
     path: '/profile',

@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+import { AppFooter } from "./AppFooter";
 import { AuthInitializingSpinner } from "@/components/auth/AuthLoadingSpinner";
 import { ImpersonationIndicator } from "@/components/impersonation";
 
@@ -25,6 +26,9 @@ const DashboardLayout = () => {
                 <Outlet />
               </div>
             </main>
+
+            {/* Footer */}
+            <AppFooter />
           </div>
         </div>
       </SidebarProvider>
