@@ -23,6 +23,12 @@ export class GoogleCalendarAuthClient {
    * @returns URL de autorização
    */
   generateAuthUrl(userId: string): string {
+    console.log('🔐 [GoogleCalendarAuthClient] Gerando URL de autorização:', {
+      clientId: this.clientId,
+      redirectUri: this.redirectUri,
+      userId
+    });
+
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -36,7 +42,10 @@ export class GoogleCalendarAuthClient {
       state: userId
     });
 
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    console.log('🔐 [GoogleCalendarAuthClient] URL gerada:', authUrl);
+    
+    return authUrl;
   }
 
   /**

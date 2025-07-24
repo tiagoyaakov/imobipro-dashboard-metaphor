@@ -45,6 +45,7 @@ const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const UnauthorizedPage = lazy(() => import("./pages/auth/UnauthorizedPage"));
 const AuthCallbackPage = lazy(() => import("./pages/auth/AuthCallbackPage"));
+const GoogleCalendarCallback = lazy(() => import("./pages/GoogleCalendarCallback"));
 
 // Páginas de Perfil e Configurações Avançadas
 const ProfilePage = lazy(() => import("./pages/auth/ProfilePage"));
@@ -165,6 +166,16 @@ const AppWithAuth = () => (
                     <AuthCallbackPage />
                   </Suspense>
                 </PublicRoute>
+              } 
+            />
+
+            {/* Callback do Google Calendar - Fora do layout */}
+            <Route 
+              path="/google-calendar/callback" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <GoogleCalendarCallback />
+                </Suspense>
               } 
             />
 
