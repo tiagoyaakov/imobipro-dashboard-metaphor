@@ -70,5 +70,17 @@
     "telefone": "+55 11 99999-0006",
     "createdAt": "2024-01-01T08:00:00.000Z",
     "updatedAt": "2024-06-29T10:00:00.000Z"
+  },
+  {
+    "id": "8a8c11cd-9165-4f15-9174-6a22afcc1465",
+    "email": "1992tiagofranca@gmail.com",
+    "name": "Tiago França Lima",
+    "role": "AGENT",
+    "isActive": true,
+    "companyId": "mock-company-uuid-456",
+    "avatarUrl": "/avatar-placeholder.svg",
+    "telefone": "+55 11 99999-0007",
+    "createdAt": "2024-01-01T08:00:00.000Z",
+    "updatedAt": "2024-06-29T10:00:00.000Z"
   }
 ] 

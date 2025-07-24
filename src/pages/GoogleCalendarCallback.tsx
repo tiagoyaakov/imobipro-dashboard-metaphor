@@ -9,12 +9,14 @@ import {
   RefreshCw,
   ArrowLeft
 } from 'lucide-react';
-import { useGoogleCalendar } from '@/hooks';
+import { useGoogleCalendarDirect } from '@/hooks/useGoogleCalendarDirect';
+import { useAuth } from '@/hooks/useAuth';
 
 const GoogleCalendarCallback: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { handleAuthCallback } = useGoogleCalendar();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { handleAuthCallback } = useGoogleCalendarDirect();
   
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Processando autorização...');
@@ -22,6 +24,20 @@ const GoogleCalendarCallback: React.FC = () => {
   useEffect(() => {
     const processCallback = async () => {
       try {
+        // Aguardar carregamento da autenticação
+        if (authLoading) {
+          setMessage('Verificando autenticação...');
+          return;
+        }
+
+        // Verificar se usuário está autenticado
+        if (!isAuthenticated || !user) {
+          setStatus('error');
+          setMessage('Usuário não autenticado. Faça login e tente novamente.');
+          setTimeout(() => navigate('/'), 3000);
+          return;
+        }
+
         // Extrair parâmetros da URL
         const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get('code');
@@ -90,7 +106,7 @@ const GoogleCalendarCallback: React.FC = () => {
     };
 
     processCallback();
-  }, [location.search, handleAuthCallback, navigate]);
+  }, [location.search, handleAuthCallback, navigate, authLoading, isAuthenticated, user]);
 
   const handleReturnToAgenda = () => {
     navigate('/agenda');

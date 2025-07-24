@@ -9,12 +9,13 @@ export const authConfig = {
   /**
    * Se true, usa autenticação real do Supabase
    * Se false, usa sistema mock para desenvolvimento
-   * Em produção, SEMPRE usa auth real
+   * TEMPORARIAMENTE FORÇANDO MOCK até configurar RLS
    */
-  useRealAuth: import.meta.env.PROD || // SEMPRE real em produção
-               (import.meta.env.VITE_USE_REAL_AUTH === 'true' && 
-                import.meta.env.VITE_SUPABASE_URL && 
-                import.meta.env.VITE_SUPABASE_ANON_KEY),
+  useRealAuth: false, // Temporariamente forçado para mock
+  // useRealAuth: import.meta.env.PROD || // SEMPRE real em produção
+  //              (import.meta.env.VITE_USE_REAL_AUTH === 'true' && 
+  //               import.meta.env.VITE_SUPABASE_URL && 
+  //               import.meta.env.VITE_SUPABASE_ANON_KEY),
 
   /**
    * Configurações do Supabase
