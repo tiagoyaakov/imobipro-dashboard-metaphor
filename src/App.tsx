@@ -42,7 +42,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProviderMock defaultUserId="8a8c11cd-9165-4f15-9174-6a22afcc1465">
+    <AuthProviderMock>
       <TooltipProvider>
         <Toaster />
         <Sonner />
