@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AgendaCalendar, AgendaSidebar, AppointmentModal, GoogleCalendarConnection } from '@/components/agenda';
 import { Appointment, AppointmentType, AppointmentStatus } from '@/types/agenda';
-import { useAppointments, useAgentSchedules, useGoogleCalendarStatus } from '@/hooks';
+import { useAppointments, useAgentSchedules } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,8 +41,7 @@ export default function Agenda() {
 
   const agentSchedules = agentSchedulesData || [];
 
-  // Status do Google Calendar
-  const { isConnected: googleCalendarConnected, isChecking: googleCalendarChecking } = useGoogleCalendarStatus();
+  // Status do Google Calendar removido - agora é gerenciado no componente GoogleCalendarConnection
 
   // Métricas da agenda - seguindo padrão CRM
   const metrics = useMemo(() => {

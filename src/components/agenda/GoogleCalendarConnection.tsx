@@ -13,7 +13,7 @@ import {
   Unlink,
   Settings
 } from 'lucide-react';
-import { useGoogleCalendar, useGoogleCalendarStatus } from '@/hooks';
+import { useGoogleCalendarDirect, useGoogleCalendarStatusDirect } from '@/hooks/useGoogleCalendarDirect';
 
 interface GoogleCalendarConnectionProps {
   className?: string;
@@ -25,21 +25,28 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   
-  const { isConnected, isChecking } = useGoogleCalendarStatus();
+  const { isConnected, isChecking } = useGoogleCalendarStatusDirect();
   const { 
     isLoading,
     error,
     connectGoogleCalendar,
     disconnectGoogleCalendar,
     fullSync,
-    clearError
-  } = useGoogleCalendar();
+    clearError,
+    isConfigValid
+  } = useGoogleCalendarDirect();
 
   /**
    * Iniciar processo de conexão com Google Calendar
    */
   const handleConnect = useCallback(async () => {
     if (isConnecting || isConnected) return;
+    
+    // Verificar configuração primeiro
+    if (!isConfigValid()) {
+      setConnectionError('Configuração do Google Calendar incompleta. Verifique as variáveis de ambiente.');
+      return;
+    }
     
     setIsConnecting(true);
     setConnectionError(null);

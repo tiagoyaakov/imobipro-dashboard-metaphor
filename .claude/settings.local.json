@@ -11,7 +11,9 @@
       "Bash(pnpmx eslint:*)",
       "Bash(pnpm exec eslint:*)",
       "Bash(pnpm build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm dev:*)"
     ],
     "deny": []
   }

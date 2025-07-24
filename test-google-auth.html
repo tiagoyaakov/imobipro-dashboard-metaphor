@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Google Calendar Auth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Teste - Autenticação Google Calendar</h1>
+    
+    <div id="config-status"></div>
+    <div id="auth-url-result"></div>
+    
+    <button onclick="testAuthURL()">Testar Geração de URL</button>
+    <button onclick="testConfig()">Verificar Configuração</button>
+    
+    <script>
+        // Configuração das variáveis (simular frontend)
+        const config = {
+            clientId: '645763156855-r6q2cdomvct2fnnm2l3dussq04bfcnbh.apps.googleusercontent.com',
+            clientSecret: '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',
+            redirectUri: 'https://imobpro-brown.vercel.app/google-calendar/callback'
+        };
+        
+        function testConfig() {
+            const configDiv = document.getElementById('config-status');
+            
+            const hasClientId = !!config.clientId;
+            const hasClientSecret = !!config.clientSecret;
+            const hasRedirectUri = !!config.redirectUri;
+            
+            if (hasClientId && hasClientSecret && hasRedirectUri) {
+                configDiv.innerHTML = '<div class="result success">✅ Configuração válida!</div>';
+            } else {
+                configDiv.innerHTML = '<div class="result error">❌ Configuração inválida!</div>';
+            }
+        }
+        
+        function testAuthURL() {
+            const resultDiv = document.getElementById('auth-url-result');
+            
+            try {
+                // Gerar URL de autorização (simulando a função do auth-client.ts)
+                const params = new URLSearchParams({
+                    client_id: config.clientId,
+                    redirect_uri: config.redirectUri,
+                    scope: [
+                        'https://www.googleapis.com/auth/calendar',
+                        'https://www.googleapis.com/auth/calendar.events'
+                    ].join(' '),
+                    response_type: 'code',
+                    access_type: 'offline',
+                    prompt: 'consent',
+                    state: 'test-user-123'
+                });
+                
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+                
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <strong>✅ URL gerada com sucesso!</strong><br>
+                        <small style="word-break: break-all;">${authUrl}</small><br><br>
+                        <a href="${authUrl}" target="_blank" style="color: #007bff;">🔗 Testar URL no Google</a>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Erro ao gerar URL:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Testar automaticamente ao carregar
+        window.onload = function() {
+            testConfig();
+        };
+    </script>
+</body>
+</html>
