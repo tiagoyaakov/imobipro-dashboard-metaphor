@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 
 // -----------------------------------------------------------
@@ -23,19 +22,23 @@ export const AppFooter: React.FC = () => {
 
           {/* Links Legais */}
           <div className="flex items-center space-x-6">
-            <Link 
-              to="/legal/privacy-policy" 
+            <a
+              href="/privacy-policy.html"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Política de Privacidade
-            </Link>
+            </a>
             <Separator orientation="vertical" className="h-4" />
-            <Link 
-              to="/legal/terms-of-service" 
+            <a
+              href="/terms-of-service.html"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Termos de Serviço
-            </Link>
+            </a>
           </div>
         </div>
       </div>

@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProviderMock } from "@/contexts/AuthContextMock";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import PublicLayout from "./components/layout/PublicLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
 // Lazy loading das páginas para melhor performance
@@ -23,8 +22,6 @@ const Usuarios = lazy(() => import("./pages/Usuarios"));
 const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
-const PrivacyPolicySimple = lazy(() => import("./pages/legal/PrivacyPolicySimple"));
-const TermsOfServiceSimple = lazy(() => import("./pages/legal/TermsOfServiceSimple"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configuração do QueryClient com otimizações
@@ -50,28 +47,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* IMPORTANTE: Rotas específicas DEVEM vir ANTES das rotas genéricas */}
-            
-            {/* Rotas Públicas - Páginas Legais (MUITO ESPECÍFICAS) */}
-            <Route 
-              path="/legal/privacy-policy" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <PrivacyPolicySimple />
-                </Suspense>
-              } 
-            />
-            <Route 
-              path="/legal/terms-of-service" 
-              element={
-                <Suspense fallback={<PageLoadingFallback />}>
-                  <TermsOfServiceSimple />
-                </Suspense>
-              } 
-            />
-
-            {/* Rotas Protegidas - Dashboard (ROTA GENÉRICA) */}
-            <Route path="/*" element={<DashboardLayout />}>
+            {/* ROTAS PROTEGIDAS - DASHBOARD */}
+            <Route path="/" element={<DashboardLayout />}>
               <Route 
                 index 
                 element={
@@ -176,17 +153,17 @@ const App = () => (
                   </Suspense>
                 } 
               />
-              
-              {/* Rota 404 dentro do DashboardLayout */}
-              <Route 
-                path="*" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <NotFound />
-                  </Suspense>
-                } 
-              />
             </Route>
+
+            {/* ROTA 404 GLOBAL */}
+            <Route 
+              path="*" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <NotFound />
+                </Suspense>
+              } 
+            />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
