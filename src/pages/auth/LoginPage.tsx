@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { LoginForm } from '@/components/auth/LoginForm';
 
 // -----------------------------------------------------------
@@ -8,6 +8,23 @@ import { LoginForm } from '@/components/auth/LoginForm';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * Detectar callback do Google Calendar e redirecionar
+   */
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    // Se tem código e state, é um callback do Google Calendar
+    if (code && state) {
+      console.log('🔐 [LoginPage] Detectado callback do Google Calendar, redirecionando...');
+      const callbackUrl = `/google-calendar/callback${location.search}`;
+      navigate(callbackUrl, { replace: true });
+    }
+  }, [location.search, navigate]);
 
   /**
    * Redirecionar para dashboard após login bem-sucedido
