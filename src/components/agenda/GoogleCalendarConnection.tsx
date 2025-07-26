@@ -233,13 +233,18 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
 
         <Separator className="mb-4" />
 
-        {/* Success Message */}
+        {/* Debug Info */}
         {!connectionError && !error && !isConnected && (
-          <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-900/10">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
-              ✅ <strong>Correções aplicadas:</strong> REDIRECT_URI corrigida, PostMessage implementado, segurança melhorada. 
-              Pronto para conectar!
+          <Alert className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-900/10">
+            <Settings className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>🔧 Configuração Atual:</strong><br/>
+              • Client ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID?.substring(0, 20)}...<br/>
+              • Redirect URI: {import.meta.env.VITE_GOOGLE_REDIRECT_URI}<br/>
+              • Host Atual: {window.location.origin}<br/>
+              <small className="text-xs opacity-75">
+                ⚠️ Certifique-se que o Redirect URI está registrado no Google Cloud Console
+              </small>
             </AlertDescription>
           </Alert>
         )}

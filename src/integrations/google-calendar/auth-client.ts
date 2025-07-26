@@ -12,7 +12,25 @@ export class GoogleCalendarAuthClient {
 
   constructor() {
     this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-    this.redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || '';
+    
+    // Detectar ambiente e usar URI apropriada
+    const baseRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || '';
+    
+    // Se estamos em desenvolvimento local, usar localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      this.redirectUri = `${window.location.origin}/google-oauth-callback.html`;
+    } else {
+      // Em produção, usar a URI configurada
+      this.redirectUri = baseRedirectUri;
+    }
+
+    console.log('🔐 [GoogleCalendarAuthClient] Configuração inicializada:', {
+      environment: import.meta.env.MODE,
+      hostname: window.location.hostname,
+      origin: window.location.origin,
+      configuredUri: baseRedirectUri,
+      finalUri: this.redirectUri
+    });
   }
 
   /**
@@ -24,7 +42,9 @@ export class GoogleCalendarAuthClient {
     console.log('🔐 [GoogleCalendarAuthClient] Gerando URL de autorização:', {
       clientId: this.clientId,
       redirectUri: this.redirectUri,
-      userId
+      userId,
+      environment: import.meta.env.MODE,
+      currentHost: window.location.origin
     });
 
     const params = new URLSearchParams({
@@ -41,7 +61,16 @@ export class GoogleCalendarAuthClient {
     });
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-    console.log('🔐 [GoogleCalendarAuthClient] URL gerada:', authUrl);
+    console.log('🔐 [GoogleCalendarAuthClient] URL completa gerada:', authUrl);
+    console.log('🔐 [GoogleCalendarAuthClient] Parâmetros enviados:', {
+      client_id: this.clientId,
+      redirect_uri: this.redirectUri,
+      scope: 'calendar + calendar.events',
+      response_type: 'code',
+      access_type: 'offline',
+      prompt: 'consent',
+      state: userId
+    });
     
     return authUrl;
   }
