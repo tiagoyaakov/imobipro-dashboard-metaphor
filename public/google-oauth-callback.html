@@ -97,9 +97,14 @@
                         // Fechar popup
                         window.close();
                     } else {
-                        // Se não é popup, redirecionar para a aplicação
-                        console.log('🔐 [GoogleOAuthCallback] Redirecionando para aplicação...');
-                        window.location.href = `/google-calendar/callback?code=${code}&state=${state}`;
+                        // Se não é popup, mostrar sucesso e instruir fechar manualmente
+                        console.log('🔐 [GoogleOAuthCallback] Não é popup - mostrar sucesso');
+                        document.querySelector('.container').innerHTML = `
+                            <div class="spinner" style="display: none;"></div>
+                            <h2>✅ Autorização Concluída!</h2>
+                            <p>Feche esta janela e volte para o ImobiPRO.</p>
+                            <p><small>A conexão será processada automaticamente.</small></p>
+                        `;
                     }
                 } else {
                     console.error('🔐 [GoogleOAuthCallback] Nenhum código ou erro encontrado');

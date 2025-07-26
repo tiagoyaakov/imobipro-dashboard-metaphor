@@ -10,21 +10,8 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /**
-   * Detectar callback do Google Calendar e redirecionar
-   */
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    
-    // Se tem código e state, é um callback do Google Calendar
-    if (code && state) {
-      console.log('🔐 [LoginPage] Detectado callback do Google Calendar, redirecionando...');
-      const callbackUrl = `/google-calendar/callback${location.search}`;
-      navigate(callbackUrl, { replace: true });
-    }
-  }, [location.search, navigate]);
+  // Removido: interceptação de callback do Google Calendar
+  // O callback agora é processado apenas via popup/postMessage
 
   /**
    * Redirecionar para dashboard após login bem-sucedido
