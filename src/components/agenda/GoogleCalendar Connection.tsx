@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -30,15 +30,15 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
     isLoading,
     error,
     connectGoogleCalendar,
+    handleAuthCallback,
     disconnectGoogleCalendar,
     fullSync,
     clearError,
-    isConfigValid,
-    handleAuthCallback
+    isConfigValid
   } = useGoogleCalendarDirect();
 
   /**
-   * Iniciar processo de conexão com Google Calendar
+   * Iniciar processo de conexão com Google Calendar (novo método com popup)
    */
   const handleConnect = useCallback(async () => {
     if (isConnecting || isConnected) return;
@@ -56,6 +56,7 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
     try {
       // 1. Obter URL de autorização
       const authUrl = await connectGoogleCalendar();
+      console.log('🔐 [GoogleCalendarConnection] Abrindo popup para:', authUrl);
       
       // 2. Abrir popup para autorização
       const popup = window.open(
@@ -68,27 +69,71 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
         throw new Error('Pop-up bloqueado. Permita pop-ups e tente novamente.');
       }
 
-      // 3. Monitorar se popup foi fechado manualmente
+      // 3. Escutar mensagens do popup
+      const handleMessage = (event: MessageEvent) => {
+        console.log('🔐 [GoogleCalendarConnection] Mensagem recebida:', event.data);
+        
+        if (event.data.type === 'GOOGLE_CALENDAR_AUTH_SUCCESS') {
+          console.log('🔐 [GoogleCalendarConnection] Sucesso! Processando código...');
+          
+          // Remover listener
+          window.removeEventListener('message', handleMessage);
+          
+          // Processar o código recebido
+          handleAuthCallback(event.data.code)
+            .then(() => {
+              console.log('🔐 [GoogleCalendarConnection] Callback processado com sucesso!');
+              setIsConnecting(false);
+              // Recarregar para atualizar status
+              setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch((error) => {
+              console.error('🔐 [GoogleCalendarConnection] Erro no callback:', error);
+              setConnectionError(error.message);
+              setIsConnecting(false);
+            });
+            
+        } else if (event.data.type === 'GOOGLE_CALENDAR_AUTH_ERROR') {
+          console.error('🔐 [GoogleCalendarConnection] Erro OAuth:', event.data.error);
+          
+          // Remover listener
+          window.removeEventListener('message', handleMessage);
+          
+          setConnectionError(`Erro de autorização: ${event.data.error}`);
+          setIsConnecting(false);
+        }
+      };
+
+      // Adicionar listener para mensagens
+      window.addEventListener('message', handleMessage);
+
+      // 4. Monitorar se popup foi fechado manualmente
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
-          setIsConnecting(false);
-          console.log('🔐 [GoogleCalendarConnection] Popup fechado pelo usuário');
+          window.removeEventListener('message', handleMessage);
+          
+          if (isConnecting) {
+            console.log('🔐 [GoogleCalendarConnection] Popup fechado manualmente');
+            setIsConnecting(false);
+            setConnectionError('Autorização cancelada.');
+          }
         }
       }, 1000);
 
-      // 4. Timeout após 5 minutos
+      // Timeout após 5 minutos
       setTimeout(() => {
         if (!popup.closed) {
           popup.close();
           clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
           setIsConnecting(false);
           setConnectionError('Tempo limite de autorização expirado. Tente novamente.');
         }
       }, 5 * 60 * 1000);
 
     } catch (error) {
-      console.error('Erro ao conectar Google Calendar:', error);
+      console.error('🔐 [GoogleCalendarConnection] Erro ao conectar:', error);
       setConnectionError(
         error instanceof Error 
           ? error.message 
@@ -96,7 +141,7 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
       );
       setIsConnecting(false);
     }
-  }, [isConnecting, isConnected, connectGoogleCalendar, clearError, isConfigValid]);
+  }, [isConnecting, isConnected, connectGoogleCalendar, clearError, handleAuthCallback]);
 
   /**
    * Desconectar Google Calendar
@@ -145,56 +190,6 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
     clearError();
   }, [clearError]);
 
-  /**
-   * Listener para postMessage do popup OAuth
-   */
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      // Verificar origem por segurança
-      if (event.origin !== window.location.origin && 
-          !event.origin.includes('imobpro-brown.vercel.app')) {
-        return;
-      }
-
-      console.log('🔐 [GoogleCalendarConnection] PostMessage recebido:', event.data);
-
-      try {
-        if (event.data.type === 'GOOGLE_CALENDAR_AUTH_SUCCESS' && event.data.code) {
-          console.log('🔐 [GoogleCalendarConnection] Processando código de autorização...');
-          setIsConnecting(true);
-          setConnectionError(null);
-          
-          // Processar callback
-          await handleAuthCallback(event.data.code);
-          
-          setIsConnecting(false);
-          console.log('🔐 [GoogleCalendarConnection] Autorização concluída com sucesso!');
-          
-          // Recarregar página para atualizar status
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-          
-        } else if (event.data.type === 'GOOGLE_CALENDAR_AUTH_ERROR') {
-          console.error('🔐 [GoogleCalendarConnection] Erro na autorização:', event.data.error);
-          setConnectionError(`Erro na autorização: ${event.data.error}`);
-          setIsConnecting(false);
-        }
-      } catch (error) {
-        console.error('🔐 [GoogleCalendarConnection] Erro ao processar postMessage:', error);
-        setConnectionError(
-          error instanceof Error 
-            ? `Erro no processamento: ${error.message}`
-            : 'Erro desconhecido no processamento da autorização'
-        );
-        setIsConnecting(false);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleAuthCallback]);
-
   return (
     <Card className={`${className} border-2`}>
       <CardContent className="p-6">
@@ -232,17 +227,6 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
         </div>
 
         <Separator className="mb-4" />
-
-        {/* Success Message */}
-        {!connectionError && !error && !isConnected && (
-          <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-900/10">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
-              ✅ <strong>Correções aplicadas:</strong> REDIRECT_URI corrigida, PostMessage implementado, segurança melhorada. 
-              Pronto para conectar!
-            </AlertDescription>
-          </Alert>
-        )}
 
         {/* Error Display */}
         {(connectionError || error) && (

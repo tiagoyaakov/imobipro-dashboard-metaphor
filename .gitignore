@@ -37,3 +37,4 @@ oauth2.keys.json
 !.env.example
 .vercel
 .env
+.env

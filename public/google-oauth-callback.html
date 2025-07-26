@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar - Callback</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container { 
+            text-align: center; 
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Processando autorização...</h2>
+        <p>Conectando com Google Calendar</p>
+    </div>
+
+    <script>
+        (function() {
+            console.log('🔐 [GoogleOAuthCallback] Página de callback carregada');
+            
+            try {
+                // Extrair parâmetros da URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const error = urlParams.get('error');
+                const state = urlParams.get('state');
+
+                console.log('🔐 [GoogleOAuthCallback] Parâmetros:', {
+                    hasCode: !!code,
+                    error,
+                    state,
+                    fullUrl: window.location.href
+                });
+
+                // Se há um erro, notificar
+                if (error) {
+                    console.error('🔐 [GoogleOAuthCallback] Erro OAuth:', error);
+                    
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'GOOGLE_CALENDAR_AUTH_ERROR',
+                            error: error
+                        }, '*');
+                        window.close();
+                    } else {
+                        document.querySelector('.container').innerHTML = `
+                            <h2>❌ Erro na Autorização</h2>
+                            <p>Erro: ${error}</p>
+                            <p>Feche esta janela e tente novamente.</p>
+                        `;
+                    }
+                    return;
+                }
+
+                // Se há um código, processar
+                if (code) {
+                    console.log('🔐 [GoogleOAuthCallback] Código recebido, notificando janela pai...');
+                    
+                    if (window.opener) {
+                        // Notificar janela pai com o código
+                        window.opener.postMessage({
+                            type: 'GOOGLE_CALENDAR_AUTH_SUCCESS',
+                            code: code,
+                            state: state
+                        }, '*');
+                        
+                        // Fechar popup
+                        window.close();
+                    } else {
+                        // Se não é popup, redirecionar para a aplicação
+                        console.log('🔐 [GoogleOAuthCallback] Redirecionando para aplicação...');
+                        window.location.href = `/google-calendar/callback?code=${code}&state=${state}`;
+                    }
+                } else {
+                    console.error('🔐 [GoogleOAuthCallback] Nenhum código ou erro encontrado');
+                    
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'GOOGLE_CALENDAR_AUTH_ERROR',
+                            error: 'Código de autorização não encontrado'
+                        }, '*');
+                        window.close();
+                    } else {
+                        document.querySelector('.container').innerHTML = `
+                            <h2>❌ Erro</h2>
+                            <p>Código de autorização não encontrado.</p>
+                            <p>Feche esta janela e tente novamente.</p>
+                        `;
+                    }
+                }
+
+            } catch (error) {
+                console.error('🔐 [GoogleOAuthCallback] Erro geral:', error);
+                
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'GOOGLE_CALENDAR_AUTH_ERROR',
+                        error: error.message || 'Erro desconhecido'
+                    }, '*');
+                    window.close();
+                } else {
+                    document.querySelector('.container').innerHTML = `
+                        <h2>❌ Erro</h2>
+                        <p>Erro inesperado: ${error.message}</p>
+                        <p>Feche esta janela e tente novamente.</p>
+                    `;
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
