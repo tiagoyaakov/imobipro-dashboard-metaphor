@@ -184,11 +184,8 @@ const GoogleCalendarConnection: React.FC<GoogleCalendarConnectionProps> = ({
           // Feedback de sucesso
           alert('🎉 Google Calendar conectado com sucesso!');
           
-          // Recarregar página para atualizar status
-          setTimeout(() => {
-            console.log('🔐 [GoogleCalendarConnection] Recarregando página...');
-            window.location.reload();
-          }, 1500);
+          // NÃO recarregar - apenas forçar re-render dos componentes
+          console.log('🔐 [GoogleCalendarConnection] Conexão concluída - mantendo página atual');
           
         } else if (event.data.type === 'GOOGLE_CALENDAR_AUTH_ERROR') {
           console.error('🔐 [GoogleCalendarConnection] ❌ Erro na autorização:', event.data.error);

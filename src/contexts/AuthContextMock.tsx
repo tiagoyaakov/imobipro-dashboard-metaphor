@@ -25,6 +25,8 @@ interface AuthContextType {
   updateProfile: (data: { name: string; email: string; avatarUrl?: string }) => Promise<{ success: boolean; error?: string }>;
   /** Simula atualização do avatar do usuário */
   updateAvatar: (avatarUrl: string) => Promise<{ success: boolean; error?: string }>;
+  /** Atualiza o Google Calendar token do usuário */
+  updateGoogleCalendarToken: (refreshToken: string) => Promise<void>;
 }
 
 // -----------------------------------------------------------
@@ -211,6 +213,26 @@ export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({
     }
   }, []);
 
+  /**
+   * Atualiza o Google Calendar token do usuário logado
+   */
+  const updateGoogleCalendarToken = useCallback(async (refreshToken: string): Promise<void> => {
+    if (!currentUser) {
+      throw new Error('Nenhum usuário logado para atualizar token Google Calendar');
+    }
+
+    console.log('🔐 [AuthMock] Atualizando Google Calendar token para usuário:', currentUser.name);
+    
+    // Atualizar o usuário atual com o novo token
+    const updatedUser = {
+      ...currentUser,
+      googleRefreshToken: refreshToken
+    } as User;
+    
+    setCurrentUser(updatedUser);
+    console.log('🔐 [AuthMock] Google Calendar token salvo com sucesso!');
+  }, [currentUser]);
+
   // Valor do contexto
   const contextValue: AuthContextType = {
     isAuthenticated: currentUser !== null,
@@ -221,7 +243,8 @@ export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({
     switchUser,
     refreshUser,
     updateProfile,
-    updateAvatar
+    updateAvatar,
+    updateGoogleCalendarToken
   };
 
   return (

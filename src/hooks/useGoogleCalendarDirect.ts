@@ -7,7 +7,7 @@ import { useAuth } from './useAuth';
 import { googleCalendarAuthClient, validateGoogleCalendarConfigClient } from '@/integrations/google-calendar/auth-client';
 
 export const useGoogleCalendarDirect = () => {
-  const { user } = useAuth();
+  const { user, updateGoogleCalendarToken } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,15 +84,12 @@ export const useGoogleCalendarDirect = () => {
         expiresIn: tokens.expires_in
       });
       
-      // TODO: Salvar tokens no banco de dados ou localStorage
-      // Por enquanto, simular salvamento
-      console.log('🔐 [useGoogleCalendarDirect] Simulando salvamento de tokens...');
+      // Salvar tokens usando o método correto do AuthContext
+      console.log('🔐 [useGoogleCalendarDirect] Salvando tokens via AuthContext...');
       
-      // Simular usuário com Google Calendar conectado
-      // Em uma implementação real, isso seria salvo no banco
-      if (user && 'googleRefreshToken' in user) {
-        (user as any).googleRefreshToken = tokens.refresh_token;
-        console.log('🔐 [useGoogleCalendarDirect] Refresh token salvo no objeto do usuário');
+      if (tokens.refresh_token) {
+        await updateGoogleCalendarToken(tokens.refresh_token);
+        console.log('🔐 [useGoogleCalendarDirect] Refresh token salvo via AuthContext');
       }
       
       setIsConnected(true);
@@ -105,7 +102,7 @@ export const useGoogleCalendarDirect = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, updateGoogleCalendarToken]);
 
   /**
    * Desconectar Google Calendar
