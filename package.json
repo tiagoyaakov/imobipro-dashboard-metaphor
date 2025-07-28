@@ -36,6 +36,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^6.11.0",
     "@radix-ui/react-accordion": "^1.2.0",

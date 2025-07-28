@@ -43,6 +43,42 @@ enum ContactStatus {
   INACTIVE
 }
 
+// === NOVOS ENUMS PARA MÓDULO CLIENTES ===
+
+enum LeadStage {
+  NEW           // Novo lead
+  CONTACTED     // Contatado
+  QUALIFIED     // Qualificado
+  INTERESTED    // Interessado
+  NEGOTIATING   // Negociando
+  CONVERTED     // Convertido
+  LOST          // Perdido
+}
+
+enum CampaignStatus {
+  DRAFT         // Rascunho
+  SCHEDULED     // Agendada
+  RUNNING       // Executando
+  PAUSED        // Pausada
+  COMPLETED     // Concluída
+  CANCELLED     // Cancelada
+}
+
+enum LeadActivityType {
+  CALL          // Ligação
+  EMAIL         // Email
+  WHATSAPP      // WhatsApp
+  MEETING       // Reunião
+  VISIT         // Visita
+  SMS           // SMS
+  FOLLOW_UP     // Follow-up
+  NOTE          // Anotação
+  PROPOSAL_SENT // Proposta enviada
+  CONTRACT_SENT // Contrato enviado
+  DOCUMENT_RECEIVED // Documento recebido
+  PAYMENT_RECEIVED  // Pagamento recebido
+}
+
 enum AppointmentType {
   VISIT
   MEETING
@@ -240,6 +276,10 @@ model User {
   availabilitySlots          AvailabilitySlot[]
   googleCalendarCredentials  GoogleCalendarCredentials?
   n8nWorkflowConfigs         N8nWorkflowConfig[]
+
+  // Novos relacionamentos para módulo clientes
+  createdCampaigns           MessageCampaign[]  @relation("CampaignCreator")
+  performedActivities        LeadActivity[]     @relation("ActivityPerformer")
 }
 
 model Property {
@@ -279,6 +319,44 @@ model Contact {
   lastContactAt DateTime?
   avatarUrl     String?
 
+  // === NOVOS CAMPOS PARA FUNIL DE LEADS ===
+  
+  // Gestão de funil
+  leadStage          LeadStage      @default(NEW)
+  leadScore          Int            @default(0)  // Score automático 0-100
+  leadSource         String?        // "WhatsApp", "Site", "Indicação", etc.
+  leadSourceDetails  String?        // Detalhes da fonte
+  
+  // Informações adicionais
+  company            String?        // Empresa do contato
+  position           String?        // Cargo
+  budget             Decimal?       // Orçamento disponível
+  timeline           String?        // Prazo desejado
+  preferences        Json?          // Preferências estruturadas
+  
+  // Comportamento e engajamento
+  interactionCount   Int            @default(0)  // Número de interações
+  lastInteractionAt  DateTime?      // Última interação
+  responseRate       Float?         // Taxa de resposta (0-1)
+  engagementLevel    String?        // "LOW", "MEDIUM", "HIGH"
+  
+  // Qualificação e segmentação
+  isQualified        Boolean        @default(false)
+  qualificationNotes String?        // Notas da qualificação
+  tags               String[]       // Tags personalizadas
+  priority           String         @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "URGENT"
+  
+  // Controle de campanhas
+  unsubscribed       Boolean        @default(false)
+  unsubscribedAt     DateTime?
+  optInWhatsApp      Boolean        @default(false)
+  optInEmail         Boolean        @default(false)
+  optInSMS          Boolean        @default(false)
+  
+  // Próximas ações
+  nextFollowUpAt     DateTime?      // Próximo follow-up
+  followUpReason     String?        // Motivo do follow-up
+
   agentId       String
   agent         User            @relation(fields: [agentId], references: [id])
 
@@ -286,8 +364,17 @@ model Contact {
   deals         Deal[]
   chats         Chat[]          @relation("ContactChat")
 
+  // Novos relacionamentos para funil
+  leadActivities     LeadActivity[]
+  campaignParticipations MessageCampaignParticipation[]
+
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  
+  @@index([leadStage, leadScore])
+  @@index([agentId, leadStage])
+  @@index([leadSource, createdAt])
+  @@index([nextFollowUpAt])
 }
 
 model Appointment {
@@ -355,6 +442,7 @@ model Appointment {
   conflictLogs        AppointmentConflictLog[]
   syncLogs            CalendarSyncLog[]
   n8nExecutions       N8nExecutionLog[]
+  leadActivities      LeadActivity[]    @relation("AppointmentActivity")
 
   @@index([syncStatus, lastSyncAt])
   @@index([source, createdAt])
@@ -381,6 +469,9 @@ model Deal {
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  
+  // Novos relacionamentos para módulo clientes
+  leadActivities    LeadActivity[] @relation("DealActivity")
 }
 
 model Activity {
@@ -636,4 +727,125 @@ model N8nExecutionLog {
   appointment     Appointment? @relation(fields: [appointmentId], references: [id])
   
   createdAt       DateTime @default(now())
+}
+
+// === NOVOS MODELOS PARA MÓDULO CLIENTES ===
+
+// Campanhas de mensagens automatizadas
+model MessageCampaign {
+  id          String         @id @default(uuid())
+  name        String         // Nome da campanha
+  description String?        // Descrição
+  
+  // Configuração da campanha
+  channel     String         // "WHATSAPP", "EMAIL", "SMS"
+  status      CampaignStatus @default(DRAFT)
+  
+  // Conteúdo
+  subject     String?        // Assunto (para email)
+  template    String         // Template da mensagem
+  variables   Json?          // Variáveis disponíveis no template
+  
+  // Agendamento
+  scheduledAt DateTime?      // Data/hora agendada
+  startedAt   DateTime?      // Quando iniciou
+  completedAt DateTime?      // Quando terminou
+  
+  // Configurações
+  targetCriteria Json?       // Critérios de segmentação
+  sendDelay      Int?        // Delay entre envios (segundos)
+  maxRecipients  Int?        // Máximo de destinatários
+  
+  // Estatísticas
+  totalRecipients   Int      @default(0)
+  sentCount        Int       @default(0)
+  deliveredCount   Int       @default(0)
+  readCount        Int       @default(0)
+  responseCount    Int       @default(0)
+  errorCount       Int       @default(0)
+  
+  // Relacionamentos
+  createdById  String
+  createdBy    User     @relation("CampaignCreator", fields: [createdById], references: [id])
+  
+  participants MessageCampaignParticipation[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([status, scheduledAt])
+  @@index([channel, status])
+}
+
+// Participação em campanhas (many-to-many entre Contact e MessageCampaign)
+model MessageCampaignParticipation {
+  id           String   @id @default(uuid())
+  
+  campaignId   String
+  campaign     MessageCampaign @relation(fields: [campaignId], references: [id])
+  
+  contactId    String
+  contact      Contact  @relation(fields: [contactId], references: [id])
+  
+  // Status da participação
+  status       String   @default("PENDING") // "PENDING", "SENT", "DELIVERED", "READ", "RESPONDED", "FAILED"
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
+  respondedAt  DateTime?
+  
+  // Dados da mensagem
+  messageId    String?  // ID externo da mensagem
+  errorMessage String?  // Erro se houver
+  
+  // Personalização
+  personalizedContent String? // Conteúdo personalizado
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([campaignId, contactId])
+  @@index([status, sentAt])
+}
+
+// Atividades dos leads (histórico de interações)
+model LeadActivity {
+  id          String           @id @default(uuid())
+  
+  contactId   String
+  contact     Contact          @relation(fields: [contactId], references: [id])
+  
+  // Dados da atividade
+  type        LeadActivityType
+  title       String           // Título da atividade
+  description String?          // Descrição detalhada
+  
+  // Contexto
+  direction   String?          // "INBOUND", "OUTBOUND"
+  channel     String?          // Canal da comunicação
+  duration    Int?             // Duração em minutos (para calls/meetings)
+  
+  // Resultado
+  outcome     String?          // Resultado da atividade
+  nextAction  String?          // Próxima ação sugerida
+  
+  // Dados estruturados
+  metadata    Json?            // Dados adicionais estruturados
+  
+  // Relacionamentos
+  performedById String?        // Quem realizou a atividade
+  performedBy   User?          @relation("ActivityPerformer", fields: [performedById], references: [id])
+  
+  appointmentId String?        // Relacionado a um agendamento
+  appointment   Appointment?   @relation("AppointmentActivity", fields: [appointmentId], references: [id])
+  
+  dealId        String?        // Relacionado a um negócio
+  deal          Deal?          @relation("DealActivity", fields: [dealId], references: [id])
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  @@index([contactId, type, createdAt])
+  @@index([performedById, createdAt])
+  @@index([type, createdAt])
 }

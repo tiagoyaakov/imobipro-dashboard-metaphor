@@ -18,7 +18,8 @@
       "Bash(git add:*)",
       "Bash(pnpm typecheck:*)",
       "Bash(git commit:*)",
-      "Bash(pnpm dev:*)"
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm add:*)"
     ],
     "deny": []
   }
