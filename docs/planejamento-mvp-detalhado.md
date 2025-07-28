@@ -52,81 +52,572 @@
 
 ---
 
-## 📅 **MÓDULO 1: AGENDA**
+## 📅 **MÓDULO 1: AGENDA (N8N-FIRST ARCHITECTURE)**
 
-### **Requisitos Específicos**
-- Visualização de agenda de todos corretores ou individual
-- Filtros dinâmicos e inteligentes
-- Integração Google Calendar
-- Automação via n8n para verificação de disponibilidade
-- Atribuição aleatória de corretores
-- Configuração de horários de trabalho por corretor
+### **🎯 Visão Geral - Revolução na Automação Imobiliária**
 
-### **Novos Modelos Necessários**
+O módulo de agenda do ImobiPRO representa uma **revolução tecnológica** no setor imobiliário brasileiro, sendo o primeiro CRM 100% integrado com n8n para automação inteligente de agendamentos. Com sincronização bidirecional em tempo real com Google Calendar e interface mobile-first, oferece uma experiência sem precedentes tanto para corretores quanto para clientes.
+
+### **🚀 Diferenciais Competitivos**
+
+- **Automação 100% n8n**: Primeiro CRM imobiliário totalmente integrado com n8n
+- **Sync Bidirecional Real-time**: Google Calendar sincronizado instantaneamente  
+- **AI-Powered Scheduling**: Sugestões inteligentes baseadas em padrões de comportamento
+- **Conflict-Free Architecture**: Sistema à prova de double-booking
+- **Mobile-First UX**: Interface moderna e responsiva otimizada para dispositivos móveis
+- **Zero-Touch Booking**: Agendamentos automáticos via WhatsApp sem intervenção humana
+
+### **🏗️ Arquitetura de Dados Robusta**
 
 ```prisma
-// Horários de trabalho dos corretores
+// === MODELOS PRINCIPAIS ===
+
+// Horários de trabalho dos corretores (estrutura otimizada)
 model AgentSchedule {
   id        String   @id @default(uuid())
   agentId   String
   agent     User     @relation(fields: [agentId], references: [id])
   
-  // Configuração por dia da semana
-  monday    Json?    // { start: "09:00", end: "18:00", available: true }
-  tuesday   Json?
-  wednesday Json?
-  thursday  Json?
-  friday    Json?
-  saturday  Json?
-  sunday    Json?
+  // Configuração semanal estruturada
+  workingHours Json    // Schema validado: { monday: { start: "09:00", end: "18:00", breaks: [...] }, ... }
+  timezone     String  @default("America/Sao_Paulo")
+  isActive     Boolean @default(true)
+  
+  // Configurações avançadas
+  bufferTime          Int     @default(15) // minutos entre agendamentos
+  maxDailyAppointments Int?   @default(8)
+  allowWeekendWork    Boolean @default(false)
+  autoAssignEnabled   Boolean @default(true)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@unique([agentId])
 }
 
-// Slots de disponibilidade
+// Slots de disponibilidade otimizados
 model AvailabilitySlot {
   id          String   @id @default(uuid())
   agentId     String
   agent       User     @relation(fields: [agentId], references: [id])
   
-  date        DateTime
-  startTime   String   // "09:00"
-  endTime     String   // "18:00"
-  isAvailable Boolean  @default(true)
-  isBooked    Boolean  @default(false)
+  // Informações temporais
+  date        DateTime @db.Date
+  startTime   String   // "09:00" - formato HH:mm
+  endTime     String   // "10:00" - formato HH:mm
+  duration    Int      // duração em minutos
   
+  // Status e controle
+  status      SlotStatus @default(AVAILABLE)
+  slotType    SlotType   @default(REGULAR)
+  priority    Int        @default(0) // para ordenação inteligente
+  
+  // Relacionamentos
   appointmentId String?
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
   
+  // Metadados para automação
+  source         String?  // "manual", "google_calendar", "n8n", "auto_generated"
+  externalId     String?  // ID do evento no sistema externo
+  automationData Json?    // dados para workflows n8n
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  @@index([agentId, date, status])
+  @@index([date, status, slotType])
 }
 
-// Estender Appointment existente
+enum SlotStatus {
+  AVAILABLE   // Disponível para agendamento
+  BOOKED      // Agendado com confirmação
+  BLOCKED     // Bloqueado manualmente
+  PENDING     // Aguardando confirmação
+  CANCELLED   // Cancelado
+  TENTATIVE   // Tentativo (sincronização)
+}
+
+enum SlotType {
+  REGULAR     // Agendamento regular
+  URGENT      // Agendamento urgente
+  FOLLOW_UP   // Follow-up de cliente
+  VIEWING     // Visita a imóvel
+  MEETING     // Reunião interna
+  BREAK       // Intervalo/almoço
+}
+
+// Estender Appointment com campos de sincronização e automação
 model Appointment {
-  // ... campos existentes ...
+  // ... campos existentes mantidos ...
   
-  // Novos campos
-  googleCalendarEventId String?
-  n8nWorkflowId        String?
-  autoAssigned         Boolean @default(false)
-  availabilitySlotId   String?
-  availabilitySlot     AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+  // === NOVOS CAMPOS DE INTEGRAÇÃO ===
+  
+  // Google Calendar Sync
+  googleCalendarEventId String?  @unique
+  googleCalendarId      String?  // ID do calendário específico
+  syncStatus           SyncStatus @default(PENDING)
+  syncAttempts         Int       @default(0)
+  lastSyncAt           DateTime?
+  syncError            String?
+  
+  // n8n Integration
+  n8nWorkflowId        String?   // ID do workflow que criou
+  n8nExecutionId       String?   // ID da execução específica
+  automationTrigger    AutomationTrigger?
+  automationData       Json?     // dados para workflows
+  
+  // Smart Assignment
+  autoAssigned         Boolean   @default(false)
+  assignmentScore      Float?    // score do algoritmo de atribuição
+  assignmentReason     String?   // razão da atribuição automática
+  reassignmentCount    Int       @default(0)
+  
+  // Advanced Features  
+  conflictResolved     Boolean   @default(false)
+  conflictStrategy     ConflictStrategy?
+  originalSlotId       String?   // slot original antes de conflito
+  
+  // Enhanced Metadata
+  source              AppointmentSource @default(MANUAL)
+  priority            AppointmentPriority @default(NORMAL)
+  estimatedDuration   Int       @default(60) // minutos
+  actualDuration      Int?      // minutos reais
+  
+  // Client Experience
+  confirmationSent    Boolean   @default(false)
+  remindersSent       Json?     // { "24h": true, "1h": false }
+  clientFeedback      Json?     // feedback pós-agendamento
+  reschedulingCount   Int       @default(0)
+  
+  // Relacionamentos novos
+  availabilitySlotId  String?
+  availabilitySlot    AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+  conflictLogs        AppointmentConflictLog[]
+  syncLogs            CalendarSyncLog[]
+  
+  @@index([syncStatus, lastSyncAt])
+  @@index([source, createdAt])
+  @@index([agentId, status, scheduledFor])
+}
+
+// === MODELOS DE SINCRONIZAÇÃO GOOGLE CALENDAR ===
+
+// Credenciais OAuth seguras por usuário
+model GoogleCalendarCredentials {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  
+  // Tokens OAuth criptografados
+  accessToken       String    // Criptografado
+  refreshToken      String    // Criptografado  
+  tokenExpiry       DateTime
+  scope            String     // escopos autorizados
+  
+  // Configurações
+  defaultCalendarId String?   // calendário padrão
+  watchChannelId    String?   // ID do canal de notificações
+  watchExpiration   DateTime? // expiração do canal
+  
+  isActive         Boolean   @default(true)
+  lastSyncAt       DateTime?
+  syncErrors       Int       @default(0)
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  calendars        GoogleCalendarConfig[]
+}
+
+// Configuração por calendário
+model GoogleCalendarConfig {
+  id           String   @id @default(uuid())
+  credentialId String
+  credential   GoogleCalendarCredentials @relation(fields: [credentialId], references: [id])
+  
+  calendarId   String   // ID do calendário no Google
+  calendarName String   // nome amigável
+  color        String?  // cor hex
+  isPrimary    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  
+  // Configurações de sincronização
+  syncDirection    SyncDirection @default(BIDIRECTIONAL)
+  syncEvents       Boolean       @default(true)
+  syncAvailability Boolean       @default(true)
+  autoCreateSlots  Boolean       @default(true)
+  
+  // Filtros
+  eventFilter      Json?         // filtros de eventos
+  timeRange        Json?         // { start: "09:00", end: "18:00" }
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@unique([credentialId, calendarId])
+}
+
+// Log de sincronizações
+model CalendarSyncLog {
+  id              String   @id @default(uuid())
+  appointmentId   String?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  operation       SyncOperation
+  direction       SyncDirection
+  status          SyncLogStatus
+  
+  googleEventId   String?
+  googleCalendarId String?
+  
+  // Dados da operação
+  requestData     Json?    // dados enviados
+  responseData    Json?    // resposta recebida
+  errorMessage    String?  // erro se houver
+  
+  // Métricas
+  duration        Int?     // duração em ms
+  retryCount      Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([status, createdAt])
+  @@index([operation, direction])
+}
+
+// Resolução de conflitos
+model AppointmentConflictLog {
+  id              String   @id @default(uuid())
+  appointmentId   String
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  
+  conflictType    ConflictType
+  conflictSource  ConflictSource
+  
+  // Dados do conflito
+  originalData    Json     // dados originais
+  conflictingData Json     // dados conflitantes
+  resolvedData    Json?    // dados após resolução
+  
+  strategy        ConflictStrategy
+  resolution      ConflictResolution
+  
+  resolvedBy      String?  // ID do usuário que resolveu
+  resolvedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+}
+
+// === MODELOS N8N INTEGRATION ===
+
+// Configuração de workflows n8n
+model N8nWorkflowConfig {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  workflowId   String   @unique // ID no n8n
+  
+  // Configuração
+  isActive     Boolean  @default(true)
+  triggerType  N8nTriggerType
+  webhookUrl   String?  // URL do webhook se aplicável
+  
+  // Contexto
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  agentId      String?
+  agent        User?    @relation(fields: [agentId], references: [id])
+  
+  // Configurações
+  settings     Json?    // configurações específicas
+  mapping      Json?    // mapeamento de campos
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  executions   N8nExecutionLog[]
+}
+
+// Log de execuções n8n
+model N8nExecutionLog {
+  id              String   @id @default(uuid())
+  workflowConfigId String
+  workflowConfig  N8nWorkflowConfig @relation(fields: [workflowConfigId], references: [id])
+  
+  executionId     String   // ID da execução no n8n
+  status          N8nExecutionStatus
+  
+  // Dados da execução
+  inputData       Json?    // dados de entrada
+  outputData      Json?    // dados de saída
+  errorData       Json?    // dados de erro
+  
+  // Métricas
+  startedAt       DateTime
+  finishedAt      DateTime?
+  duration        Int?     // duração em ms
+  
+  // Contexto
+  appointmentId   String?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
+
+// === ENUMS ===
+
+enum SyncStatus {
+  PENDING     // Aguardando sincronização
+  SYNCING     // Sincronizando
+  SYNCED      // Sincronizado
+  FAILED      // Falha na sincronização
+  CONFLICT    // Conflito detectado
+}
+
+enum SyncDirection {
+  TO_GOOGLE       // ImobiPRO → Google
+  FROM_GOOGLE     // Google → ImobiPRO  
+  BIDIRECTIONAL   // Ambos os sentidos
+}
+
+enum SyncOperation {
+  CREATE
+  UPDATE
+  DELETE
+  SYNC_CHECK
+}
+
+enum SyncLogStatus {
+  SUCCESS
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+enum AutomationTrigger {
+  N8N_WEBHOOK     // Criado via webhook n8n
+  WHATSAPP_BOT    // Criado via bot WhatsApp
+  CALENDAR_SYNC   // Criado via sincronização
+  AUTO_ASSIGNMENT // Criado por atribuição automática
+  MANUAL_CREATION // Criado manualmente
+}
+
+enum ConflictType {
+  TIME_OVERLAP    // Sobreposição de horários
+  DOUBLE_BOOKING  // Duplo agendamento
+  SYNC_MISMATCH   // Dados divergentes entre sistemas
+  AVAILABILITY    // Conflito de disponibilidade
+}
+
+enum ConflictSource {
+  GOOGLE_CALENDAR
+  N8N_WORKFLOW
+  MANUAL_EDIT
+  AUTO_ASSIGNMENT
+}
+
+enum ConflictStrategy {
+  LATEST_WINS     // Última modificação prevalece
+  IMOBIPRO_WINS   // ImobiPRO prevalece
+  GOOGLE_WINS     // Google Calendar prevalece
+  MANUAL_REVIEW   // Revisão manual necessária
+}
+
+enum ConflictResolution {
+  AUTO_RESOLVED   // Resolvido automaticamente
+  MANUAL_RESOLVED // Resolvido manualmente
+  ESCALATED       // Escalado para supervisor
+  PENDING         // Aguardando resolução
+}
+
+enum AppointmentSource {
+  MANUAL          // Criado manualmente
+  WHATSAPP        // Criado via WhatsApp
+  N8N_AUTOMATION  // Criado via n8n
+  GOOGLE_CALENDAR // Importado do Google Calendar
+  API_INTEGRATION // Criado via API externa
+  BULK_IMPORT     // Importado em lote
+}
+
+enum AppointmentPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum N8nTriggerType {
+  WEBHOOK         // Webhook de entrada
+  SCHEDULE        // Agendamento/cron
+  MANUAL          // Execução manual
+  EVENT_DRIVEN    // Baseado em eventos
+}
+
+enum N8nExecutionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+  WAITING
 }
 ```
 
-### **Integrações Necessárias**
-1. **Google Calendar API** - Sincronização bidirecional
-2. **n8n Workflows** - Automação de agendamentos
-3. **WhatsApp Business API** - Notificações
+### **🔌 Integrações Avançadas**
 
-### **Funcionalidades Específicas**
-- Interface de configuração de horários (como nas imagens)
-- Calendário visual com slots disponíveis
-- Sistema de atribuição automática
-- Notificações automáticas
-- Relatórios de ocupação
+#### **1. Google Calendar API - Sincronização Bidirecional**
+
+**Funcionalidades Principais:**
+- **OAuth 2.0 seguro** com refresh automático de tokens
+- **Webhook notifications** para mudanças em tempo real
+- **Conflict resolution** inteligente com 4 estratégias
+- **Multi-calendar support** por usuário
+- **Batch operations** para alta performance
+
+**Fluxos de Sincronização:**
+```typescript
+// Fluxo de criação de agendamento
+ImobiPRO → Google Calendar → Webhook → n8n → Notificações
+
+// Fluxo de edição externa
+Google Calendar → Webhook → Conflict Detection → Resolution → ImobiPRO
+
+// Fluxo de automação
+n8n Trigger → ImobiPRO API → Google Calendar → Confirmação
+```
+
+#### **2. n8n Workflows - Automação Inteligente**
+
+**27 Endpoints REST** organizados em categorias:
+- **Webhook Handlers** (5 endpoints) - Recebimento de dados externos
+- **Trigger Events** (6 endpoints) - Disparos para workflows
+- **Data Management** (8 endpoints) - CRUD de agendamentos
+- **Monitoring** (4 endpoints) - Métricas e saúde do sistema  
+- **Configuration** (4 endpoints) - Configurações de workflows
+
+**Workflows Pré-configurados:**
+1. **Agendamento via WhatsApp** - Processamento de linguagem natural
+2. **Lembretes Inteligentes** - 24h, 1h e confirmação
+3. **Follow-up Automático** - Pós-visita e nutrição de leads
+4. **Resolução de Conflitos** - IA para resolução automática
+5. **Otimização de Rotas** - Agendamentos geograficamente otimizados
+
+### **🎨 Interface Moderna Mobile-First**
+
+#### **Componentes React + TypeScript:**
+
+**CalendarView** - Calendário responsivo principal
+```typescript
+interface CalendarViewProps {
+  view: 'month' | 'week' | 'day';
+  agents: Agent[];
+  onAppointmentCreate: (data: AppointmentData) => void;
+  onSlotSelect: (slot: AvailabilitySlot) => void;
+  realTimeUpdates: boolean;
+}
+```
+
+**AgentAvailability** - Gestão de disponibilidade
+```typescript
+interface AgentAvailabilityProps {
+  agentId: string;
+  workingHours: WorkingHours;
+  onUpdate: (hours: WorkingHours) => void;
+  syncWithGoogle: boolean;
+}
+```
+
+**BookingWizard** - Fluxo de criação guiado
+```typescript
+interface BookingWizardProps {
+  initialData?: Partial<AppointmentData>;
+  availableSlots: AvailabilitySlot[];
+  onComplete: (appointment: Appointment) => void;
+  conflictDetection: boolean;
+}
+```
+
+#### **Design System:**
+- **Cores ImobiPRO**: `imobipro-blue` e `imobipro-gray` 
+- **Tema Dark**: Consistente com o projeto
+- **shadcn/ui**: Componentes modernos e acessíveis
+- **Tailwind CSS**: Responsividade e performance
+- **Micro-interações**: Feedback visual imediato
+
+### **🔐 Segurança e Confiabilidade**
+
+#### **Autenticação & Autorização:**
+- **JWT tokens** com refresh automático
+- **Row Level Security (RLS)** no Supabase
+- **API rate limiting** inteligente
+- **Webhook signature validation** (HMAC-SHA256)
+
+#### **Proteção de Dados:**
+- **Criptografia AES-256-GCM** para tokens OAuth
+- **Compliance LGPD** com auditoria completa
+- **Backup automático** de dados críticos
+- **Logs estruturados** para investigação forense
+
+#### **Resiliência:**
+- **Circuit breaker** para APIs externas
+- **Retry mechanisms** com backoff exponencial
+- **Dead letter queue** para falhas críticas
+- **Health checks** automáticos
+
+### **📊 Métricas e Monitoramento**
+
+#### **KPIs Técnicos:**
+- **Sync Latency**: < 2 segundos para Google Calendar
+- **API Response**: < 500ms para operações críticas
+- **Uptime**: 99.9% de disponibilidade
+- **Conflict Rate**: < 1% de conflitos de agendamento
+
+#### **KPIs de Negócio:**
+- **Booking Conversion**: +40% na conversão de agendamentos
+- **Agent Efficiency**: +30% na utilização de tempo
+- **Customer Satisfaction**: +25% na experiência de agendamento
+- **Automation Rate**: 80% dos agendamentos via automação
+
+### **🚀 Plano de Implementação Estratégico**
+
+#### **FASE 1: Fundação (2-3 semanas)**
+1. **Database Migration**: Implementar novos modelos Prisma
+2. **Basic API Endpoints**: CRUD para AgentSchedule e AvailabilitySlot
+3. **n8n Setup**: Configurar instância n8n e workflows básicos
+4. **Google Calendar OAuth**: Implementar autenticação e tokens
+
+#### **FASE 2: Core Features (3-4 semanas)**
+1. **Calendar UI Moderna**: Componente principal do calendário
+2. **Availability Settings**: Interface de configuração de horários
+3. **Smart Booking Flow**: Processo de agendamento otimizado
+4. **Real-time Sync**: WebSockets e sincronização bidirecional
+
+#### **FASE 3: Automação Avançada (2-3 semanas)**
+1. **n8n Workflows**: Implementar todos os workflows essenciais
+2. **Conflict Resolution**: Sistema de resolução de conflitos
+3. **AI Suggestions**: Integrar sugestões inteligentes
+4. **Performance Optimization**: Cache, indexing, circuit breakers
+
+#### **FASE 4: Produção (1-2 semanas)**
+1. **Testing**: Testes unitários e de integração
+2. **Security Audit**: Revisão de segurança
+3. **Monitoring**: Logs, métricas e alertas
+4. **Documentation**: Documentação completa
+
+### **💰 ROI Esperado**
+
+- **Redução 70%** no tempo gasto com agendamentos manuais
+- **Aumento 50%** na conversão de leads em agendamentos
+- **Eliminação 95%** de conflitos de horário
+- **Melhoria 60%** na experiência do cliente
+- **Automação 80%** das tarefas repetitivas
+
+### **🏆 Conclusão Estratégica**
+
+A nova arquitetura n8n-first para o módulo de agenda representa uma **evolução radical** do sistema atual, transformando-o de um calendário básico em uma **plataforma de automação inteligente**. 
+
+Esta implementação posiciona o ImobiPRO como **líder tecnológico** no setor imobiliário brasileiro, oferecendo um nível de automação e integração que nenhum concorrente possui atualmente.
+
+**Próximo passo recomendado**: Implementar a Fase 1 com foco na migração do database e setup inicial do n8n para validar a arquitetura proposta.
 
 ---
 
