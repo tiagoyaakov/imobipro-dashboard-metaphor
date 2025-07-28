@@ -16,7 +16,7 @@ import {
   Smartphone,
   AlertTriangle,
   CheckCircle2,
-  Sync,
+  RotateCcw,
   HardDrive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 export interface OfflineQueueItem {
   id: string;
   type: 'create_appointment' | 'update_appointment' | 'delete_appointment' | 'sync_calendar';
-  data: any;
+  data: Record<string, unknown>;
   timestamp: Date;
   retryCount: number;
   status: 'pending' | 'syncing' | 'failed' | 'completed';
@@ -45,7 +45,7 @@ interface OfflineModeProps {
   queueItems: OfflineQueueItem[];
   cacheStats: CacheStats;
   syncProgress: number;
-  onSyncQueue: () => void;
+  onRotateCcwQueue: () => void;
   onClearQueue: () => void;
   onRefreshCache: () => void;
   onInstallPWA?: () => void;
@@ -58,7 +58,7 @@ const OfflineMode: React.FC<OfflineModeProps> = ({
   queueItems,
   cacheStats,
   syncProgress,
-  onSyncQueue,
+  onRotateCcwQueue,
   onClearQueue,
   onRefreshCache,
   onInstallPWA,
@@ -182,7 +182,7 @@ const OfflineMode: React.FC<OfflineModeProps> = ({
     if (queueItems.length === 0) {
       return (
         <div className="text-center py-4 text-muted-foreground">
-          <Sync className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <RotateCcw className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">Nenhuma ação pendente</p>
         </div>
       );
@@ -196,7 +196,7 @@ const OfflineMode: React.FC<OfflineModeProps> = ({
             {isOnline && pendingItems > 0 && (
               <Button
                 size="sm"
-                onClick={onSyncQueue}
+                onClick={onRotateCcwQueue}
                 className="h-6 px-2 text-xs"
               >
                 <Upload className="w-3 h-3 mr-1" />
@@ -354,7 +354,7 @@ const OfflineMode: React.FC<OfflineModeProps> = ({
 export const useOfflineMode = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueItems, setQueueItems] = useState<OfflineQueueItem[]>([]);
-  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncProgress, setRotateCcwProgress] = useState(0);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -401,7 +401,7 @@ export const useOfflineMode = () => {
     
     for (let i = 0; i < pendingItems.length; i++) {
       const item = pendingItems[i];
-      setSyncProgress(((i + 1) / pendingItems.length) * 100);
+      setRotateCcwProgress(((i + 1) / pendingItems.length) * 100);
       
       try {
         updateQueueItem(item.id, { status: 'syncing' });
@@ -423,7 +423,7 @@ export const useOfflineMode = () => {
       }
     }
     
-    setSyncProgress(0);
+    setRotateCcwProgress(0);
   };
 
   return {

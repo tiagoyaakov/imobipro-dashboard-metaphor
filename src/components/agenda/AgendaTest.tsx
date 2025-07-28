@@ -68,7 +68,7 @@ export function AgendaTest({ agentId }: AgendaTestProps) {
     });
   };
 
-  const updateDaySchedule = (day: keyof WorkingHours, field: keyof DaySchedule, value: any) => {
+  const updateDaySchedule = (day: keyof WorkingHours, field: keyof DaySchedule, value: string | boolean) => {
     setWorkingHours(prev => ({
       ...prev,
       [day]: {

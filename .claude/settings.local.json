@@ -9,7 +9,14 @@
       "Bash(pnpm db:generate:*)",
       "Bash(npx prisma generate:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npx vite:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git add:*)",
+      "Bash(pnpm typecheck:*)"
     ],
     "deny": []
   }
