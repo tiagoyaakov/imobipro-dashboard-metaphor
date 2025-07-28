@@ -83,6 +83,121 @@ enum ActivityType {
   CHAT_MESSAGE_SENT
 }
 
+// === NOVOS ENUMS PARA MÓDULO AGENDA ===
+
+enum SlotStatus {
+  AVAILABLE   // Disponível para agendamento
+  BOOKED      // Agendado com confirmação
+  BLOCKED     // Bloqueado manualmente
+  PENDING     // Aguardando confirmação
+  CANCELLED   // Cancelado
+  TENTATIVE   // Tentativo (sincronização)
+}
+
+enum SlotType {
+  REGULAR     // Agendamento regular
+  URGENT      // Agendamento urgente
+  FOLLOW_UP   // Follow-up de cliente
+  VIEWING     // Visita a imóvel
+  MEETING     // Reunião interna
+  BREAK       // Intervalo/almoço
+}
+
+enum SyncStatus {
+  PENDING     // Aguardando sincronização
+  SYNCING     // Sincronizando
+  SYNCED      // Sincronizado
+  FAILED      // Falha na sincronização
+  CONFLICT    // Conflito detectado
+}
+
+enum SyncDirection {
+  TO_GOOGLE       // ImobiPRO → Google
+  FROM_GOOGLE     // Google → ImobiPRO  
+  BIDIRECTIONAL   // Ambos os sentidos
+}
+
+enum SyncOperation {
+  CREATE
+  UPDATE
+  DELETE
+  SYNC_CHECK
+}
+
+enum SyncLogStatus {
+  SUCCESS
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+enum AutomationTrigger {
+  N8N_WEBHOOK     // Criado via webhook n8n
+  WHATSAPP_BOT    // Criado via bot WhatsApp
+  CALENDAR_SYNC   // Criado via sincronização
+  AUTO_ASSIGNMENT // Criado por atribuição automática
+  MANUAL_CREATION // Criado manualmente
+}
+
+enum ConflictType {
+  TIME_OVERLAP    // Sobreposição de horários
+  DOUBLE_BOOKING  // Duplo agendamento
+  SYNC_MISMATCH   // Dados divergentes entre sistemas
+  AVAILABILITY    // Conflito de disponibilidade
+}
+
+enum ConflictSource {
+  GOOGLE_CALENDAR
+  N8N_WORKFLOW
+  MANUAL_EDIT
+  AUTO_ASSIGNMENT
+}
+
+enum ConflictStrategy {
+  LATEST_WINS     // Última modificação prevalece
+  IMOBIPRO_WINS   // ImobiPRO prevalece
+  GOOGLE_WINS     // Google Calendar prevalece
+  MANUAL_REVIEW   // Revisão manual necessária
+}
+
+enum ConflictResolution {
+  AUTO_RESOLVED   // Resolvido automaticamente
+  MANUAL_RESOLVED // Resolvido manualmente
+  ESCALATED       // Escalado para supervisor
+  PENDING         // Aguardando resolução
+}
+
+enum AppointmentSource {
+  MANUAL          // Criado manualmente
+  WHATSAPP        // Criado via WhatsApp
+  N8N_AUTOMATION  // Criado via n8n
+  GOOGLE_CALENDAR // Importado do Google Calendar
+  API_INTEGRATION // Criado via API externa
+  BULK_IMPORT     // Importado em lote
+}
+
+enum AppointmentPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum N8nTriggerType {
+  WEBHOOK         // Webhook de entrada
+  SCHEDULE        // Agendamento/cron
+  MANUAL          // Execução manual
+  EVENT_DRIVEN    // Baseado em eventos
+}
+
+enum N8nExecutionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+  WAITING
+}
+
 // -----------------------------------------------------------
 // Models
 // -----------------------------------------------------------
@@ -94,6 +209,9 @@ model Company {
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Novos relacionamentos para módulo agenda
+  n8nWorkflowConfigs N8nWorkflowConfig[]
 }
 
 model User {
@@ -108,6 +226,7 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  // Relacionamentos existentes
   properties   Property[]
   contacts     Contact[]
   appointments Appointment[]
@@ -115,6 +234,12 @@ model User {
   activities   Activity[]
   messages     Message[]
   chats        Chat[]     @relation("ChatOwner")
+
+  // Novos relacionamentos para módulo agenda
+  agentSchedule              AgentSchedule?
+  availabilitySlots          AvailabilitySlot[]
+  googleCalendarCredentials  GoogleCalendarCredentials?
+  n8nWorkflowConfigs         N8nWorkflowConfig[]
 }
 
 model Property {
@@ -184,6 +309,56 @@ model Appointment {
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  // === NOVOS CAMPOS DE INTEGRAÇÃO ===
+  
+  // Google Calendar Sync
+  googleCalendarEventId String?  @unique
+  googleCalendarId      String?  // ID do calendário específico
+  syncStatus           SyncStatus @default(PENDING)
+  syncAttempts         Int       @default(0)
+  lastSyncAt           DateTime?
+  syncError            String?
+  
+  // n8n Integration
+  n8nWorkflowId        String?   // ID do workflow que criou
+  n8nExecutionId       String?   // ID da execução específica
+  automationTrigger    AutomationTrigger?
+  automationData       Json?     // dados para workflows
+  
+  // Smart Assignment
+  autoAssigned         Boolean   @default(false)
+  assignmentScore      Float?    // score do algoritmo de atribuição
+  assignmentReason     String?   // razão da atribuição automática
+  reassignmentCount    Int       @default(0)
+  
+  // Advanced Features  
+  conflictResolved     Boolean   @default(false)
+  conflictStrategy     ConflictStrategy?
+  originalSlotId       String?   // slot original antes de conflito
+  
+  // Enhanced Metadata
+  source              AppointmentSource @default(MANUAL)
+  priority            AppointmentPriority @default(NORMAL)
+  estimatedDuration   Int       @default(60) // minutos
+  actualDuration      Int?      // minutos reais
+  
+  // Client Experience
+  confirmationSent    Boolean   @default(false)
+  remindersSent       Json?     // { "24h": true, "1h": false }
+  clientFeedback      Json?     // feedback pós-agendamento
+  reschedulingCount   Int       @default(0)
+  
+  // Novos relacionamentos
+  availabilitySlotId  String?
+  availabilitySlot    AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+  conflictLogs        AppointmentConflictLog[]
+  syncLogs            CalendarSyncLog[]
+  n8nExecutions       N8nExecutionLog[]
+
+  @@index([syncStatus, lastSyncAt])
+  @@index([source, createdAt])
+  @@index([agentId, status, date])
 }
 
 model Deal {
@@ -242,4 +417,223 @@ model Message {
   sender    User     @relation(fields: [senderId], references: [id])
   chatId    String
   chat      Chat     @relation(fields: [chatId], references: [id])
+}
+
+// === NOVOS MODELOS PARA MÓDULO AGENDA ===
+
+// Horários de trabalho dos corretores (estrutura otimizada)
+model AgentSchedule {
+  id        String   @id @default(uuid())
+  agentId   String   @unique
+  agent     User     @relation(fields: [agentId], references: [id])
+  
+  // Configuração semanal estruturada
+  workingHours Json    // Schema validado: { monday: { start: "09:00", end: "18:00", breaks: [...] }, ... }
+  timezone     String  @default("America/Sao_Paulo")
+  isActive     Boolean @default(true)
+  
+  // Configurações avançadas
+  bufferTime          Int     @default(15) // minutos entre agendamentos
+  maxDailyAppointments Int?   @default(8)
+  allowWeekendWork    Boolean @default(false)
+  autoAssignEnabled   Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Slots de disponibilidade otimizados
+model AvailabilitySlot {
+  id          String   @id @default(uuid())
+  agentId     String
+  agent       User     @relation(fields: [agentId], references: [id])
+  
+  // Informações temporais
+  date        DateTime @db.Date
+  startTime   String   // "09:00" - formato HH:mm
+  endTime     String   // "10:00" - formato HH:mm
+  duration    Int      // duração em minutos
+  
+  // Status e controle
+  status      SlotStatus @default(AVAILABLE)
+  slotType    SlotType   @default(REGULAR)
+  priority    Int        @default(0) // para ordenação inteligente
+  
+  // Relacionamentos
+  appointments Appointment[]
+  
+  // Metadados para automação
+  source         String?  // "manual", "google_calendar", "n8n", "auto_generated"
+  externalId     String?  // ID do evento no sistema externo
+  automationData Json?    // dados para workflows n8n
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([agentId, date, status])
+  @@index([date, status, slotType])
+}
+
+// === MODELOS DE SINCRONIZAÇÃO GOOGLE CALENDAR ===
+
+// Credenciais OAuth seguras por usuário
+model GoogleCalendarCredentials {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  
+  // Tokens OAuth criptografados
+  accessToken       String    // Criptografado
+  refreshToken      String    // Criptografado  
+  tokenExpiry       DateTime
+  scope            String     // escopos autorizados
+  
+  // Configurações
+  defaultCalendarId String?   // calendário padrão
+  watchChannelId    String?   // ID do canal de notificações
+  watchExpiration   DateTime? // expiração do canal
+  
+  isActive         Boolean   @default(true)
+  lastSyncAt       DateTime?
+  syncErrors       Int       @default(0)
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  calendars        GoogleCalendarConfig[]
+}
+
+// Configuração por calendário
+model GoogleCalendarConfig {
+  id           String   @id @default(uuid())
+  credentialId String
+  credential   GoogleCalendarCredentials @relation(fields: [credentialId], references: [id])
+  
+  calendarId   String   // ID do calendário no Google
+  calendarName String   // nome amigável
+  color        String?  // cor hex
+  isPrimary    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  
+  // Configurações de sincronização
+  syncDirection    SyncDirection @default(BIDIRECTIONAL)
+  syncEvents       Boolean       @default(true)
+  syncAvailability Boolean       @default(true)
+  autoCreateSlots  Boolean       @default(true)
+  
+  // Filtros
+  eventFilter      Json?         // filtros de eventos
+  timeRange        Json?         // { start: "09:00", end: "18:00" }
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@unique([credentialId, calendarId])
+}
+
+// Log de sincronizações
+model CalendarSyncLog {
+  id              String   @id @default(uuid())
+  appointmentId   String?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  operation       SyncOperation
+  direction       SyncDirection
+  status          SyncLogStatus
+  
+  googleEventId   String?
+  googleCalendarId String?
+  
+  // Dados da operação
+  requestData     Json?    // dados enviados
+  responseData    Json?    // resposta recebida
+  errorMessage    String?  // erro se houver
+  
+  // Métricas
+  duration        Int?     // duração em ms
+  retryCount      Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([status, createdAt])
+  @@index([operation, direction])
+}
+
+// Resolução de conflitos
+model AppointmentConflictLog {
+  id              String   @id @default(uuid())
+  appointmentId   String
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  
+  conflictType    ConflictType
+  conflictSource  ConflictSource
+  
+  // Dados do conflito
+  originalData    Json     // dados originais
+  conflictingData Json     // dados conflitantes
+  resolvedData    Json?    // dados após resolução
+  
+  strategy        ConflictStrategy
+  resolution      ConflictResolution
+  
+  resolvedBy      String?  // ID do usuário que resolveu
+  resolvedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+}
+
+// === MODELOS N8N INTEGRATION ===
+
+// Configuração de workflows n8n
+model N8nWorkflowConfig {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  workflowId   String   @unique // ID no n8n
+  
+  // Configuração
+  isActive     Boolean  @default(true)
+  triggerType  N8nTriggerType
+  webhookUrl   String?  // URL do webhook se aplicável
+  
+  // Contexto
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  agentId      String?
+  agent        User?    @relation(fields: [agentId], references: [id])
+  
+  // Configurações
+  settings     Json?    // configurações específicas
+  mapping      Json?    // mapeamento de campos
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  executions   N8nExecutionLog[]
+}
+
+// Log de execuções n8n
+model N8nExecutionLog {
+  id              String   @id @default(uuid())
+  workflowConfigId String
+  workflowConfig  N8nWorkflowConfig @relation(fields: [workflowConfigId], references: [id])
+  
+  executionId     String   // ID da execução no n8n
+  status          N8nExecutionStatus
+  
+  // Dados da execução
+  inputData       Json?    // dados de entrada
+  outputData      Json?    // dados de saída
+  errorData       Json?    // dados de erro
+  
+  // Métricas
+  startedAt       DateTime
+  finishedAt      DateTime?
+  duration        Int?     // duração em ms
+  
+  // Contexto
+  appointmentId   String?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  
+  createdAt       DateTime @default(now())
 }
