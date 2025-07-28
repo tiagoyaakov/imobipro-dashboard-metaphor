@@ -25,97 +25,19 @@ import type {
   LeadStage,
   LeadActivityType,
   CampaignStatus,
-  User 
-} from '@prisma/client';
+  User,
+  ContactWithDetails,
+  CreateContactInput,
+  UpdateContactInput,
+  CreateLeadActivityInput,
+  CreateCampaignInput,
+  LeadScoringFactors,
+  FunnelStats
+} from '@/types/clients';
 
 // ============================================================================
-// TIPOS E INTERFACES
+// CONFIGURAÇÃO
 // ============================================================================
-
-export interface ContactWithDetails extends Contact {
-  agent: Pick<User, 'id' | 'name' | 'email'>;
-  leadActivities: LeadActivity[];
-  campaignParticipations: MessageCampaignParticipation[];
-  _count: {
-    appointments: number;
-    deals: number;
-    leadActivities: number;
-  };
-}
-
-export interface CreateContactInput {
-  name: string;
-  email?: string;
-  phone?: string;
-  leadSource?: string;
-  leadSourceDetails?: string;
-  company?: string;
-  position?: string;
-  budget?: number;
-  timeline?: string;
-  preferences?: Record<string, any>;
-  tags?: string[];
-  priority?: string;
-  agentId: string;
-}
-
-export interface UpdateContactInput extends Partial<CreateContactInput> {
-  leadStage?: LeadStage;
-  leadScore?: number;
-  isQualified?: boolean;
-  qualificationNotes?: string;
-  nextFollowUpAt?: Date;
-  followUpReason?: string;
-  optInWhatsApp?: boolean;
-  optInEmail?: boolean;
-  optInSMS?: boolean;
-}
-
-export interface CreateLeadActivityInput {
-  contactId: string;
-  type: LeadActivityType;
-  title: string;
-  description?: string;
-  direction?: 'INBOUND' | 'OUTBOUND';
-  channel?: string;
-  duration?: number;
-  outcome?: string;
-  nextAction?: string;
-  metadata?: Record<string, any>;
-  performedById?: string;
-}
-
-export interface CreateCampaignInput {
-  name: string;
-  description?: string;
-  channel: 'WHATSAPP' | 'EMAIL' | 'SMS';
-  subject?: string;
-  template: string;
-  variables?: Record<string, any>;
-  scheduledAt?: Date;
-  targetCriteria?: Record<string, any>;
-  sendDelay?: number;
-  maxRecipients?: number;
-  createdById: string;
-}
-
-export interface LeadScoringFactors {
-  sourceQuality: number;
-  engagementLevel: number;
-  budgetAlignment: number;
-  timelineUrgency: number;
-  qualificationLevel: number;
-  responseRate: number;
-  interactionFrequency: number;
-}
-
-export interface FunnelStats {
-  totalLeads: number;
-  byStage: Record<LeadStage, number>;
-  conversionRates: Record<string, number>;
-  averageTimeInStage: Record<LeadStage, number>;
-  topSources: Array<{ source: string; count: number; conversionRate: number }>;
-}
 
 // ============================================================================
 // SERVIÇO PRINCIPAL

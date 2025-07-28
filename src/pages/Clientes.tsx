@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFunnelStats } from '@/hooks/useClients';
-import type { ContactWithDetails } from '@/services/clientsService';
+import type { ContactWithDetails } from '@/types/clients';
 
 const Clientes = () => {
   const { user } = useAuth();

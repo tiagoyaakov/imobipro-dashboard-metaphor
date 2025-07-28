@@ -22,7 +22,7 @@ export type {
   CreateCampaignInput,
   FunnelStats,
   LeadScoringFactors
-} from '@/services/clientsService';
+} from '@/types/clients';
 
 // ============================================================================
 // HOOKS EXPORTADOS

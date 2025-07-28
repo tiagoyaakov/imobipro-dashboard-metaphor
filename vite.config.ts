@@ -120,20 +120,7 @@ export default defineConfig(({ mode, command }) => {
       // Configurações específicas para Vercel
       reportCompressedSize: false, // Desabilita relatório de tamanho comprimido para builds mais rápidos
       
-      // Configurações avançadas de minificação
-      terserOptions: isProduction ? {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info'],
-        },
-        mangle: {
-          safari10: true,
-        },
-        format: {
-          comments: false,
-        },
-      } : undefined,
+      // Configurações removidas - esbuild é usado como minificador
     },
 
     // Configurações de otimização de dependências

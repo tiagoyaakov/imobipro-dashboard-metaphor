@@ -34,7 +34,7 @@ import {
   Webhook,
   Link,
   Unlink,
-  Sync,
+  RotateCcw,
   User,
   Calendar as CalendarIcon,
   Bell,
@@ -188,7 +188,7 @@ export function GoogleCalendarIntegration({
             </>
           ) : (
             <>
-              <Sync className="w-4 h-4 mr-2" />
+              <RotateCcw className="w-4 h-4 mr-2" />
               Sincronizar Agora
             </>
           )}

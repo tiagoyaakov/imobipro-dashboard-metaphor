@@ -18,15 +18,19 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
-import clientsService, { 
-  type ContactWithDetails, 
-  type CreateContactInput, 
-  type UpdateContactInput,
-  type CreateLeadActivityInput,
-  type CreateCampaignInput,
-  type FunnelStats
-} from '@/services/clientsService';
-import type { LeadStage, LeadActivity, MessageCampaign, CampaignStatus } from '@prisma/client';
+import clientsService from '@/services/clientsService';
+import type { 
+  ContactWithDetails, 
+  CreateContactInput, 
+  UpdateContactInput,
+  CreateLeadActivityInput,
+  CreateCampaignInput,
+  FunnelStats,
+  LeadStage, 
+  LeadActivity, 
+  MessageCampaign, 
+  CampaignStatus 
+} from '@/types/clients';
 
 // ============================================================================
 // KEYS PARA REACT QUERY
