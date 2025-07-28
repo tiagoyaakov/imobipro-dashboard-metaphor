@@ -16,7 +16,8 @@
       "Bash(pnpm lint:*)",
       "Bash(npx eslint:*)",
       "Bash(git add:*)",
-      "Bash(pnpm typecheck:*)"
+      "Bash(pnpm typecheck:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
