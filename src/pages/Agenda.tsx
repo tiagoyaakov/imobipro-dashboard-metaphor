@@ -21,11 +21,16 @@ import {
   type TimeSlotOption
 } from "@/components/agenda";
 
+// Importar componente Google Calendar Integration
+import GoogleCalendarIntegration from "@/components/agenda/GoogleCalendarIntegration";
+import { useAuth } from "@/hooks/useAuth";
+
 const Agenda = () => {
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   // Hooks para gerenciar estado
+  const { user } = useAuth();
   const { syncStatus, setSyncStatus } = useSyncStatus();
   const { notifications, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
@@ -259,23 +264,41 @@ const Agenda = () => {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
-          <Card className="imobipro-card">
-            <CardHeader>
-              <CardTitle>Configurações da Agenda</CardTitle>
-              <CardDescription>
-                Configure preferências gerais, notificações e integrações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Configurações em desenvolvimento</p>
-                <p className="text-xs mt-2">
-                  Use as abas de Notificações e Sincronização para configurar essas funcionalidades
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            {/* Integração Google Calendar */}
+            <GoogleCalendarIntegration
+              userId={user?.id || 'mock-user-id'}
+              onConnectionChange={(isConnected) => {
+                console.log('Google Calendar connection changed:', isConnected);
+                // Atualizar status de sincronização se necessário
+                if (isConnected) {
+                  setSyncStatus(prev => ({
+                    ...prev,
+                    google: { ...prev.google, status: 'connected' }
+                  }));
+                }
+              }}
+            />
+
+            {/* Outras configurações */}
+            <Card className="imobipro-card">
+              <CardHeader>
+                <CardTitle>Outras Configurações</CardTitle>
+                <CardDescription>
+                  Configure preferências gerais e outras integrações
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Configurações adicionais em desenvolvimento</p>
+                  <p className="text-xs mt-2">
+                    Use as abas de Notificações e Sincronização para outras funcionalidades
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
