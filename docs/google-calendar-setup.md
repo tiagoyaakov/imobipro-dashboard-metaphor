@@ -70,8 +70,7 @@ Este documento detalha como configurar a integração completa com Google Calend
    http://localhost:8080/auth/google/callback
    
    # Produção
-   https://imobipro.com/auth/google/callback
-   https://app.imobipro.com/auth/google/callback
+   https://imobpro-brown.vercel.app/auth/google/callback
    
    # Staging (se houver)
    https://staging.imobipro.com/auth/google/callback
@@ -83,8 +82,7 @@ Este documento detalha como configurar a integração completa com Google Calend
    http://localhost:8080
    
    # Produção
-   https://imobipro.com
-   https://app.imobipro.com
+   https://imobpro-brown.vercel.app
    
    # Staging
    https://staging.imobipro.com
