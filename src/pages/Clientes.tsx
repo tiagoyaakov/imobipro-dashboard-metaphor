@@ -38,7 +38,15 @@ const Clientes = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   // const { data: stats } = useFunnelStats(user?.id);
-  const stats = { totalLeads: 25, byStage: { NEW: 8, QUALIFIED: 6, CONVERTED: 3 } }; // Mock temporário
+  const stats = { 
+    totalLeads: 25, 
+    byStage: { NEW: 8, QUALIFIED: 6, CONVERTED: 3, NEGOTIATING: 4 },
+    topSources: [
+      { source: 'WhatsApp', count: 12 },
+      { source: 'Site', count: 8 },
+      { source: 'Indicação', count: 5 }
+    ]
+  }; // Mock temporário completo
 
   const handleContactSelect = (contact: any) => {
     setSelectedContact(contact);
@@ -91,10 +99,10 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-green-600">
-              {stats?.byStage.CONVERTED || 0}
+              {stats?.byStage?.CONVERTED || 0}
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {((stats?.byStage.CONVERTED || 0) / (stats?.totalLeads || 1) * 100).toFixed(1)}% conversão
+              {((stats?.byStage?.CONVERTED || 0) / (stats?.totalLeads || 1) * 100).toFixed(1)}% conversão
             </p>
           </CardContent>
         </Card>
@@ -106,7 +114,7 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-amber-600">
-              {stats?.byStage.NEGOTIATING || 0}
+              {stats?.byStage?.NEGOTIATING || 0}
             </div>
             <p className="text-[10px] text-muted-foreground">
               Alto potencial
@@ -121,10 +129,10 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-purple-600">
-              {stats?.topSources[0]?.source || 'N/A'}
+              {stats?.topSources?.[0]?.source || 'N/A'}
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {stats?.topSources[0]?.count || 0} leads
+              {stats?.topSources?.[0]?.count || 0} leads
             </p>
           </CardContent>
         </Card>
