@@ -56,7 +56,7 @@ export function useReportTemplates(filters?: TemplateFilters) {
       companyId: user?.companyId,
       ...filters
     }),
-    enabled: false, // Desabilitar temporariamente até tabelas serem criadas
+    enabled: !!user?.companyId,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -157,7 +157,7 @@ export function useScheduledReports() {
   return useQuery({
     queryKey: reportKeys.scheduledByCompany(user?.companyId || ''),
     queryFn: () => ReportsService.getScheduledReports(user?.companyId),
-    enabled: false, // Desabilitar temporariamente até tabelas serem criadas
+    enabled: !!user?.companyId,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -324,11 +324,11 @@ export function useReportsManager() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Queries (desabilitadas temporariamente)
+  // Queries
   const templates = useReportTemplates();
   const scheduledReports = useScheduledReports();
 
-  // Mutations (desabilitadas temporariamente)
+  // Mutations
   const createTemplate = useCreateReportTemplate();
   const updateTemplate = useUpdateReportTemplate();
   const deleteTemplate = useDeleteReportTemplate();
@@ -336,94 +336,69 @@ export function useReportsManager() {
   const executeReport = useExecuteScheduledReport();
   const generateReport = useGenerateReport();
 
-  // Mock data temporariamente
-  const mockTemplates = [
-    {
-      id: '1',
-      name: 'Relatório Semanal de Vendas',
-      description: 'Resumo das vendas realizadas na semana',
-      type: 'WEEKLY_SALES',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      template: 'Template mock'
-    },
-    {
-      id: '2',
-      name: 'Relatório de Conversão de Leads',
-      description: 'Análise da conversão de leads por fonte',
-      type: 'LEAD_CONVERSION',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      template: 'Template mock'
-    }
-  ];
-
-  const mockScheduledReports = [
-    {
-      id: '1',
-      name: 'Relatório Semanal Automático',
-      description: 'Enviado toda segunda-feira às 9h',
-      format: 'WHATSAPP',
-      isActive: true,
-      nextSendAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      template: { name: 'Relatório Semanal de Vendas' }
-    }
-  ];
-
-  // Actions (mock temporariamente)
+  // Actions
   const actions = {
     // Template actions
-    createTemplate: () => console.log('Mock: criar template'),
-    updateTemplate: () => console.log('Mock: atualizar template'),
-    deleteTemplate: () => console.log('Mock: deletar template'),
+    createTemplate: createTemplate.mutate,
+    updateTemplate: updateTemplate.mutate,
+    deleteTemplate: deleteTemplate.mutate,
     
     // Schedule actions
-    scheduleReport: () => console.log('Mock: agendar relatório'),
-    executeReport: (id: string) => console.log('Mock: executar relatório', id),
-    generateReport: () => console.log('Mock: gerar relatório'),
+    scheduleReport: scheduleReport.mutate,
+    executeReport: executeReport.mutate,
+    generateReport: generateReport.mutate,
     
     // Utility actions
-    refreshTemplates: () => console.log('Mock: refresh templates'),
-    refreshScheduledReports: () => console.log('Mock: refresh scheduled'),
+    refreshTemplates: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: reportKeys.templatesByCompany(user?.companyId || '') 
+      });
+    },
+    
+    refreshScheduledReports: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: reportKeys.scheduledByCompany(user?.companyId || '') 
+      });
+    },
   };
 
-  // Loading states (mock)
+  // Loading states
   const isLoading = {
-    templates: false,
-    scheduledReports: false,
-    createTemplate: false,
-    updateTemplate: false,
-    deleteTemplate: false,
-    scheduleReport: false,
-    executeReport: false,
-    generateReport: false,
+    templates: templates.isLoading,
+    scheduledReports: scheduledReports.isLoading,
+    createTemplate: createTemplate.isPending,
+    updateTemplate: updateTemplate.isPending,
+    deleteTemplate: deleteTemplate.isPending,
+    scheduleReport: scheduleReport.isPending,
+    executeReport: executeReport.isPending,
+    generateReport: generateReport.isPending,
   };
 
   return {
-    // Data (mock)
-    templates: mockTemplates,
-    scheduledReports: mockScheduledReports,
+    // Data
+    templates: templates.data || [],
+    scheduledReports: scheduledReports.data || [],
     
     // Loading states
     isLoading,
     
-    // Error states (mock)
+    // Error states
     error: {
-      templates: null,
-      scheduledReports: null,
-      createTemplate: null,
-      updateTemplate: null,
-      deleteTemplate: null,
-      scheduleReport: null,
-      executeReport: null,
-      generateReport: null,
+      templates: templates.error,
+      scheduledReports: scheduledReports.error,
+      createTemplate: createTemplate.error,
+      updateTemplate: updateTemplate.error,
+      deleteTemplate: deleteTemplate.error,
+      scheduleReport: scheduleReport.error,
+      executeReport: executeReport.error,
+      generateReport: generateReport.error,
     },
     
     // Actions
     actions,
     
     // Status
-    isReady: true, // Mock sempre pronto
+    isReady: !templates.isLoading && !scheduledReports.isLoading,
   };
 }
 

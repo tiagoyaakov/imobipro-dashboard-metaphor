@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,9 @@ import { useReportsManager, useReportsDashboard } from '@/hooks/useReports';
 import { ReportTemplate } from '@prisma/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ReportsSetupModal } from '@/components/reports/ReportsSetupModal';
+import { companyNeedsReportsSeed } from '@/utils/seedReports';
+import { useAuth } from '@/hooks/useAuth';
 
 // ===================================================================
 // COMPONENTE PRINCIPAL
@@ -32,8 +35,24 @@ import { ptBR } from 'date-fns/locale';
 
 const Relatorios = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const { user } = useAuth();
   const reportsManager = useReportsManager();
   const dashboard = useReportsDashboard();
+
+  // Verificar se precisa mostrar setup inicial
+  useEffect(() => {
+    async function checkSetupNeeded() {
+      if (user?.companyId && reportsManager.isReady && reportsManager.templates.length === 0) {
+        const needsSetup = await companyNeedsReportsSeed(user.companyId);
+        if (needsSetup) {
+          setShowSetupModal(true);
+        }
+      }
+    }
+
+    checkSetupNeeded();
+  }, [user?.companyId, reportsManager.isReady, reportsManager.templates.length]);
 
   if (!reportsManager.isReady) {
     return (
@@ -101,6 +120,16 @@ const Relatorios = () => {
           <HistoryContent />
         </TabsContent>
       </Tabs>
+
+      {/* Setup Modal */}
+      <ReportsSetupModal
+        open={showSetupModal}
+        onOpenChange={setShowSetupModal}
+        onComplete={() => {
+          reportsManager.actions.refreshTemplates();
+          reportsManager.actions.refreshScheduledReports();
+        }}
+      />
     </div>
   );
 };
