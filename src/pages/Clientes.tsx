@@ -27,19 +27,18 @@ import {
   Settings,
   Plus
 } from 'lucide-react';
-// Temporariamente comentado para evitar erro de build
-// import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useFunnelStats } from '@/hooks/useClients';
 // import type { ContactWithDetails } from '@/types/clients';
 
 const Clientes = () => {
-  // const { user } = useAuth();
-  // const [selectedContact, setSelectedContact] = useState<ContactWithDetails | null>(null);
-  const user = { role: 'AGENT' }; // Mock temporário
+  const { user } = useAuth();
+  // Fallback mock caso não tenha dados
+  const userWithFallback = user || { id: 'mock-user', role: 'AGENT' };
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  const { data: stats } = useFunnelStats(user?.id);
+  const { data: stats } = useFunnelStats(userWithFallback?.id);
   // Fallback para stats mockados caso não carregue
   const statsData = stats || { 
     totalLeads: 25, 
@@ -182,7 +181,7 @@ const Clientes = () => {
 
         <TabsContent value="kanban" className="flex-1 min-h-0 mt-0">
           <LeadFunnelKanban 
-            agentId={user?.id}
+            agentId={userWithFallback?.id}
             onContactSelect={handleContactSelect}
             onContactCreate={handleContactCreate}
             className="h-full"
@@ -271,7 +270,7 @@ const Clientes = () => {
       {/* Botão Flutuante para Novo Lead */}
       <AddLeadButton 
         variant="floating"
-        defaultAgentId={user?.id}
+        defaultAgentId={userWithFallback?.id}
         onLeadCreated={() => {
           // Recarregar dados quando um lead for criado
           console.log('Lead criado com sucesso');

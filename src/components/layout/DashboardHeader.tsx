@@ -13,33 +13,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// Temporariamente comentado para evitar erro de build
-// import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
+// Temporariamente comentado para evitar dependências complexas  
 // import { usePermissions } from "@/components/auth/PrivateRoute";
 // import { useRoutes } from "@/hooks/useRoutes";
 // import { ImpersonationButton, useEffectiveUser } from "@/components/impersonation";
 
 const DashboardHeaderContent = () => {
   const navigate = useNavigate();
+  const { user: originalUser, logout } = useAuth();
   
-  // Mock temporário para evitar chamadas ao Supabase
-  const originalUser = { 
+  // Configurações simplificadas temporárias
+  const effectiveUser = originalUser;
+  const isImpersonating = false;
+  const canManageSettings = originalUser?.role === 'ADMIN' || originalUser?.role === 'DEV_MASTER';
+  const breadcrumbs: any[] = [];
+  
+  // Fallback para mock caso não tenha dados
+  const fallbackUser = { 
     name: 'Tiago França Lima', 
     email: '1992tiagofranca@gmail.com', 
     role: 'AGENT',
     avatar_url: null 
   };
-  const effectiveUser = originalUser;
-  const isImpersonating = false;
-  const canManageSettings = false;
-  const breadcrumbs: any[] = [];
-  
-  const logout = async () => {
-    console.log('Logout mockado');
-  };
 
-  // Usar o usuário efetivo para exibição, mas manter lógica baseada no original
-  const displayUser = effectiveUser || originalUser;
+  // Usar o usuário efetivo para exibição, com fallback
+  const displayUser = effectiveUser || originalUser || fallbackUser;
 
   // Helper para obter avatar url compatível com ambos os tipos
   const getAvatarUrl = (user: unknown) => {
