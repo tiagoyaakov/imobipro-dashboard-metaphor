@@ -35,7 +35,10 @@
       "Bash(echo:*)",
       "Bash(pnpm install:*)",
       "Bash(pnpm approve-builds:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(del:*)"
     ],
     "deny": []
   }

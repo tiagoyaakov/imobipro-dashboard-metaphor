@@ -22,6 +22,7 @@ const Usuarios = lazy(() => import("./pages/Usuarios"));
 const Chats = lazy(() => import("./pages/Chats"));
 const LeiInquilino = lazy(() => import("./pages/LeiInquilino"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const GoogleCalendarCallback = lazy(() => import("./pages/GoogleCalendarCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -150,6 +151,14 @@ const App = () => (
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Configuracoes />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="whatsapp-test" 
+                element={
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <WhatsAppTest />
                   </Suspense>
                 } 
               />

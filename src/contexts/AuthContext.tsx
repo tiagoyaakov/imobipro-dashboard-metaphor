@@ -65,17 +65,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔐 [Auth] Buscando dados do usuário:', supabaseUser.id);
       
       const { data, error } = await supabase
-        .from('users')
+        .from('User')
         .select(`
           id,
           email,
           name,
           role,
-          is_active,
-          company_id,
-          avatar_url,
-          created_at,
-          updated_at
+          createdAt,
+          updatedAt
         `)
         .eq('id', supabaseUser.id)
         .single();
@@ -91,48 +88,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
           name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
-          role: (supabaseUser.user_metadata?.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT') || 'DEV_MASTER', // Temporariamente DEV_MASTER para teste
+          role: 'ADMIN', // Use ADMIN as fallback since DEV_MASTER might not exist in DB
           isActive: true,
           companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Company padrão
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
           createdAt: supabaseUser.created_at || new Date().toISOString(),
           updatedAt: supabaseUser.updated_at || new Date().toISOString(),
-          company: null, // Sem dados da empresa no fallback
+          company: { 
+            id: 'c1036c09-e971-419b-9244-e9f6792954e2', 
+            name: 'ImobiPRO Default' 
+          }, // Default company
         };
         
         return fallbackUser;
       }
 
-      // Buscar dados da empresa separadamente (para evitar problemas de JOIN)
-      let companyData = null;
-      if (data.company_id) {
-        try {
-          const { data: company, error: companyError } = await supabase
-            .from('companies')
-            .select('id, name')
-            .eq('id', data.company_id)
-            .single();
-          
-          if (!companyError && company) {
-            companyData = company;
-          }
-        } catch (companyErr) {
-          console.warn('🔐 [Auth] Erro ao buscar dados da empresa:', companyErr);
-        }
-      }
+      // Map database role to app role (handle role differences)
+      let mappedRole: 'DEV_MASTER' | 'ADMIN' | 'AGENT' = 'AGENT'; // Default to AGENT
+      if (data.role === 'ADMIN') mappedRole = 'ADMIN';
+      else if (data.role === 'MANAGER') mappedRole = 'ADMIN'; // Map MANAGER to ADMIN
+      else if (data.role === 'VIEWER') mappedRole = 'AGENT'; // Map VIEWER to AGENT
 
-      // Mapear dados do banco (snake_case) para objeto User (camelCase)
+      // Create user object with defaults for missing fields
       const user: User = {
         id: data.id,
         email: data.email,
         name: data.name,
-        role: data.role,
-        isActive: data.is_active,
-        companyId: data.company_id,
-        avatarUrl: data.avatar_url,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-        company: companyData, // Dados da empresa buscados separadamente
+        role: mappedRole,
+        isActive: true, // Default to active since field doesn't exist in DB
+        companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Default company ID
+        avatarUrl: null, // Default to null since field doesn't exist in DB
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        company: { 
+          id: 'c1036c09-e971-419b-9244-e9f6792954e2', 
+          name: 'ImobiPRO Default' 
+        }, // Default company
       };
 
       return user;
