@@ -85,7 +85,15 @@ class ClientsService {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado ao criar contato:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
 
       // Registrar atividade de criação
       await this.createLeadActivity({
@@ -595,7 +603,8 @@ class ClientsService {
         .from('Contact')
         .select('leadStage, leadSource, createdAt');
 
-      if (agentId) {
+      // Apenas aplicar filtro de agentId se ele for fornecido e não for uma string vazia
+      if (agentId && agentId.trim().length > 0) {
         query = query.eq('agentId', agentId);
       }
 

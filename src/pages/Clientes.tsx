@@ -87,7 +87,12 @@ const Clientes = () => {
               <DialogHeader>
                 <DialogTitle>Criar Novo Lead</DialogTitle>
               </DialogHeader>
-              <NewLeadForm onSuccess={() => setShowCreateModal(false)} />
+              <NewLeadForm 
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                defaultAgentId={userWithFallback?.id}
+                onSuccess={() => setShowCreateModal(false)} 
+              />
             </DialogContent>
           </Dialog>
           
@@ -267,15 +272,6 @@ const Clientes = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Botão Flutuante para Novo Lead */}
-      <AddLeadButton 
-        variant="floating"
-        defaultAgentId={userWithFallback?.id}
-        onLeadCreated={() => {
-          // Recarregar dados quando um lead for criado
-          console.log('Lead criado com sucesso');
-        }}
-      />
     </div>
   );
 };

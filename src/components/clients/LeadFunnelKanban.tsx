@@ -262,15 +262,6 @@ export default function LeadFunnelKanban({
               Gerencie seu pipeline de vendas com drag & drop
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={onContactCreate}
-              className="bg-imobipro-blue hover:bg-imobipro-blue-dark"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Lead
-            </Button>
-          </div>
         </div>
 
         {/* Filtros */}
