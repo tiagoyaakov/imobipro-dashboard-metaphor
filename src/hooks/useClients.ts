@@ -16,6 +16,7 @@
  * @version 1.0.0
  */
 
+import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import clientsService from '@/services/clientsService';
@@ -381,13 +382,27 @@ export function useFunnelKanban(agentId?: string) {
   const { data: stats } = useFunnelStats(agentId);
   const moveContact = useMoveContactInFunnel();
 
-  // Organizar contatos por stage
-  const contactsByStage = contacts?.contacts.reduce((acc, contact) => {
-    const stage = contact.leadStage;
-    if (!acc[stage]) acc[stage] = [];
-    acc[stage].push(contact);
-    return acc;
-  }, {} as Record<LeadStage, ContactWithDetails[]>) || {};
+  // Organizar contatos por stage - garantir que todos os stages existam
+  const contactsByStage = React.useMemo(() => {
+    const stages: Record<LeadStage, ContactWithDetails[]> = {
+      'NEW': [],
+      'CONTACTED': [],
+      'QUALIFIED': [],
+      'INTERESTED': [],
+      'NEGOTIATING': [],
+      'CONVERTED': [],
+      'LOST': []
+    };
+
+    contacts?.contacts.forEach(contact => {
+      const stage = contact.leadStage;
+      if (stages[stage]) {
+        stages[stage].push(contact);
+      }
+    });
+
+    return stages;
+  }, [contacts]);
 
   // Função para mover contato no Kanban
   const handleMoveContact = (contactId: string, newStage: LeadStage) => {

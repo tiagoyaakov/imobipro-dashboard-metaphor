@@ -65,6 +65,8 @@ class ClientsService {
         interactionFrequency: 0
       });
 
+      console.log('Tentando criar contato com dados:', input);
+      
       const { data, error } = await supabase
         .from('Contact')
         .insert({
@@ -605,6 +607,20 @@ class ClientsService {
 
       // Apenas aplicar filtro de agentId se ele for fornecido e não for uma string vazia
       if (agentId && agentId.trim().length > 0) {
+        // Tentar primeiro sem o filtro para verificar se a tabela existe
+        console.log('Tentando query em Contact com agentId:', agentId);
+        
+        // Testa se a tabela Contact existe
+        const { data: testData, error: testError } = await supabase
+          .from('Contact')
+          .select('id')
+          .limit(1);
+          
+        if (testError) {
+          console.error('Erro ao testar tabela Contact:', testError);
+          throw new Error(`Tabela Contact não encontrada: ${testError.message}`);
+        }
+        
         query = query.eq('agentId', agentId);
       }
 

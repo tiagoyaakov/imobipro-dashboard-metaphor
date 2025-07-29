@@ -35,7 +35,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-import { useCreateContact } from '@/hooks/useClients';
+import { useCreateLeadCompatible } from '@/hooks/useN8nLeads';
 import type { CreateContactInput } from '@/types/clients';
 
 // ============================================================================
@@ -149,7 +149,7 @@ export default function NewLeadForm({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [customTag, setCustomTag] = useState('');
 
-  const createContact = useCreateContact();
+  const createContact = useCreateLeadCompatible();
 
   const {
     register,
