@@ -32,7 +32,10 @@
       "Bash(npm install:*)",
       "Bash(rm:*)",
       "Bash(supabase:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
