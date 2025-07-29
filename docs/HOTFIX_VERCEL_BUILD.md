@@ -1,30 +1,39 @@
 # 🔧 Hotfix - Correção de Erro de Build Vercel
 
-## 🚨 Problema Identificado
+## 🚨 Problemas Identificados
 
-Durante o deploy no Vercel, ocorreu um erro de build relacionado ao esbuild:
+Durante o deploy no Vercel, ocorreram múltiplos erros de build:
 
+**Erro 1 - Importações Circulares:**
 ```
 Error: Build failed with 1 error:
 src/components/clients/ClientsPage.tsx:475:7: ERROR: No matching export in "src/components/clients/index.ts" for import "FloatingAddLeadButton"
 ```
 
+**Erro 2 - Exportações Duplicadas:**
+```
+[vite:esbuild] Transform failed with 1 error:
+/vercel/path0/src/components/clients/ClientsPage.tsx:448:7: ERROR: Multiple exports with the same name "default"
+```
+
 ## 🔍 Análise da Causa
 
-O erro foi causado por **dependências circulares** e **importações complexas** entre os componentes:
+Os erros foram causados por **múltiplos problemas estruturais**:
 
 1. **Importações Circulares**: `ClientsPage` importava de `@/components/clients` que também exportava `ClientsPage`
-2. **Dependências Complexas**: Hooks `useClients` com dependências do Supabase
-3. **Tipos TypeScript**: Interfaces complexas causando problemas no build
-4. **Serviços**: `clientsService` e `leadAssignmentService` com dependências pesadas
+2. **Exportações Duplicadas**: Duas declarações `export default` no mesmo arquivo
+3. **Dependências Complexas**: Hooks `useClients` com dependências do Supabase
+4. **Tipos TypeScript**: Interfaces complexas causando problemas no esbuild
+5. **Serviços**: `clientsService` e `leadAssignmentService` com dependências pesadas
 
 ## ✅ Solução Aplicada (Hotfix)
 
-### 1. **Simplificação do ClientsPage**
+### 1. **Reescrita Completa do ClientsPage**
+- ✅ Arquivo completamente reescrito limpo
 - ✅ Removidas importações circulares
-- ✅ Comentados hooks problemáticos
-- ✅ Dados mockados temporariamente
-- ✅ Interface simplificada mantendo UX
+- ✅ Corrigidas exportações duplicadas (apenas 1 `export default`)
+- ✅ Dados simulados para evitar dependências
+- ✅ Interface funcional mantendo UX essencial
 
 ### 2. **Index.ts Minimizado**
 - ✅ Apenas exportação essencial (`ClientsPage`)
