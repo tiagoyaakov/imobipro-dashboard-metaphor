@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 // Temporariamente comentado para evitar erro de build
 // import { useAuth } from '@/hooks/useAuth';
-// import { useFunnelStats } from '@/hooks/useClients';
+import { useFunnelStats } from '@/hooks/useClients';
 // import type { ContactWithDetails } from '@/types/clients';
 
 const Clientes = () => {
@@ -37,8 +37,9 @@ const Clientes = () => {
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  // const { data: stats } = useFunnelStats(user?.id);
-  const stats = { 
+  const { data: stats } = useFunnelStats(user?.id);
+  // Fallback para stats mockados caso não carregue
+  const statsData = stats || { 
     totalLeads: 25, 
     byStage: { NEW: 8, QUALIFIED: 6, CONVERTED: 3, NEGOTIATING: 4 },
     topSources: [
@@ -46,7 +47,7 @@ const Clientes = () => {
       { source: 'Site', count: 8 },
       { source: 'Indicação', count: 5 }
     ]
-  }; // Mock temporário completo
+  };
 
   const handleContactSelect = (contact: any) => {
     setSelectedContact(contact);
@@ -72,7 +73,7 @@ const Clientes = () => {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue text-xs">
-            {stats?.totalLeads || 0} leads ativos
+            {statsData?.totalLeads || 0} leads ativos
           </Badge>
         </div>
       </div>
@@ -85,7 +86,7 @@ const Clientes = () => {
             <Users className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <div className="text-lg font-bold">{stats?.totalLeads || 0}</div>
+            <div className="text-lg font-bold">{statsData?.totalLeads || 0}</div>
             <p className="text-[10px] text-muted-foreground">
               +12% vs mês anterior
             </p>
@@ -99,10 +100,10 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-green-600">
-              {stats?.byStage?.CONVERTED || 0}
+              {statsData?.byStage?.CONVERTED || 0}
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {((stats?.byStage?.CONVERTED || 0) / (stats?.totalLeads || 1) * 100).toFixed(1)}% conversão
+              {((statsData?.byStage?.CONVERTED || 0) / (statsData?.totalLeads || 1) * 100).toFixed(1)}% conversão
             </p>
           </CardContent>
         </Card>
@@ -114,7 +115,7 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-amber-600">
-              {stats?.byStage?.NEGOTIATING || 0}
+              {statsData?.byStage?.NEGOTIATING || 0}
             </div>
             <p className="text-[10px] text-muted-foreground">
               Alto potencial
@@ -129,10 +130,10 @@ const Clientes = () => {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-lg font-bold text-purple-600">
-              {stats?.topSources?.[0]?.source || 'N/A'}
+              {statsData?.topSources?.[0]?.source || 'N/A'}
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {stats?.topSources?.[0]?.count || 0} leads
+              {statsData?.topSources?.[0]?.count || 0} leads
             </p>
           </CardContent>
         </Card>
