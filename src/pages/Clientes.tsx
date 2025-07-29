@@ -12,6 +12,8 @@
 import React, { useState } from 'react';
 // import LeadFunnelKanban from '@/components/clients/LeadFunnelKanban'; // Temporariamente comentado
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewLeadForm } from '@/components/clients';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +25,8 @@ import {
   BarChart3,
   Calendar,
   MessageSquare,
-  Settings
+  Settings,
+  Plus
 } from 'lucide-react';
 // Temporariamente comentado para evitar erro de build
 // import { useAuth } from '@/hooks/useAuth';
@@ -72,6 +75,24 @@ const Clientes = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-imobipro-blue hover:bg-imobipro-blue-dark text-white px-4 py-2 text-sm"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Lead
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Lead</DialogTitle>
+              </DialogHeader>
+              <NewLeadForm onSuccess={() => setShowCreateModal(false)} />
+            </DialogContent>
+          </Dialog>
+          
           <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue text-xs">
             {statsData?.totalLeads || 0} leads ativos
           </Badge>

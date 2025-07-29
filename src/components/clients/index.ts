@@ -11,8 +11,10 @@
 // Exportação mínima funcional
 export { default as ClientsPage, ClientsPageDemo } from './ClientsPage';
 
+// Restaurando gradualmente
+export { default as NewLeadForm } from './NewLeadForm';
+
 // TODO: Restaurar após correção de dependências
-// - NewLeadForm
 // - AddLeadButton e variantes
 // - Hooks useClients
 // - Tipos TypeScript
