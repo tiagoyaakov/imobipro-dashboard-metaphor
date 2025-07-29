@@ -9,6 +9,14 @@
  */
 
 export { default as LeadFunnelKanban } from './LeadFunnelKanban';
+export { default as NewLeadForm } from './NewLeadForm';
+export { 
+  default as AddLeadButton,
+  FloatingAddLeadButton,
+  InlineAddLeadButton,
+  MinimalAddLeadButton
+} from './AddLeadButton';
+export { default as ClientsPage, ClientsPageDemo } from './ClientsPage';
 
 // ============================================================================
 // TIPOS EXPORTADOS

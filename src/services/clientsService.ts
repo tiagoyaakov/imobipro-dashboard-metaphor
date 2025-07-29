@@ -519,12 +519,66 @@ class ClientsService {
    */
   private async handleAutoAssignment(contact: Contact): Promise<void> {
     try {
-      // Lógica de atribuição baseada em critérios
-      // Implementar algoritmo de balanceamento de cargas
-      // Por ora, manter o agente atual
-      console.log('Auto-assignment:', contact.id);
+      // Importar serviço de atribuição dinâmicamente para evitar dependência circular
+      const { leadAssignmentService, AssignmentStrategy } = await import('./leadAssignmentService');
+      
+      // Critérios para atribuição
+      const criteria = {
+        leadSource: contact.leadSource,
+        propertyType: contact.preferences?.propertyType,
+        budget: contact.budget ? Number(contact.budget) : undefined,
+        location: contact.preferences?.location,
+        urgency: contact.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+        companyId: (contact as any).agent?.companyId || ''
+      };
+
+      // Realizar atribuição automática
+      const assignmentResult = await leadAssignmentService.assignLead(
+        criteria,
+        AssignmentStrategy.HYBRID
+      );
+
+      // Atualizar contato com novo agente se necessário
+      if (assignmentResult.assignedAgentId !== contact.agentId) {
+        await supabase
+          .from('Contact')
+          .update({
+            agentId: assignmentResult.assignedAgentId,
+            autoAssigned: true,
+            assignmentScore: assignmentResult.assignmentScore,
+            assignmentReason: assignmentResult.assignmentReason
+          })
+          .eq('id', contact.id);
+
+        // Registrar atividade de atribuição
+        await this.createLeadActivity({
+          contactId: contact.id,
+          type: 'NOTE',
+          title: 'Lead reatribuído automaticamente',
+          description: `Lead reatribuído para ${assignmentResult.assignedAgent.name}. Motivo: ${assignmentResult.assignmentReason}`,
+          direction: 'OUTBOUND',
+          performedById: assignmentResult.assignedAgentId
+        });
+      }
+
+      console.log('Auto-assignment completed:', {
+        contactId: contact.id,
+        assignedTo: assignmentResult.assignedAgent.name,
+        score: assignmentResult.assignmentScore,
+        reason: assignmentResult.assignmentReason
+      });
+
     } catch (error) {
       console.error('Erro na atribuição automática:', error);
+      
+      // Registrar erro como atividade
+      await this.createLeadActivity({
+        contactId: contact.id,
+        type: 'NOTE',
+        title: 'Erro na atribuição automática',
+        description: `Falha na atribuição automática: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        direction: 'OUTBOUND'
+      });
     }
   }
 
