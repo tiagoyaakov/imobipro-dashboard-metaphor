@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { NewLeadForm, LeadFunnelKanban } from '@/components/clients';
+import { NewLeadForm, LeadFunnelKanban, AddLeadButton } from '@/components/clients';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -267,6 +267,16 @@ const Clientes = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Botão Flutuante para Novo Lead */}
+      <AddLeadButton 
+        variant="floating"
+        defaultAgentId={user?.id}
+        onLeadCreated={() => {
+          // Recarregar dados quando um lead for criado
+          console.log('Lead criado com sucesso');
+        }}
+      />
     </div>
   );
 };

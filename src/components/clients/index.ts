@@ -14,9 +14,9 @@ export { default as ClientsPage, ClientsPageDemo } from './ClientsPage';
 // Restaurando gradualmente
 export { default as NewLeadForm } from './NewLeadForm';
 export { default as LeadFunnelKanban } from './LeadFunnelKanban';
+export { default as AddLeadButton } from './AddLeadButton';
 
 // TODO: Restaurar após correção de dependências
-// - AddLeadButton e variantes
 // - Hooks useClients
 // - Tipos TypeScript
 // - Serviços
