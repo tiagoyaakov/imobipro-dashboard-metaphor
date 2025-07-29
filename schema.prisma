@@ -234,6 +234,35 @@ enum N8nExecutionStatus {
   WAITING
 }
 
+// === NOVOS ENUMS PARA MÓDULO CONEXÕES ===
+
+enum WhatsAppStatus {
+  CONNECTED
+  DISCONNECTED
+  CONNECTING
+  ERROR
+  QR_CODE_PENDING
+}
+
+enum ConnectionAction {
+  CONNECT
+  DISCONNECT
+  QR_GENERATED
+  ERROR
+  RECONNECT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  LOCATION
+  STICKER
+  CONTACT
+}
+
 // -----------------------------------------------------------
 // Models
 // -----------------------------------------------------------
@@ -248,6 +277,9 @@ model Company {
 
   // Novos relacionamentos para módulo agenda
   n8nWorkflowConfigs N8nWorkflowConfig[]
+
+  // Novos relacionamentos para módulo conexões
+  whatsappConfig     WhatsAppConfig? @relation("CompanyWhatsAppConfig")
 }
 
 model User {
@@ -280,6 +312,9 @@ model User {
   // Novos relacionamentos para módulo clientes
   createdCampaigns           MessageCampaign[]  @relation("CampaignCreator")
   performedActivities        LeadActivity[]     @relation("ActivityPerformer")
+
+  // Novos relacionamentos para módulo conexões
+  whatsappInstance           WhatsAppInstance?  @relation("AgentWhatsAppInstances")
 }
 
 model Property {
@@ -367,6 +402,9 @@ model Contact {
   // Novos relacionamentos para funil
   leadActivities     LeadActivity[]
   campaignParticipations MessageCampaignParticipation[]
+
+  // Novos relacionamentos para módulo conexões
+  whatsappMessages   WhatsAppMessage[] @relation("WhatsAppContactMessages")
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -496,6 +534,10 @@ model Chat {
   agent      User     @relation("ChatOwner", fields: [agentId], references: [id])
 
   messages   Message[]
+
+  // Novos relacionamentos para módulo conexões
+  whatsappMessages WhatsAppMessage[] @relation("WhatsAppChatMessages")
+  
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -848,4 +890,156 @@ model LeadActivity {
   @@index([contactId, type, createdAt])
   @@index([performedById, createdAt])
   @@index([type, createdAt])
+}
+
+// === NOVOS MODELOS PARA MÓDULO CONEXÕES ===
+
+// Instâncias WhatsApp por corretor
+model WhatsAppInstance {
+  id          String   @id @default(uuid())
+  agentId     String
+  agent       User     @relation("AgentWhatsAppInstances", fields: [agentId], references: [id])
+  
+  // Identificação da instância
+  instanceId  String   @unique
+  phoneNumber String?
+  displayName String?
+  
+  // Status e controle
+  status      WhatsAppStatus @default(DISCONNECTED)
+  qrCode      String?
+  qrCodeExpiry DateTime?
+  
+  // Configurações
+  autoReply   Boolean  @default(false)
+  autoReplyMessage String?
+  webhookUrl  String?
+  
+  // Permissões e controle
+  isActive    Boolean  @default(true)
+  canConnect  Boolean  @default(true)
+  maxDailyMessages Int? @default(1000)
+  
+  // Estatísticas
+  lastConnectionAt DateTime?
+  messagesSentToday Int @default(0)
+  messagesReceivedToday Int @default(0)
+  totalMessagesSent Int @default(0)
+  totalMessagesReceived Int @default(0)
+  
+  // Relacionamentos
+  connectionLogs WhatsAppConnectionLog[]
+  messages       WhatsAppMessage[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([agentId])
+  @@index([status, isActive])
+  @@index([phoneNumber])
+}
+
+// Log de conexões WhatsApp
+model WhatsAppConnectionLog {
+  id          String   @id @default(uuid())
+  instanceId  String
+  instance    WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  
+  // Dados da ação
+  action      ConnectionAction
+  status      String
+  errorMessage String?
+  
+  // Metadados
+  metadata    Json?    // Dados adicionais da operação
+  ipAddress   String?  // IP de onde veio a conexão
+  userAgent   String?  // User agent se aplicável
+  
+  // Métricas
+  duration    Int?     // Duração da operação em ms
+  retryCount  Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([instanceId, action, createdAt])
+  @@index([status, createdAt])
+}
+
+// Mensagens WhatsApp (extensão do sistema de chats)
+model WhatsAppMessage {
+  id          String   @id @default(uuid())
+  instanceId  String
+  instance    WhatsAppInstance @relation(fields: [instanceId], references: [id])
+  
+  // Identificação da mensagem
+  whatsappMessageId String @unique
+  conversationId    String // ID da conversa no WhatsApp
+  
+  // Dados da mensagem
+  messageType MessageType @default(TEXT)
+  content     String
+  caption     String?     // Para imagens/vídeos
+  
+  // Participantes
+  fromNumber  String      // Número que enviou
+  toNumber    String      // Número que recebeu
+  isFromMe    Boolean     // Se foi enviada pela instância
+  
+  // Status
+  messageStatus String    // sent, delivered, read, failed
+  timestamp     DateTime  // Timestamp original do WhatsApp
+  
+  // Relacionamentos (opcional - para integrar com sistema de chats existente)
+  chatId        String?
+  chat          Chat?     @relation("WhatsAppChatMessages", fields: [chatId], references: [id])
+  
+  contactId     String?   // Se identificado como um contato do sistema
+  contact       Contact?  @relation("WhatsAppContactMessages", fields: [contactId], references: [id])
+  
+  // Metadados
+  metadata      Json?     // Dados adicionais (localização, contato, etc.)
+  mediaUrl      String?   // URL do arquivo de mídia se aplicável
+  mediaSize     Int?      // Tamanho do arquivo em bytes
+  mediaMimeType String?   // Tipo MIME do arquivo
+  
+  // Flags de processamento
+  isProcessed   Boolean   @default(false) // Se foi processada por automações
+  isAutoReply   Boolean   @default(false) // Se foi uma resposta automática
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([instanceId, timestamp])
+  @@index([conversationId, timestamp])
+  @@index([fromNumber, timestamp])
+  @@index([messageStatus, timestamp])
+  @@index([isProcessed, createdAt])
+}
+
+// Configurações globais do WhatsApp
+model WhatsAppConfig {
+  id          String   @id @default(uuid())
+  companyId   String   @unique
+  company     Company  @relation("CompanyWhatsAppConfig", fields: [companyId], references: [id])
+  
+  // Configurações gerais
+  maxInstancesPerAgent Int     @default(1)
+  autoQRRefresh       Boolean @default(true)
+  qrRefreshInterval   Int     @default(300) // segundos
+  
+  // Configurações de mensagens
+  messageRateLimit    Int     @default(20)  // mensagens por minuto
+  autoReplyEnabled    Boolean @default(false)
+  webhookSecret       String? // Secret para validar webhooks
+  
+  // Integrações
+  n8nWebhookUrl       String? // URL do webhook n8n
+  enableN8nIntegration Boolean @default(false)
+  
+  // Configurações de segurança
+  allowedIPs          String[] // IPs permitidos para conexão
+  requireIPWhitelist  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -22,7 +22,9 @@
       "Bash(pnpm add:*)",
       "Bash(node:*)",
       "Bash(npm run build:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npm run:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
