@@ -10,10 +10,9 @@
  */
 
 import React, { useState } from 'react';
-// import LeadFunnelKanban from '@/components/clients/LeadFunnelKanban'; // Temporariamente comentado
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { NewLeadForm } from '@/components/clients';
+import { NewLeadForm, LeadFunnelKanban } from '@/components/clients';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -182,20 +181,12 @@ const Clientes = () => {
         </TabsList>
 
         <TabsContent value="kanban" className="flex-1 min-h-0 mt-0">
-          <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-            <div className="text-center">
-              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Funil Kanban
-              </h3>
-              <p className="text-gray-600 mb-4 max-w-md">
-                Interface de arrastar e soltar para gerenciar leads será restaurada em breve
-              </p>
-              <Badge variant="secondary">
-                Funcionalidade temporariamente desabilitada
-              </Badge>
-            </div>
-          </div>
+          <LeadFunnelKanban 
+            agentId={user?.id}
+            onContactSelect={handleContactSelect}
+            onContactCreate={handleContactCreate}
+            className="h-full"
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="flex-1 min-h-0 mt-0">

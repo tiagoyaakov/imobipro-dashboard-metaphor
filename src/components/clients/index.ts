@@ -13,6 +13,7 @@ export { default as ClientsPage, ClientsPageDemo } from './ClientsPage';
 
 // Restaurando gradualmente
 export { default as NewLeadForm } from './NewLeadForm';
+export { default as LeadFunnelKanban } from './LeadFunnelKanban';
 
 // TODO: Restaurar após correção de dependências
 // - AddLeadButton e variantes
