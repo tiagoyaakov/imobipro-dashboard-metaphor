@@ -280,6 +280,10 @@ model Company {
 
   // Novos relacionamentos para módulo conexões
   whatsappConfig     WhatsAppConfig? @relation("CompanyWhatsAppConfig")
+
+  // Novos relacionamentos para módulo relatórios
+  reportTemplates    ReportTemplate[]
+  scheduledReports   ScheduledReport[]
 }
 
 model User {
@@ -315,6 +319,10 @@ model User {
 
   // Novos relacionamentos para módulo conexões
   whatsappInstance           WhatsAppInstance?  @relation("AgentWhatsAppInstances")
+
+  // Novos relacionamentos para módulo relatórios
+  createdReportTemplates     ReportTemplate[]   @relation("ReportTemplateCreator")
+  createdScheduledReports    ScheduledReport[]  @relation("ScheduledReportCreator")
 }
 
 model Property {
@@ -1042,4 +1050,128 @@ model WhatsAppConfig {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ===================================================================
+// MÓDULO 7: RELATÓRIOS
+// ===================================================================
+
+// Templates de relatório
+model ReportTemplate {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  type        ReportType
+  template    String     // Template HTML/Texto
+  variables   Json?      // Variáveis disponíveis
+  
+  // Permissões e controle
+  isActive    Boolean    @default(true)
+  createdBy   String
+  creator     User       @relation("ReportTemplateCreator", fields: [createdBy], references: [id])
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id])
+  
+  // Relacionamentos
+  scheduledReports ScheduledReport[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@index([companyId, type])
+  @@index([createdBy, isActive])
+}
+
+// Agendamento de relatórios
+model ScheduledReport {
+  id          String         @id @default(uuid())
+  templateId  String
+  template    ReportTemplate @relation(fields: [templateId], references: [id])
+  
+  name        String
+  description String?
+  schedule    String         // Cron expression
+  recipients  String[]       // Lista de destinatários
+  format      ReportFormat   @default(WHATSAPP)
+  
+  // Configurações avançadas
+  filters     Json?          // Filtros específicos do relatório
+  parameters  Json?          // Parâmetros personalizados
+  
+  // Controle
+  isActive    Boolean        @default(true)
+  lastSentAt  DateTime?
+  nextSendAt  DateTime?
+  
+  // Permissões
+  createdBy   String
+  creator     User           @relation("ScheduledReportCreator", fields: [createdBy], references: [id])
+  companyId   String
+  company     Company        @relation(fields: [companyId], references: [id])
+  
+  // Relacionamentos
+  reportHistory ReportHistory[]
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@index([companyId, isActive])
+  @@index([nextSendAt, isActive])
+}
+
+// Histórico de relatórios enviados
+model ReportHistory {
+  id              String         @id @default(uuid())
+  scheduledReportId String
+  scheduledReport ScheduledReport @relation(fields: [scheduledReportId], references: [id])
+  
+  // Dados do envio
+  content         String
+  recipients      String[]
+  format          ReportFormat
+  
+  // Status e métricas
+  status          ReportStatus   @default(PENDING)
+  sentAt          DateTime?
+  error           String?
+  executionTime   Int?           // tempo de execução em ms
+  contentSize     Int?           // tamanho do conteúdo em bytes
+  
+  // Metadados
+  metadata        Json?          // dados adicionais
+  triggeredBy     String?        // manual, scheduled, webhook
+  
+  createdAt       DateTime       @default(now())
+  
+  @@index([scheduledReportId, createdAt])
+  @@index([status, sentAt])
+}
+
+// ===================================================================
+// ENUMS PARA RELATÓRIOS
+// ===================================================================
+
+enum ReportType {
+  WEEKLY_SALES        // Relatório semanal de vendas
+  LEAD_CONVERSION     // Conversão de leads
+  APPOINTMENT_SUMMARY // Resumo de agendamentos
+  AGENT_PERFORMANCE   // Performance de agentes
+  PROPERTY_ANALYSIS   // Análise de propriedades
+  CUSTOM              // Relatório customizado
+}
+
+enum ReportFormat {
+  WHATSAPP    // Mensagem via WhatsApp
+  EMAIL       // Email HTML
+  PDF         // Arquivo PDF
+  EXCEL       // Planilha Excel
+  JSON        // JSON estruturado
+}
+
+enum ReportStatus {
+  PENDING     // Aguardando processamento
+  PROCESSING  // Em processamento
+  SENT        // Enviado com sucesso
+  FAILED      // Falha no envio
+  CANCELLED   // Cancelado
 }
