@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import '@/styles/kanban.css';
 import { 
   DragDropContext, 
   Droppable, 
@@ -378,74 +379,78 @@ export default function LeadFunnelKanban({
         </div>
       )}
 
-      {/* Kanban Board */}
+      {/* Kanban Board - Layout Otimizado */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 overflow-x-auto">
+        <div className="kanban-board flex gap-2 h-[calc(100vh-420px)] min-h-[500px] overflow-hidden">
           {LEAD_STAGES.map((stage) => {
             const stageContacts = filteredContactsByStage[stage.id] || [];
             const stageCount = stageContacts.length;
 
             return (
-              <div key={stage.id} className="min-w-[280px]">
-                <Card className={`${stage.bgColor} border-2`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={stage.color}>
-                          {stage.icon}
+              <div key={stage.id} className="kanban-column flex-1 min-w-0 flex flex-col">
+                <Card className={`${stage.bgColor} border h-full flex flex-col`}>
+                  {/* Header compacto */}
+                  <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`${stage.color} flex-shrink-0`}>
+                          {React.cloneElement(stage.icon as React.ReactElement, { className: "w-3.5 h-3.5" })}
                         </div>
-                        <CardTitle className={`text-sm font-medium ${stage.color}`}>
+                        <CardTitle className={`text-xs font-semibold ${stage.color} truncate`}>
                           {stage.label}
                         </CardTitle>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto min-w-[18px] flex items-center justify-center">
                         {stageCount}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {stage.description}
-                    </p>
                   </CardHeader>
 
+                  {/* Área de drop scrollável */}
                   <Droppable droppableId={stage.id}>
                     {(provided, snapshot) => (
                       <CardContent
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`space-y-3 min-h-[200px] transition-colors ${
-                          snapshot.isDraggingOver ? 'bg-white/50' : ''
+                        className={`kanban-column-scroll flex-1 px-2 pb-2 overflow-y-auto transition-colors ${
+                          snapshot.isDraggingOver ? 'kanban-drop-zone-active' : ''
                         }`}
                       >
-                        {stageContacts.map((contact, index) => (
-                          <Draggable
-                            key={contact.id}
-                            draggableId={contact.id}
-                            index={index}
-                            isDragDisabled={isMoving}
-                          >
-                            {(provided, snapshot) => (
-                              <LeadCard
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                contact={contact}
-                                isDragging={snapshot.isDragging}
-                                isSelected={selectedContacts.includes(contact.id)}
-                                onSelect={(selected) => 
-                                  handleContactSelection(contact.id, selected)
-                                }
-                                onClick={() => onContactSelect?.(contact)}
-                              />
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
+                        <div className="space-y-2 py-1">
+                          {stageContacts.map((contact, index) => (
+                            <Draggable
+                              key={contact.id}
+                              draggableId={contact.id}
+                              index={index}
+                              isDragDisabled={isMoving}
+                            >
+                              {(provided, snapshot) => (
+                                <CompactLeadCard
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  contact={contact}
+                                  isDragging={snapshot.isDragging}
+                                  isSelected={selectedContacts.includes(contact.id)}
+                                  onSelect={(selected) => 
+                                    handleContactSelection(contact.id, selected)
+                                  }
+                                  onClick={() => onContactSelect?.(contact)}
+                                />
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
 
-                        {stageContacts.length === 0 && (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <p className="text-sm">Nenhum lead neste estágio</p>
-                          </div>
-                        )}
+                          {stageContacts.length === 0 && (
+                            <div className="text-center py-6 text-muted-foreground">
+                              <div className="text-gray-400 mb-2">
+                                {React.cloneElement(stage.icon as React.ReactElement, { className: "w-8 h-8 mx-auto opacity-30" })}
+                              </div>
+                              <p className="text-[10px] leading-tight">Nenhum lead<br />neste estágio</p>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     )}
                   </Droppable>
@@ -471,7 +476,8 @@ interface LeadCardProps {
   onClick: () => void;
 }
 
-const LeadCard = React.forwardRef<HTMLDivElement, LeadCardProps & any>(
+// Componente CompactLeadCard otimizado para design responsivo
+const CompactLeadCard = React.forwardRef<HTMLDivElement, LeadCardProps & any>(
   ({ contact, isDragging, isSelected, onSelect, onClick, ...props }, ref) => {
     const getPriorityColor = (priority: string) => {
       switch (priority) {
@@ -490,136 +496,156 @@ const LeadCard = React.forwardRef<HTMLDivElement, LeadCardProps & any>(
       return 'text-red-600';
     };
 
+    const formatPhone = (phone: string) => {
+      if (phone.length <= 10) return phone;
+      return `${phone.slice(0, 6)}...`;
+    };
+
+    const getInitials = (name: string) => {
+      return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+    };
+
     return (
       <Card
         ref={ref}
         {...props}
-        className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-          isDragging ? 'shadow-lg rotate-2 scale-105' : ''
+        className={`kanban-card cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-imobipro-blue/30 group ${
+          isDragging ? 'kanban-card-dragging' : ''
         } ${
-          isSelected ? 'ring-2 ring-imobipro-blue' : ''
+          isSelected ? 'kanban-card-selected ring-1 ring-imobipro-blue bg-imobipro-blue/5' : ''
         }`}
         onClick={onClick}
       >
-        <CardContent className="p-4">
-          <div className="space-y-3">
-            {/* Header do card */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onSelect(e.target.checked);
-                  }}
-                  className="rounded border-gray-300"
-                />
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={contact.avatarUrl || ''} />
-                  <AvatarFallback className="text-xs">
-                    {contact.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm truncate">{contact.name}</h4>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {contact.company || contact.email}
-                  </p>
-                </div>
-              </div>
+        <CardContent className="p-2.5">
+          {/* Header ultra compacto */}
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => {
+                e.stopPropagation();
+                onSelect(e.target.checked);
+              }}
+              className="kanban-checkbox w-3 h-3 rounded border-gray-300 text-imobipro-blue focus:ring-1 focus:ring-imobipro-blue"
+            />
+            
+            <Avatar className="h-6 w-6 flex-shrink-0">
+              <AvatarImage src={contact.avatarUrl || ''} />
+              <AvatarFallback className="text-[9px] font-semibold bg-gradient-to-br from-gray-100 to-gray-200">
+                {getInitials(contact.name)}
+              </AvatarFallback>
+            </Avatar>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                  <DropdownMenuItem>Editar</DropdownMenuItem>
-                  <DropdownMenuItem>Adicionar atividade</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Score e prioridade */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${getPriorityColor(contact.priority)}`} />
-                <span className="text-xs text-muted-foreground capitalize">
-                  {contact.priority.toLowerCase()}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 text-amber-500" />
-                <span className={`text-xs font-medium ${getScoreColor(contact.leadScore)}`}>
-                  {contact.leadScore}
-                </span>
-              </div>
-            </div>
-
-            {/* Progresso do score */}
-            <Progress value={contact.leadScore} className="h-1" />
-
-            {/* Informações de contato */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {contact.phone && (
-                <div className="flex items-center gap-1">
-                  <Phone className="w-3 h-3" />
-                  <span className="truncate">{contact.phone}</span>
-                </div>
-              )}
-              {contact.email && (
-                <div className="flex items-center gap-1">
-                  <Mail className="w-3 h-3" />
-                </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-[11px] leading-tight truncate text-gray-900">
+                {contact.name}
+              </h4>
+              {(contact.company || contact.email) && (
+                <p className="text-[9px] text-gray-500 truncate leading-tight">
+                  {contact.company || contact.email}
+                </p>
               )}
             </div>
 
-            {/* Tags */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-2.5 w-2.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuItem className="text-xs">Ver perfil</DropdownMenuItem>
+                <DropdownMenuItem className="text-xs">Editar</DropdownMenuItem>
+                <DropdownMenuItem className="text-xs">Atividade</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs text-red-600">
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Score e prioridade em linha */}
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1">
+              <div className={`w-1.5 h-1.5 rounded-full ${getPriorityColor(contact.priority)}`} />
+              <span className="text-[9px] text-gray-500 uppercase tracking-wide">
+                {contact.priority.slice(0, 3)}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Star className="w-2.5 h-2.5 text-amber-500" />
+              <span className={`text-[10px] font-semibold ${getScoreColor(contact.leadScore)}`}>
+                {contact.leadScore}
+              </span>
+            </div>
+          </div>
+
+          {/* Barra de progresso ultra fina */}
+          <div className="w-full bg-gray-200 rounded-full h-0.5 mb-2">
+            <div 
+              className={`h-0.5 rounded-full transition-all duration-300 ${
+                contact.leadScore >= 80 ? 'bg-green-500' :
+                contact.leadScore >= 60 ? 'bg-yellow-500' :
+                contact.leadScore >= 40 ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${contact.leadScore}%` }}
+            />
+          </div>
+
+          {/* Informações essenciais */}
+          <div className="space-y-1">
+            {/* Contato */}
+            {contact.phone && (
+              <div className="flex items-center gap-1 text-[9px] text-gray-600">
+                <Phone className="w-2.5 h-2.5 flex-shrink-0" />
+                <span className="truncate">{formatPhone(contact.phone)}</span>
+              </div>
+            )}
+
+            {/* Tags compactas */}
             {contact.tags && contact.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {contact.tags.slice(0, 2).map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs px-1 py-0">
-                    {tag}
+                {contact.tags.slice(0, 1).map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="text-[8px] px-1 py-0 h-3 bg-gray-100 text-gray-600 border-0">
+                    {tag.length > 8 ? `${tag.slice(0, 8)}...` : tag}
                   </Badge>
                 ))}
-                {contact.tags.length > 2 && (
-                  <Badge variant="outline" className="text-xs px-1 py-0">
-                    +{contact.tags.length - 2}
+                {contact.tags.length > 1 && (
+                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-gray-300 text-gray-500">
+                    +{contact.tags.length - 1}
                   </Badge>
                 )}
               </div>
             )}
 
-            {/* Fonte do lead */}
-            {contact.leadSource && (
-              <div className="text-xs text-muted-foreground">
-                📍 {contact.leadSource}
-              </div>
-            )}
-
-            {/* Última interação */}
-            {contact.lastInteractionAt && (
-              <div className="text-xs text-muted-foreground">
-                💬 {new Date(contact.lastInteractionAt).toLocaleDateString('pt-BR')}
-              </div>
-            )}
+            {/* Fonte ou última interação */}
+            <div className="text-[8px] text-gray-400 flex items-center gap-1">
+              {contact.leadSource && (
+                <span className="truncate">📍 {contact.leadSource}</span>
+              )}
+              {contact.lastInteractionAt && !contact.leadSource && (
+                <span className="truncate">
+                  💬 {new Date(contact.lastInteractionAt).toLocaleDateString('pt-BR', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
     );
   }
 );
+
+// Manter o LeadCard original como fallback
+const LeadCard = CompactLeadCard;
 
 LeadCard.displayName = 'LeadCard';

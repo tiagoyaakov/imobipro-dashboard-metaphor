@@ -49,105 +49,105 @@ const Clientes = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden animate-fade-in">
+      {/* Header compacto */}
+      <div className="flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Clientes & Leads</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Clientes & Leads</h1>
+          <p className="text-sm text-muted-foreground">
             Gerencie seu funil de vendas e relacionamento com clientes
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue">
+          <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue text-xs">
             {stats?.totalLeads || 0} leads ativos
           </Badge>
         </div>
       </div>
 
-      {/* Dashboard com métricas principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Dashboard com métricas compactas */}
+      <div className="flex-shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Card className="imobipro-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Total de Leads</CardTitle>
+            <Users className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalLeads || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% em relação ao mês passado
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold">{stats?.totalLeads || 0}</div>
+            <p className="text-[10px] text-muted-foreground">
+              +12% vs mês anterior
             </p>
           </CardContent>
         </Card>
 
         <Card className="imobipro-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Convertidos</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Convertidos</CardTitle>
+            <TrendingUp className="h-3 w-3 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-green-600">
               {stats?.byStage.CONVERTED || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Taxa de conversão: {((stats?.byStage.CONVERTED || 0) / (stats?.totalLeads || 1) * 100).toFixed(1)}%
+            <p className="text-[10px] text-muted-foreground">
+              {((stats?.byStage.CONVERTED || 0) / (stats?.totalLeads || 1) * 100).toFixed(1)}% conversão
             </p>
           </CardContent>
         </Card>
 
         <Card className="imobipro-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Negociação</CardTitle>
-            <Target className="h-4 w-4 text-amber-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Negociando</CardTitle>
+            <Target className="h-3 w-3 text-amber-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-amber-600">
               {stats?.byStage.NEGOTIATING || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Potencial de fechamento alto
+            <p className="text-[10px] text-muted-foreground">
+              Alto potencial
             </p>
           </CardContent>
         </Card>
 
         <Card className="imobipro-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Fonte</CardTitle>
-            <Star className="h-4 w-4 text-purple-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Top Fonte</CardTitle>
+            <Star className="h-3 w-3 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-purple-600">
               {stats?.topSources[0]?.source || 'N/A'}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.topSources[0]?.count || 0} leads gerados
+            <p className="text-[10px] text-muted-foreground">
+              {stats?.topSources[0]?.count || 0} leads
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Abas principais */}
-      <Tabs defaultValue="kanban" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="kanban" className="flex items-center gap-2">
-            <Target className="w-4 h-4" />
+      <Tabs defaultValue="kanban" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="flex-shrink-0 grid w-full grid-cols-4 mb-3">
+          <TabsTrigger value="kanban" className="flex items-center gap-1.5 text-xs">
+            <Target className="w-3 h-3" />
             Funil Kanban
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
+          <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs">
+            <BarChart3 className="w-3 h-3" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="campaigns" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
+          <TabsTrigger value="campaigns" className="flex items-center gap-1.5 text-xs">
+            <MessageSquare className="w-3 h-3" />
             Campanhas
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
+          <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs">
+            <Settings className="w-3 h-3" />
             Configurações
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="kanban" className="mt-6">
+        <TabsContent value="kanban" className="flex-1 min-h-0 mt-0">
           <LeadFunnelKanban
             agentId={user?.id}
             onContactSelect={handleContactSelect}
@@ -155,81 +155,78 @@ const Clientes = () => {
           />
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-6">
-          <Card className="imobipro-card">
-            <CardHeader>
-              <CardTitle>📊 Analytics Avançado</CardTitle>
-              <CardDescription>
-                Análise detalhada do desempenho do funil de vendas
+        <TabsContent value="analytics" className="flex-1 min-h-0 mt-0">
+          <Card className="imobipro-card h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">📊 Analytics Avançado</CardTitle>
+              <CardDescription className="text-xs">
+                Análise detalhada do desempenho do funil
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Analytics em Desenvolvimento</h3>
-                <p className="text-sm">
-                  Dashboard com gráficos detalhados, relatórios de conversão,
-                  análise de ROI e métricas avançadas será implementado aqui.
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <h3 className="text-sm font-medium mb-2">Analytics em Desenvolvimento</h3>
+                <p className="text-xs max-w-md mx-auto">
+                  Dashboard com gráficos, relatórios de conversão e métricas avançadas.
                 </p>
-                <div className="mt-6 space-y-2 text-xs">
+                <div className="mt-4 space-y-1 text-[10px]">
                   <p>✅ Funil Kanban funcional</p>
-                  <p>🔄 Gráficos de conversão (em breve)</p>
-                  <p>🔄 Análise de ROI por fonte (em breve)</p>
-                  <p>🔄 Relatórios automatizados (em breve)</p>
+                  <p>🔄 Gráficos de conversão</p>
+                  <p>🔄 Análise de ROI por fonte</p>
+                  <p>🔄 Relatórios automatizados</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="campaigns" className="mt-6">
-          <Card className="imobipro-card">
-            <CardHeader>
-              <CardTitle>📢 Campanhas de Marketing</CardTitle>
-              <CardDescription>
+        <TabsContent value="campaigns" className="flex-1 min-h-0 mt-0">
+          <Card className="imobipro-card h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">📢 Campanhas de Marketing</CardTitle>
+              <CardDescription className="text-xs">
                 Gerencie campanhas de WhatsApp, Email e SMS
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Campanhas em Desenvolvimento</h3>
-                <p className="text-sm">
-                  Sistema completo de campanhas automatizadas com templates,
-                  segmentação e análise de resultados será implementado aqui.
+              <div className="text-center py-8 text-muted-foreground">
+                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <h3 className="text-sm font-medium mb-2">Campanhas em Desenvolvimento</h3>
+                <p className="text-xs max-w-md mx-auto">
+                  Sistema completo de campanhas automatizadas com templates e segmentação.
                 </p>
-                <div className="mt-6 space-y-2 text-xs">
+                <div className="mt-4 space-y-1 text-[10px]">
                   <p>✅ Estrutura de dados criada</p>
-                  <p>🔄 Interface de criação (em breve)</p>
-                  <p>🔄 Templates personalizáveis (em breve)</p>
-                  <p>🔄 Integração WhatsApp/Email (em breve)</p>
+                  <p>🔄 Interface de criação</p>
+                  <p>🔄 Templates personalizáveis</p>
+                  <p>🔄 Integração WhatsApp/Email</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-6">
-          <Card className="imobipro-card">
-            <CardHeader>
-              <CardTitle>⚙️ Configurações do CRM</CardTitle>
-              <CardDescription>
-                Personalize o comportamento do sistema de leads
+        <TabsContent value="settings" className="flex-1 min-h-0 mt-0">
+          <Card className="imobipro-card h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">⚙️ Configurações do CRM</CardTitle>
+              <CardDescription className="text-xs">
+                Personalize o comportamento do sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Settings className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Configurações em Desenvolvimento</h3>
-                <p className="text-sm">
-                  Painel de configurações para personalizar scoring, atribuição automática,
-                  notificações e integrações será implementado aqui.
+              <div className="text-center py-8 text-muted-foreground">
+                <Settings className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <h3 className="text-sm font-medium mb-2">Configurações em Desenvolvimento</h3>
+                <p className="text-xs max-w-md mx-auto">
+                  Painel para personalizar scoring, atribuição automática e notificações.
                 </p>
-                <div className="mt-6 space-y-2 text-xs">
+                <div className="mt-4 space-y-1 text-[10px]">
                   <p>✅ Sistema de scoring implementado</p>
-                  <p>🔄 Configuração de pesos (em breve)</p>
-                  <p>🔄 Atribuição automática (em breve)</p>
-                  <p>🔄 Configurações de notificação (em breve)</p>
+                  <p>🔄 Configuração de pesos</p>
+                  <p>🔄 Atribuição automática</p>
+                  <p>🔄 Configurações de notificação</p>
                 </div>
               </div>
             </CardContent>

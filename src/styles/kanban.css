@@ -1,0 +1,181 @@
+/**
+ * 🔲 ImobiPRO - Estilos Customizados para Kanban
+ * 
+ * Estilos específicos para otimização visual do quadro Kanban.
+ * Inclui scrollbars customizadas e animações suaves.
+ */
+
+/* Scrollbar customizada para colunas do Kanban */
+.kanban-column-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.kanban-column-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.kanban-column-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Animações suaves para drag and drop */
+.kanban-card-dragging {
+  transform: rotate(1deg) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: none !important;
+}
+
+.kanban-drop-zone-active {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+/* Otimizações de performance */
+.kanban-card {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+.kanban-column {
+  contain: layout;
+}
+
+/* Estados visuais para interação */
+.kanban-card:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-card-selected {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 1024px) {
+  .kanban-board {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  
+  .kanban-column {
+    min-width: 280px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-column {
+    min-width: 260px;
+  }
+  
+  .kanban-card {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Efeitos visuais para estados vazios */
+.kanban-empty-state {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.kanban-empty-state:hover {
+  opacity: 0.8;
+}
+
+/* Indicadores visuais de prioridade */
+.priority-indicator {
+  position: relative;
+}
+
+.priority-indicator::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.priority-urgent::before {
+  background: linear-gradient(to bottom, #ef4444, #dc2626);
+}
+
+.priority-high::before {
+  background: linear-gradient(to bottom, #f97316, #ea580c);
+}
+
+.priority-medium::before {
+  background: linear-gradient(to bottom, #eab308, #ca8a04);
+}
+
+.priority-low::before {
+  background: linear-gradient(to bottom, #22c55e, #16a34a);
+}
+
+/* Animação de loading para cards */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.kanban-card-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Melhorias de acessibilidade */
+.kanban-card:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.kanban-checkbox:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 1px;
+}
+
+/* Otimizações para impressão */
+@media print {
+  .kanban-board {
+    display: block !important;
+    overflow: visible !important;
+  }
+  
+  .kanban-column {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+  
+  .kanban-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}
