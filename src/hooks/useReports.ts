@@ -56,7 +56,7 @@ export function useReportTemplates(filters?: TemplateFilters) {
       companyId: user?.companyId,
       ...filters
     }),
-    enabled: !!user?.companyId,
+    enabled: false, // Desabilitar temporariamente até tabelas serem criadas
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -157,7 +157,7 @@ export function useScheduledReports() {
   return useQuery({
     queryKey: reportKeys.scheduledByCompany(user?.companyId || ''),
     queryFn: () => ReportsService.getScheduledReports(user?.companyId),
-    enabled: !!user?.companyId,
+    enabled: false, // Desabilitar temporariamente até tabelas serem criadas
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -324,11 +324,11 @@ export function useReportsManager() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Queries
+  // Queries (desabilitadas temporariamente)
   const templates = useReportTemplates();
   const scheduledReports = useScheduledReports();
 
-  // Mutations
+  // Mutations (desabilitadas temporariamente)
   const createTemplate = useCreateReportTemplate();
   const updateTemplate = useUpdateReportTemplate();
   const deleteTemplate = useDeleteReportTemplate();
@@ -336,69 +336,94 @@ export function useReportsManager() {
   const executeReport = useExecuteScheduledReport();
   const generateReport = useGenerateReport();
 
-  // Actions
+  // Mock data temporariamente
+  const mockTemplates = [
+    {
+      id: '1',
+      name: 'Relatório Semanal de Vendas',
+      description: 'Resumo das vendas realizadas na semana',
+      type: 'WEEKLY_SALES',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      template: 'Template mock'
+    },
+    {
+      id: '2',
+      name: 'Relatório de Conversão de Leads',
+      description: 'Análise da conversão de leads por fonte',
+      type: 'LEAD_CONVERSION',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      template: 'Template mock'
+    }
+  ];
+
+  const mockScheduledReports = [
+    {
+      id: '1',
+      name: 'Relatório Semanal Automático',
+      description: 'Enviado toda segunda-feira às 9h',
+      format: 'WHATSAPP',
+      isActive: true,
+      nextSendAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      template: { name: 'Relatório Semanal de Vendas' }
+    }
+  ];
+
+  // Actions (mock temporariamente)
   const actions = {
     // Template actions
-    createTemplate: createTemplate.mutate,
-    updateTemplate: updateTemplate.mutate,
-    deleteTemplate: deleteTemplate.mutate,
+    createTemplate: () => console.log('Mock: criar template'),
+    updateTemplate: () => console.log('Mock: atualizar template'),
+    deleteTemplate: () => console.log('Mock: deletar template'),
     
     // Schedule actions
-    scheduleReport: scheduleReport.mutate,
-    executeReport: executeReport.mutate,
-    generateReport: generateReport.mutate,
+    scheduleReport: () => console.log('Mock: agendar relatório'),
+    executeReport: (id: string) => console.log('Mock: executar relatório', id),
+    generateReport: () => console.log('Mock: gerar relatório'),
     
     // Utility actions
-    refreshTemplates: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: reportKeys.templatesByCompany(user?.companyId || '') 
-      });
-    },
-    
-    refreshScheduledReports: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: reportKeys.scheduledByCompany(user?.companyId || '') 
-      });
-    },
+    refreshTemplates: () => console.log('Mock: refresh templates'),
+    refreshScheduledReports: () => console.log('Mock: refresh scheduled'),
   };
 
-  // Loading states
+  // Loading states (mock)
   const isLoading = {
-    templates: templates.isLoading,
-    scheduledReports: scheduledReports.isLoading,
-    createTemplate: createTemplate.isPending,
-    updateTemplate: updateTemplate.isPending,
-    deleteTemplate: deleteTemplate.isPending,
-    scheduleReport: scheduleReport.isPending,
-    executeReport: executeReport.isPending,
-    generateReport: generateReport.isPending,
+    templates: false,
+    scheduledReports: false,
+    createTemplate: false,
+    updateTemplate: false,
+    deleteTemplate: false,
+    scheduleReport: false,
+    executeReport: false,
+    generateReport: false,
   };
 
   return {
-    // Data
-    templates: templates.data || [],
-    scheduledReports: scheduledReports.data || [],
+    // Data (mock)
+    templates: mockTemplates,
+    scheduledReports: mockScheduledReports,
     
     // Loading states
     isLoading,
     
-    // Error states
+    // Error states (mock)
     error: {
-      templates: templates.error,
-      scheduledReports: scheduledReports.error,
-      createTemplate: createTemplate.error,
-      updateTemplate: updateTemplate.error,
-      deleteTemplate: deleteTemplate.error,
-      scheduleReport: scheduleReport.error,
-      executeReport: executeReport.error,
-      generateReport: generateReport.error,
+      templates: null,
+      scheduledReports: null,
+      createTemplate: null,
+      updateTemplate: null,
+      deleteTemplate: null,
+      scheduleReport: null,
+      executeReport: null,
+      generateReport: null,
     },
     
     // Actions
     actions,
     
     // Status
-    isReady: !templates.isLoading && !scheduledReports.isLoading,
+    isReady: true, // Mock sempre pronto
   };
 }
 
@@ -413,35 +438,53 @@ export function useReportsDashboard() {
     }
   };
 
-  const salesMetrics = useSalesMetrics(defaultParams);
-  const leadMetrics = useLeadMetrics(defaultParams);
-  const appointmentMetrics = useAppointmentMetrics(defaultParams);
-  const conversionRates = useConversionRates(defaultParams.dateRange!);
-
-  const isLoading = salesMetrics.isLoading || 
-                   leadMetrics.isLoading || 
-                   appointmentMetrics.isLoading || 
-                   conversionRates.isLoading;
-
-  const hasError = salesMetrics.error || 
-                   leadMetrics.error || 
-                   appointmentMetrics.error || 
-                   conversionRates.error;
+  // Temporariamente retornar dados mock até tabelas serem criadas
+  const mockMetrics = {
+    sales: {
+      totalSales: 850000,
+      salesCount: 12,
+      averageValue: 70833,
+      topAgent: {
+        name: 'João Silva',
+        salesCount: 3
+      },
+      growthRate: 15.3
+    },
+    leads: {
+      totalLeads: 45,
+      newLeads: 12,
+      convertedLeads: 8,
+      conversionRate: 17.8,
+      sourceBreakdown: [
+        { source: 'Site', count: 15, percentage: 33.3 },
+        { source: 'WhatsApp', count: 12, percentage: 26.7 },
+        { source: 'Indicação', count: 10, percentage: 22.2 },
+        { source: 'Facebook', count: 8, percentage: 17.8 }
+      ]
+    },
+    appointments: {
+      totalAppointments: 28,
+      completedAppointments: 24,
+      canceledAppointments: 4,
+      completionRate: 85.7,
+      averageDuration: 65
+    },
+    conversions: {
+      overallConversion: 12.3,
+      periodComparison: {
+        current: 12.3,
+        previous: 10.8,
+        change: 1.5
+      }
+    }
+  };
 
   return {
-    metrics: {
-      sales: salesMetrics.data,
-      leads: leadMetrics.data,
-      appointments: appointmentMetrics.data,
-      conversions: conversionRates.data,
-    },
-    isLoading,
-    hasError,
+    metrics: mockMetrics,
+    isLoading: false,
+    hasError: false,
     refresh: () => {
-      salesMetrics.refetch();
-      leadMetrics.refetch();
-      appointmentMetrics.refetch();
-      conversionRates.refetch();
+      console.log('Dashboard refresh - usando dados mock');
     }
   };
 }
