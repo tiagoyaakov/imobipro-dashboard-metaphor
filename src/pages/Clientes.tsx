@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewLeadForm, LeadFunnelKanban, AddLeadButton } from '@/components/clients';
+import { LeadSystemStatusCompact } from '@/components/clients/LeadSystemStatus';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -96,9 +97,12 @@ const Clientes = () => {
             </DialogContent>
           </Dialog>
           
-          <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue text-xs">
-            {statsData?.totalLeads || 0} leads ativos
-          </Badge>
+          <div className="flex items-center gap-3">
+            <LeadSystemStatusCompact />
+            <Badge variant="secondary" className="bg-imobipro-blue/10 text-imobipro-blue text-xs">
+              {statsData?.totalLeads || 0} leads ativos
+            </Badge>
+          </div>
         </div>
       </div>
 
