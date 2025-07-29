@@ -24,7 +24,15 @@
       "Bash(npm run build:*)",
       "Bash(touch:*)",
       "Bash(npm run:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(claude doctor)",
+      "Bash(claude mcp:*)",
+      "Bash(npx supabase:*)",
+      "Bash(psql:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(supabase:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

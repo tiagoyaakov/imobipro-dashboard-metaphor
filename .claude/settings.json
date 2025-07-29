@@ -1,0 +1,30 @@
+{
+  "mcp": {
+    "servers": {
+      "smithery-ai-server-sequential-thinking": {
+        "transport": {
+          "type": "http",
+          "url": "https://server.smithery.ai/@smithery-ai/server-sequential-thinking/mcp?api_key=6c3eb316-1c93-41e4-a26e-6cc76081a9fd&profile=terrible-hoverfly-ZC29ty"
+        }
+      },
+      "supabase-community-supabase-mcp": {
+        "transport": {
+          "type": "http",
+          "url": "https://server.smithery.ai/@supabase-community/supabase-mcp/mcp?api_key=6c3eb316-1c93-41e4-a26e-6cc76081a9fd&profile=terrible-hoverfly-ZC29ty"
+        }
+      },
+      "big-omega-mem-0-mcp": {
+        "transport": {
+          "type": "http",
+          "url": "https://server.smithery.ai/@big-omega/mem0-mcp/mcp?api_key=6c3eb316-1c93-41e4-a26e-6cc76081a9fd&profile=terrible-hoverfly-ZC29ty"
+        }
+      },
+      "upstash-context-7-mcp": {
+        "transport": {
+          "type": "http",
+          "url": "https://server.smithery.ai/@upstash/context7-mcp/mcp?api_key=6c3eb316-1c93-41e4-a26e-6cc76081a9fd&profile=terrible-hoverfly-ZC29ty"
+        }
+      }
+    }
+  }
+}
