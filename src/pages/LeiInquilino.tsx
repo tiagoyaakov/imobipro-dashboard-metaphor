@@ -48,12 +48,12 @@ const LeiInquilino = () => {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               Lei do Inquilino
-              <Badge variant="secondary" className="text-sm">
+              <Badge className="text-sm bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-0">
                 <Bot className="w-4 h-4 mr-1" />
                 IA Powered
               </Badge>
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
               Assistente jurídico inteligente com {config.agentPersonality.name}
             </p>
           </div>
@@ -67,7 +67,7 @@ const LeiInquilino = () => {
                 <MessageSquare className="w-4 h-4 text-imobipro-blue" />
                 <div className="text-center">
                   <div className="text-sm font-semibold">{activeSessions}</div>
-                  <div className="text-xs text-muted-foreground">Ativas</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">Ativas</div>
                 </div>
               </div>
             </Card>
@@ -76,8 +76,8 @@ const LeiInquilino = () => {
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-green-500" />
                 <div className="text-center">
-                  <div className="text-sm font-semibold">{totalSessions}</div>
-                  <div className="text-xs text-muted-foreground">Total</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{totalSessions}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">Total</div>
                 </div>
               </div>
             </Card>
@@ -86,13 +86,18 @@ const LeiInquilino = () => {
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "w-2 h-2 rounded-full",
-                  agentStatus.isOnline ? "bg-green-500" : "bg-gray-400"
+                  agentStatus.isOnline ? "bg-green-500 dark:bg-green-400" : "bg-gray-400 dark:bg-gray-600"
                 )} />
                 <div className="text-center">
-                  <div className="text-sm font-semibold">
+                  <div className={cn(
+                    "text-sm font-semibold",
+                    agentStatus.isOnline 
+                      ? "text-green-700 dark:text-green-400" 
+                      : "text-gray-700 dark:text-gray-400"
+                  )}>
                     {agentStatus.isOnline ? 'Online' : 'Offline'}
                   </div>
-                  <div className="text-xs text-muted-foreground">Agent</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">Agent</div>
                 </div>
               </div>
             </Card>
@@ -148,7 +153,7 @@ const LeiInquilino = () => {
               <feature.icon className={cn("w-5 h-5", feature.color)} />
               <div>
                 <h3 className="font-semibold text-sm">{feature.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   {feature.description}
                 </p>
               </div>
@@ -183,7 +188,7 @@ const LeiInquilino = () => {
                 <CardTitle className="text-2xl mb-4">
                   Bem-vindo ao {config.agentPersonality.name}
                 </CardTitle>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
                   Seu assistente jurídico especializado em questões imobiliárias. 
                   Inicie uma nova consulta para receber orientações personalizadas.
                 </p>
@@ -208,7 +213,7 @@ const LeiInquilino = () => {
                           </div>
                           <h4 className="font-semibold text-sm">{category.name}</h4>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
                           {category.description}
                         </p>
                       </Card>
@@ -216,7 +221,7 @@ const LeiInquilino = () => {
                   })}
                 </div>
                 
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   <Shield className="w-4 h-4 inline mr-1" />
                   Todas as consultas são confidenciais e baseadas na legislação brasileira atual
                 </div>

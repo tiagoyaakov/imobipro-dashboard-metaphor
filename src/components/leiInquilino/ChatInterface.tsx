@@ -115,11 +115,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
             {/* Agent Name */}
             {!isUser && (
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-semibold text-purple-600">
+                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
                   {config.agentPersonality.name}
                 </span>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-0">
                   IA
                 </Badge>
               </div>
@@ -152,30 +152,36 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           {hasReferences && (
             <div className="mt-3 w-full">
               <div className="flex items-center gap-2 mb-2">
-                <BookOpen className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-muted-foreground">
+                <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Referências Legais
                 </span>
               </div>
               <div className="space-y-2">
                 {message.metadata!.legalReferences!.map((ref) => (
-                  <Card key={ref.id} className="border-l-4 border-l-blue-500">
+                  <Card key={ref.id} className="border-l-4 border-l-blue-600 dark:border-l-blue-400 bg-blue-50/50 dark:bg-blue-950/20">
                     <CardContent className="p-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h5 className="font-medium text-sm text-foreground">
                             {ref.title}
                           </h5>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                             {ref.law} - {ref.article}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                             {ref.description}
                           </p>
                         </div>
                         <Badge 
-                          variant={ref.relevance === 'high' ? 'default' : 'secondary'}
-                          className="text-xs"
+                          className={cn(
+                            "text-xs font-medium",
+                            ref.relevance === 'high' 
+                              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
+                              : ref.relevance === 'medium'
+                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                          )}
                         >
                           {ref.relevance === 'high' ? 'Alta' : 
                            ref.relevance === 'medium' ? 'Média' : 'Baixa'}
@@ -192,8 +198,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           {hasSuggestions && (
             <div className="mt-3 w-full">
               <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium text-muted-foreground">
+                <Lightbulb className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Sugestões de perguntas
                 </span>
               </div>
@@ -203,7 +209,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
                     key={index}
                     variant="outline"
                     size="sm"
-                    className="text-xs h-8 rounded-full hover:bg-imobipro-blue hover:text-white transition-colors"
+                    className="text-xs h-8 rounded-full border-slate-300 text-slate-700 hover:bg-imobipro-blue hover:text-white hover:border-imobipro-blue dark:border-slate-600 dark:text-slate-300 dark:hover:bg-imobipro-blue dark:hover:border-imobipro-blue transition-colors"
                     onClick={() => handleSuggestionClick(suggestion)}
                   >
                     {suggestion}
@@ -215,7 +221,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
 
           {/* Message Info */}
           <div className={cn(
-            "flex items-center gap-2 mt-2 text-xs text-muted-foreground",
+            "flex items-center gap-2 mt-2 text-xs text-slate-500 dark:text-slate-500",
             isUser ? "flex-row-reverse" : "flex-row"
           )}>
             <span>
@@ -250,12 +256,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 {config.agentPersonality.name}
-                <Badge variant="secondary" className="text-xs">
+                <Badge className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-0">
                   <Sparkles className="w-3 h-3 mr-1" />
                   IA
                 </Badge>
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {config.agentPersonality.role}
               </p>
             </div>
@@ -263,11 +269,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
           <div className="text-right">
             <div className={cn(
               "text-sm font-medium",
-              agentStatus.status === 'available' ? "text-green-600" : "text-yellow-600"
+              agentStatus.status === 'available' 
+                ? "text-green-700 dark:text-green-400" 
+                : "text-yellow-700 dark:text-yellow-400"
             )}>
               {agentStatus.status === 'available' ? 'Disponível' : 'Ocupado'}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
               Resposta em ~{Math.round(agentStatus.responseTime.average / 1000)}s
             </div>
           </div>
@@ -279,8 +287,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         <ScrollArea className="h-full">
           <div className="p-4 space-y-1">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
+              <div className="flex flex-col items-center justify-center h-64 text-slate-600 dark:text-slate-400">
+                <MessageSquare className="w-12 h-12 mb-4 opacity-60" />
                 <p className="text-center text-sm">
                   Inicialize uma conversa para começar a receber assistência jurídica
                 </p>
@@ -339,7 +347,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ className }) => {
         </div>
         
         {/* Character Counter */}
-        <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+        <div className="flex justify-between items-center mt-2 text-xs text-slate-500 dark:text-slate-500">
           <span>
             Pressione Enter para enviar, Shift+Enter para nova linha
           </span>

@@ -132,7 +132,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
             </div>
             <div>
               <CardTitle className="text-xl">Configurações do Chat IA</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                 Configure a integração com N8N e personalize o comportamento do assistente
               </p>
             </div>
@@ -163,7 +163,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
                 onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 URL do webhook N8N que processará as mensagens do chat
               </p>
             </div>
@@ -178,7 +178,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Token de autenticação para maior segurança
               </p>
             </div>
@@ -235,7 +235,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
               </Button>
             </div>
             
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-slate-600 dark:text-slate-400">
               {getConnectionStatusText()}
             </div>
           </div>
@@ -254,7 +254,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
             <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg">
               <div>
                 <h4 className="font-medium">ImobiPRO Agent</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Assistente Jurídico Imobiliário especializado
                 </p>
               </div>
@@ -276,7 +276,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
                   <option value="friendly">Amigável</option>
                   <option value="formal">Formal</option>
                 </select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Estilo de comunicação do agente
                 </p>
               </div>
@@ -308,7 +308,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Sugestões Automáticas</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Exibir sugestões de perguntas após cada resposta
                 </p>
               </div>
@@ -318,7 +318,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Referências Legais</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Incluir referências legais nas respostas
                 </p>
               </div>
@@ -328,7 +328,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Histórico de Sessões</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Manter histórico de conversas para contexto
                 </p>
               </div>

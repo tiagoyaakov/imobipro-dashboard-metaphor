@@ -99,7 +99,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
           <div className="px-4 space-y-4">
             {/* Quick Start Categories */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground px-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 px-2">
                 Iniciar Consulta por Categoria
               </h3>
               <div className="grid grid-cols-1 gap-2">
@@ -124,10 +124,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
                           />
                         </div>
                         <div className="flex-1 text-left">
-                          <div className="font-medium text-xs">
+                          <div className="font-medium text-xs text-slate-900 dark:text-slate-100">
                             {category.name}
                           </div>
-                          <div className="text-xs text-muted-foreground truncate">
+                          <div className="text-xs text-slate-600 dark:text-slate-400 truncate">
                             {category.description}
                           </div>
                         </div>
@@ -143,8 +143,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
             {/* Active Sessions */}
             {activeSessions.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground px-2 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 px-2 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-green-600 dark:text-green-400" />
                   Sessões Ativas ({activeSessions.length})
                 </h3>
                 <div className="space-y-2">
@@ -182,7 +182,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
                               {getStatusIcon(session.status)}
                             </div>
                             
-                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
                               {session.lastMessage || 'Nenhuma mensagem ainda'}
                             </p>
                             
@@ -190,7 +190,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
                               <Badge variant="secondary" className="text-xs">
                                 {session.messagesCount} msgs
                               </Badge>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-slate-500 dark:text-slate-500">
                                 {formatDistanceToNow(session.updatedAt, { 
                                   addSuffix: true, 
                                   locale: ptBR 
@@ -236,8 +236,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground px-2 flex items-center gap-2">
-                    <Archive className="w-4 h-4" />
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 px-2 flex items-center gap-2">
+                    <Archive className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     Histórico ({closedSessions.length})
                   </h3>
                   <div className="space-y-2">
@@ -270,7 +270,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
                                 <Badge variant="outline" className="text-xs">
                                   {session.messagesCount} msgs
                                 </Badge>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-slate-500 dark:text-slate-500">
                                   {formatDistanceToNow(session.updatedAt, { 
                                     addSuffix: true, 
                                     locale: ptBR 
@@ -287,7 +287,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full text-xs text-muted-foreground hover:text-foreground"
+                        className="w-full text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                       >
                         Ver mais {closedSessions.length - 5} sessões...
                       </Button>
@@ -300,11 +300,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ className }) => {
             {/* Empty State */}
             {sessions.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <MessageSquare className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                <MessageSquare className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-4" />
+                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Nenhuma consulta ainda
                 </h3>
-                <p className="text-xs text-muted-foreground mb-4 max-w-[200px]">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 max-w-[200px]">
                   Inicie uma nova consulta jurídica escolhendo uma categoria acima
                 </p>
                 <Button
