@@ -1088,4 +1088,241 @@ enum PlanType {
 
 ---
 
+## MÓDULO 9: LEI DO INQUILINO - Assistente Legal IA
+
+### TypeScript Types e Interfaces
+
+```typescript
+// ✅ IMPLEMENTADO - Mensagem de chat com metadados legais
+interface ChatMessage {
+  id: string;
+  content: string;
+  type: 'user' | 'agent';
+  timestamp: Date;
+  status: 'sending' | 'sent' | 'delivered' | 'error';
+  metadata?: {
+    messageId?: string;
+    conversationId?: string;
+    source?: string;
+    suggestions?: string[];
+    legalReferences?: LegalReference[];
+  };
+}
+
+// ✅ IMPLEMENTADO - Sessão de conversa legal
+interface ChatSession {
+  id: string;
+  title: string;
+  category: LegalCategory;
+  messages: ChatMessage[];
+  status: 'active' | 'closed' | 'archived';
+  createdAt: Date;
+  updatedAt: Date;
+  lastMessage?: string;
+  messagesCount: number;
+}
+
+// ✅ IMPLEMENTADO - Referência legal automatizada
+interface LegalReference {
+  id: string;
+  title: string;
+  article: string;
+  law: string;
+  description: string;
+  url?: string;
+  relevance: 'high' | 'medium' | 'low';
+}
+
+// ✅ IMPLEMENTADO - Configuração do agente IA
+interface AgentConfig {
+  agentPersonality: {
+    name: string;
+    role: string;
+    tone: string;
+    expertise: string[];
+  };
+  responseSettings: {
+    maxLength: number;
+    includeReferences: boolean;
+    suggestQuestions: boolean;
+  };
+  integrations: {
+    n8nEnabled: boolean;
+    fallbackEnabled: boolean;
+  };
+  maxMessageLength: number;
+}
+
+// ✅ IMPLEMENTADO - Status do agente
+interface AgentStatus {
+  isOnline: boolean;
+  status: 'available' | 'busy' | 'offline';
+  responseTime: {
+    average: number;
+    last: number;
+  };
+  sessionsActive: number;
+}
+
+// ✅ IMPLEMENTADO - Categoria legal especializada
+interface LegalCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  keywords: string[];
+  examples: string[];
+}
+
+// ✅ IMPLEMENTADO - Payload N8N para webhooks
+interface N8nWebhookPayload {
+  messageId: string;
+  conversationId: string;
+  content: string;
+  type: string;
+  metadata?: {
+    suggestions?: string[];
+    legalReferences?: LegalReference[];
+    confidence?: number;
+    processingTime?: number;
+  };
+}
+
+// ✅ IMPLEMENTADO - Configuração N8N
+interface N8nConfig {
+  webhookUrl: string;
+  apiKey?: string;
+  timeout: number;
+  retryAttempts: number;
+}
+```
+
+### Estrutura de Dados Local
+
+```typescript
+// ✅ IMPLEMENTADO - Categorias legais pré-configuradas
+const LEGAL_CATEGORIES: LegalCategory[] = [
+  {
+    id: 'contracts',
+    name: 'Contratos de Locação',
+    description: 'Elaboração, revisão e questões contratuais',
+    icon: 'FileText',
+    color: '#8B5CF6',
+    keywords: ['contrato', 'locação', 'aluguel', 'cláusulas'],
+    examples: ['Como redigir cláusula de reajuste?', 'Prazo mínimo de locação']
+  },
+  {
+    id: 'eviction',
+    name: 'Ação de Despejo',
+    description: 'Procedimentos de despejo e retomada',
+    icon: 'AlertTriangle',
+    color: '#EF4444',
+    keywords: ['despejo', 'retomada', 'inadimplência'],
+    examples: ['Prazos para despejo por falta de pagamento', 'Despejo para uso próprio']
+  },
+  {
+    id: 'maintenance',
+    name: 'Reformas e Benfeitorias',
+    description: 'Responsabilidades por reparos e melhorias',
+    icon: 'Wrench',
+    color: '#10B981',
+    keywords: ['reforma', 'benfeitoria', 'reparos', 'manutenção'],
+    examples: ['Quem paga reforma estrutural?', 'Direito de retenção por benfeitorias']
+  },
+  {
+    id: 'rights',
+    name: 'Direitos e Deveres',
+    description: 'Direitos do locador e locatário',
+    icon: 'Home',
+    color: '#3B82F6',
+    keywords: ['direitos', 'deveres', 'locador', 'locatário'],
+    examples: ['Direito à vistoria do imóvel', 'Uso de áreas comuns']
+  }
+];
+
+// ✅ IMPLEMENTADO - Configuração padrão do agente
+const DEFAULT_AGENT_CONFIG: AgentConfig = {
+  agentPersonality: {
+    name: 'ImobiPRO Agent',
+    role: 'Assistente Jurídico Imobiliário',
+    tone: 'professional',
+    expertise: ['Lei 8.245/91', 'Contratos Imobiliários', 'Direito Locatício']
+  },
+  responseSettings: {
+    maxLength: 2000,
+    includeReferences: true,
+    suggestQuestions: true
+  },
+  integrations: {
+    n8nEnabled: true,
+    fallbackEnabled: true
+  },
+  maxMessageLength: 1000
+};
+```
+
+### Funcionalidades Implementadas
+
+#### **1. Sistema de Chat IA** ✅
+- Interface de chat em tempo real
+- Typing indicators e status do agente
+- Renderização de markdown
+- Sistema de sugestões contextuais
+- Referências legais automáticas
+
+#### **2. Integração N8N Robusta** ✅
+- Webhook system com retry automático
+- Fallback inteligente quando N8N indisponível
+- Configuração flexível de endpoints
+- Monitoramento de conectividade
+- Templates de prompt especializados
+
+#### **3. Gestão de Sessões** ✅
+- Múltiplas sessões de chat simultâneas
+- Categorização por área legal
+- Histórico persistente local
+- Quick start por categoria
+- Interface de navegação intuitiva
+
+#### **4. Configurações Avançadas** ✅
+- Painel de configuração N8N
+- Teste de conectividade em tempo real
+- Configurações do agente IA
+- Personalização de comportamento
+- Interface moderna e acessível
+
+### Arquivos Principais Implementados
+
+```
+src/
+├── types/leiInquilino.ts              # Types e interfaces (200+ linhas)
+├── services/n8nLegalService.ts        # Serviço N8N (600+ linhas)
+├── hooks/useLeiInquilinoChat.ts       # React Hook (400+ linhas)
+├── components/leiInquilino/
+│   ├── ChatInterface.tsx              # Interface principal (700+ linhas)
+│   ├── ChatSidebar.tsx               # Sidebar sessões (650+ linhas)
+│   ├── ChatSettings.tsx              # Configurações (400+ linhas)
+│   └── ChatAnalytics.tsx             # Analytics (placeholder)
+└── pages/LeiInquilino.tsx            # Página principal (500+ linhas)
+```
+
+### Especialização Legal
+
+#### **Áreas de Conhecimento:**
+- **Lei 8.245/91** (Lei do Inquilinato)
+- **Contratos de Locação** residencial e comercial
+- **Ações de Despejo** e procedimentos
+- **Reformas e Benfeitorias** responsabilidades
+- **Direitos e Deveres** de locadores e locatários
+
+#### **Funcionalidades Jurídicas:**
+- **Referências automáticas** com relevância classificada
+- **Templates de prompt** especializados por categoria
+- **Sugestões contextuais** baseadas na conversa
+- **Linguagem acessível** para clientes leigos
+- **Base de conhecimento** atualizada com jurisprudência
+
+---
+
 *Este documento representa o schema completo do banco de dados ImobiPRO, organizando todos os modelos, enums e relacionamentos por módulos funcionais para facilitar o desenvolvimento e manutenção.*
