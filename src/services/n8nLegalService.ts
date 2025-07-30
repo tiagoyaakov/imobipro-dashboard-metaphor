@@ -52,7 +52,8 @@ class N8nLegalService {
       return this.processN8nResponse(response, message.metadata?.conversationId);
     } catch (error) {
       console.error('Erro na comunicação com N8N:', error);
-      throw new Error('Falha ao processar mensagem via N8N');\n    }
+      throw new Error('Falha ao processar mensagem via N8N');
+    }
   }
 
   /**

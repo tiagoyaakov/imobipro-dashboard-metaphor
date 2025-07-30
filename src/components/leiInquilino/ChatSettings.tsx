@@ -7,4 +7,361 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Settings, \n  Bot, \n  Link, \n  Shield, \n  Clock, \n  Zap,\n  CheckCircle,\n  AlertCircle,\n  Loader2\n} from 'lucide-react';\nimport { n8nLegalService } from '@/services/n8nLegalService';\nimport { toast } from 'sonner';\nimport { cn } from '@/lib/utils';\n\ninterface ChatSettingsProps {\n  className?: string;\n  onClose?: () => void;\n}\n\nconst ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {\n  const [config, setConfig] = useState(n8nLegalService.getConfig());\n  const [connectionStatus, setConnectionStatus] = useState<{\n    status: 'idle' | 'testing' | 'success' | 'error';\n    responseTime?: number;\n    error?: string;\n  }>({ status: 'idle' });\n  const [isSaving, setIsSaving] = useState(false);\n\n  const handleTestConnection = async () => {\n    setConnectionStatus({ status: 'testing' });\n    \n    try {\n      const result = await n8nLegalService.testConnection();\n      \n      if (result.success) {\n        setConnectionStatus({ \n          status: 'success', \n          responseTime: result.responseTime \n        });\n        toast.success('Conexão com N8N estabelecida com sucesso!');\n      } else {\n        setConnectionStatus({ \n          status: 'error', \n          error: result.error \n        });\n        toast.error(`Falha na conexão: ${result.error}`);\n      }\n    } catch (error) {\n      setConnectionStatus({ \n        status: 'error', \n        error: 'Erro inesperado durante o teste' \n      });\n      toast.error('Erro ao testar conexão');\n    }\n  };\n\n  const handleSaveSettings = async () => {\n    setIsSaving(true);\n    \n    try {\n      // Validar URL do webhook\n      if (config.webhookUrl && !isValidUrl(config.webhookUrl)) {\n        throw new Error('URL do webhook inválida');\n      }\n\n      // Atualizar configuração do serviço\n      n8nLegalService.updateConfig(config);\n      \n      // Salvar no localStorage (em produção, salvar no backend)\n      localStorage.setItem('n8n-legal-config', JSON.stringify(config));\n      \n      toast.success('Configurações salvas com sucesso!');\n      onClose?.();\n    } catch (error) {\n      toast.error(error instanceof Error ? error.message : 'Erro ao salvar configurações');\n    } finally {\n      setIsSaving(false);\n    }\n  };\n\n  const isValidUrl = (url: string): boolean => {\n    try {\n      new URL(url);\n      return true;\n    } catch {\n      return false;\n    }\n  };\n\n  const getConnectionStatusIcon = () => {\n    switch (connectionStatus.status) {\n      case 'testing':\n        return <Loader2 className=\"w-4 h-4 animate-spin text-blue-500\" />;\n      case 'success':\n        return <CheckCircle className=\"w-4 h-4 text-green-500\" />;\n      case 'error':\n        return <AlertCircle className=\"w-4 h-4 text-red-500\" />;\n      default:\n        return <Link className=\"w-4 h-4 text-muted-foreground\" />;\n    }\n  };\n\n  const getConnectionStatusText = () => {\n    switch (connectionStatus.status) {\n      case 'testing':\n        return 'Testando conexão...';\n      case 'success':\n        return `Conectado (${connectionStatus.responseTime}ms)`;\n      case 'error':\n        return connectionStatus.error || 'Erro na conexão';\n      default:\n        return 'Não testado';\n    }\n  };\n\n  return (\n    <Card className={cn(\"w-full max-w-2xl\", className)}>\n      <CardHeader className=\"pb-4\">\n        <div className=\"flex items-center justify-between\">\n          <div className=\"flex items-center gap-3\">\n            <div className=\"w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center\">\n              <Settings className=\"w-5 h-5 text-white\" />\n            </div>\n            <div>\n              <CardTitle className=\"text-xl\">Configurações do Chat IA</CardTitle>\n              <p className=\"text-sm text-muted-foreground mt-1\">\n                Configure a integração com N8N e personalize o comportamento do assistente\n              </p>\n            </div>\n          </div>\n          {onClose && (\n            <Button variant=\"ghost\" size=\"sm\" onClick={onClose}>\n              ✕\n            </Button>\n          )}\n        </div>\n      </CardHeader>\n\n      <CardContent className=\"space-y-6\">\n        {/* N8N Configuration */}\n        <div className=\"space-y-4\">\n          <div className=\"flex items-center gap-2\">\n            <Zap className=\"w-5 h-5 text-orange-500\" />\n            <h3 className=\"text-lg font-semibold\">Integração N8N</h3>\n          </div>\n          \n          <div className=\"space-y-4\">\n            <div className=\"space-y-2\">\n              <Label htmlFor=\"webhookUrl\">URL do Webhook</Label>\n              <Input\n                id=\"webhookUrl\"\n                placeholder=\"https://seu-n8n.com/webhook/legal-assistant\"\n                value={config.webhookUrl}\n                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}\n                className=\"font-mono text-sm\"\n              />\n              <p className=\"text-xs text-muted-foreground\">\n                URL do webhook N8N que processará as mensagens do chat\n              </p>\n            </div>\n\n            <div className=\"space-y-2\">\n              <Label htmlFor=\"apiKey\">API Key (Opcional)</Label>\n              <Input\n                id=\"apiKey\"\n                type=\"password\"\n                placeholder=\"Bearer token para autenticação\"\n                value={config.apiKey || ''}\n                onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}\n                className=\"font-mono text-sm\"\n              />\n              <p className=\"text-xs text-muted-foreground\">\n                Token de autenticação para maior segurança\n              </p>\n            </div>\n\n            <div className=\"grid grid-cols-2 gap-4\">\n              <div className=\"space-y-2\">\n                <Label htmlFor=\"timeout\">Timeout (ms)</Label>\n                <Input\n                  id=\"timeout\"\n                  type=\"number\"\n                  value={config.timeout}\n                  onChange={(e) => setConfig({ ...config, timeout: Number(e.target.value) })}\n                  min=\"5000\"\n                  max=\"60000\"\n                  step=\"1000\"\n                />\n              </div>\n              \n              <div className=\"space-y-2\">\n                <Label htmlFor=\"retryAttempts\">Tentativas</Label>\n                <Input\n                  id=\"retryAttempts\"\n                  type=\"number\"\n                  value={config.retryAttempts}\n                  onChange={(e) => setConfig({ ...config, retryAttempts: Number(e.target.value) })}\n                  min=\"1\"\n                  max=\"5\"\n                />\n              </div>\n            </div>\n          </div>\n\n          {/* Connection Test */}\n          <div className=\"p-4 bg-muted/30 rounded-lg\">\n            <div className=\"flex items-center justify-between mb-3\">\n              <div className=\"flex items-center gap-2\">\n                <h4 className=\"font-medium\">Status da Conexão</h4>\n                {getConnectionStatusIcon()}\n              </div>\n              <Button\n                variant=\"outline\"\n                size=\"sm\"\n                onClick={handleTestConnection}\n                disabled={connectionStatus.status === 'testing' || !config.webhookUrl}\n              >\n                {connectionStatus.status === 'testing' ? (\n                  <>\n                    <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />\n                    Testando\n                  </>\n                ) : (\n                  'Testar Conexão'\n                )}\n              </Button>\n            </div>\n            \n            <div className=\"text-sm text-muted-foreground\">\n              {getConnectionStatusText()}\n            </div>\n          </div>\n        </div>\n\n        <Separator />\n\n        {/* AI Agent Configuration */}\n        <div className=\"space-y-4\">\n          <div className=\"flex items-center gap-2\">\n            <Bot className=\"w-5 h-5 text-purple-500\" />\n            <h3 className=\"text-lg font-semibold\">Configurações do Agente IA</h3>\n          </div>\n          \n          <div className=\"space-y-4\">\n            <div className=\"flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg\">\n              <div>\n                <h4 className=\"font-medium\">ImobiPRO Agent</h4>\n                <p className=\"text-sm text-muted-foreground\">\n                  Assistente Jurídico Imobiliário especializado\n                </p>\n              </div>\n              <Badge variant=\"secondary\">\n                <Shield className=\"w-3 h-3 mr-1\" />\n                Ativo\n              </Badge>\n            </div>\n\n            <div className=\"grid grid-cols-2 gap-4\">\n              <div className=\"space-y-2\">\n                <Label>Tom de Voz</Label>\n                <select \n                  className=\"w-full p-2 border rounded-md bg-background\"\n                  value=\"professional\"\n                  disabled\n                >\n                  <option value=\"professional\">Profissional</option>\n                  <option value=\"friendly\">Amigável</option>\n                  <option value=\"formal\">Formal</option>\n                </select>\n                <p className=\"text-xs text-muted-foreground\">\n                  Estilo de comunicação do agente\n                </p>\n              </div>\n              \n              <div className=\"space-y-2\">\n                <Label>Especialidades</Label>\n                <div className=\"flex flex-wrap gap-1 p-2 border rounded-md bg-muted/30\">\n                  {['Lei do Inquilinato', 'Contratos', 'Despejo', 'Reformas'].map((specialty) => (\n                    <Badge key={specialty} variant=\"secondary\" className=\"text-xs\">\n                      {specialty}\n                    </Badge>\n                  ))}\n                </div>\n              </div>\n            </div>\n          </div>\n        </div>\n\n        <Separator />\n\n        {/* Advanced Settings */}\n        <div className=\"space-y-4\">\n          <div className=\"flex items-center gap-2\">\n            <Clock className=\"w-5 h-5 text-blue-500\" />\n            <h3 className=\"text-lg font-semibold\">Configurações Avançadas</h3>\n          </div>\n          \n          <div className=\"space-y-4\">\n            <div className=\"flex items-center justify-between\">\n              <div>\n                <Label>Sugestões Automáticas</Label>\n                <p className=\"text-sm text-muted-foreground\">\n                  Exibir sugestões de perguntas após cada resposta\n                </p>\n              </div>\n              <Switch defaultChecked />\n            </div>\n            \n            <div className=\"flex items-center justify-between\">\n              <div>\n                <Label>Referências Legais</Label>\n                <p className=\"text-sm text-muted-foreground\">\n                  Incluir referências legais nas respostas\n                </p>\n              </div>\n              <Switch defaultChecked />\n            </div>\n            \n            <div className=\"flex items-center justify-between\">\n              <div>\n                <Label>Histórico de Sessões</Label>\n                <p className=\"text-sm text-muted-foreground\">\n                  Manter histórico de conversas para contexto\n                </p>\n              </div>\n              <Switch defaultChecked />\n            </div>\n          </div>\n        </div>\n\n        {/* Action Buttons */}\n        <div className=\"flex justify-end gap-3 pt-4\">\n          {onClose && (\n            <Button variant=\"outline\" onClick={onClose}>\n              Cancelar\n            </Button>\n          )}\n          <Button \n            onClick={handleSaveSettings}\n            disabled={isSaving}\n            className=\"bg-imobipro-blue hover:bg-imobipro-blue-dark\"\n          >\n            {isSaving ? (\n              <>\n                <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" />\n                Salvando...\n              </>\n            ) : (\n              'Salvar Configurações'\n            )}\n          </Button>\n        </div>\n      </CardContent>\n    </Card>\n  );\n};\n\nexport default ChatSettings;
+  Settings, 
+  Bot, 
+  Link, 
+  Shield, 
+  Clock, 
+  Zap,
+  CheckCircle,
+  AlertCircle,
+  Loader2
+} from 'lucide-react';
+import { n8nLegalService } from '@/services/n8nLegalService';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+interface ChatSettingsProps {
+  className?: string;
+  onClose?: () => void;
+}
+
+const ChatSettings: React.FC<ChatSettingsProps> = ({ className, onClose }) => {
+  const [config, setConfig] = useState(n8nLegalService.getConfig());
+  const [connectionStatus, setConnectionStatus] = useState<{
+    status: 'idle' | 'testing' | 'success' | 'error';
+    responseTime?: number;
+    error?: string;
+  }>({ status: 'idle' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleTestConnection = async () => {
+    setConnectionStatus({ status: 'testing' });
+    
+    try {
+      const result = await n8nLegalService.testConnection();
+      
+      if (result.success) {
+        setConnectionStatus({ 
+          status: 'success', 
+          responseTime: result.responseTime 
+        });
+        toast.success('Conexão com N8N estabelecida com sucesso!');
+      } else {
+        setConnectionStatus({ 
+          status: 'error', 
+          error: result.error 
+        });
+        toast.error(`Falha na conexão: ${result.error}`);
+      }
+    } catch (error) {
+      setConnectionStatus({ 
+        status: 'error', 
+        error: 'Erro inesperado durante o teste' 
+      });
+      toast.error('Erro ao testar conexão');
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    
+    try {
+      // Validar URL do webhook
+      if (config.webhookUrl && !isValidUrl(config.webhookUrl)) {
+        throw new Error('URL do webhook inválida');
+      }
+
+      // Atualizar configuração do serviço
+      n8nLegalService.updateConfig(config);
+      
+      // Salvar no localStorage (em produção, salvar no backend)
+      localStorage.setItem('n8n-legal-config', JSON.stringify(config));
+      
+      toast.success('Configurações salvas com sucesso!');
+      onClose?.();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar configurações');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const getConnectionStatusIcon = () => {
+    switch (connectionStatus.status) {
+      case 'testing':
+        return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
+      case 'success':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Link className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const getConnectionStatusText = () => {
+    switch (connectionStatus.status) {
+      case 'testing':
+        return 'Testando conexão...';
+      case 'success':
+        return `Conectado (${connectionStatus.responseTime}ms)`;
+      case 'error':
+        return connectionStatus.error || 'Erro na conexão';
+      default:
+        return 'Não testado';
+    }
+  };
+
+  return (
+    <Card className={cn("w-full max-w-2xl", className)}>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Configurações do Chat IA</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Configure a integração com N8N e personalize o comportamento do assistente
+              </p>
+            </div>
+          </div>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              ✕
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* N8N Configuration */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-orange-500" />
+            <h3 className="text-lg font-semibold">Integração N8N</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="webhookUrl">URL do Webhook</Label>
+              <Input
+                id="webhookUrl"
+                placeholder="https://seu-n8n.com/webhook/legal-assistant"
+                value={config.webhookUrl}
+                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                URL do webhook N8N que processará as mensagens do chat
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">API Key (Opcional)</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="Bearer token para autenticação"
+                value={config.apiKey || ''}
+                onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Token de autenticação para maior segurança
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="timeout">Timeout (ms)</Label>
+                <Input
+                  id="timeout"
+                  type="number"
+                  value={config.timeout}
+                  onChange={(e) => setConfig({ ...config, timeout: Number(e.target.value) })}
+                  min="5000"
+                  max="60000"
+                  step="1000"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="retryAttempts">Tentativas</Label>
+                <Input
+                  id="retryAttempts"
+                  type="number"
+                  value={config.retryAttempts}
+                  onChange={(e) => setConfig({ ...config, retryAttempts: Number(e.target.value) })}
+                  min="1"
+                  max="5"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Connection Test */}
+          <div className="p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium">Status da Conexão</h4>
+                {getConnectionStatusIcon()}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestConnection}
+                disabled={connectionStatus.status === 'testing' || !config.webhookUrl}
+              >
+                {connectionStatus.status === 'testing' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Testando
+                  </>
+                ) : (
+                  'Testar Conexão'
+                )}
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {getConnectionStatusText()}
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* AI Agent Configuration */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Bot className="w-5 h-5 text-purple-500" />
+            <h3 className="text-lg font-semibold">Configurações do Agente IA</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg">
+              <div>
+                <h4 className="font-medium">ImobiPRO Agent</h4>
+                <p className="text-sm text-muted-foreground">
+                  Assistente Jurídico Imobiliário especializado
+                </p>
+              </div>
+              <Badge variant="secondary">
+                <Shield className="w-3 h-3 mr-1" />
+                Ativo
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tom de Voz</Label>
+                <select 
+                  className="w-full p-2 border rounded-md bg-background"
+                  value="professional"
+                  disabled
+                >
+                  <option value="professional">Profissional</option>
+                  <option value="friendly">Amigável</option>
+                  <option value="formal">Formal</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Estilo de comunicação do agente
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Especialidades</Label>
+                <div className="flex flex-wrap gap-1 p-2 border rounded-md bg-muted/30">
+                  {['Lei do Inquilinato', 'Contratos', 'Despejo', 'Reformas'].map((specialty) => (
+                    <Badge key={specialty} variant="secondary" className="text-xs">
+                      {specialty}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Advanced Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Configurações Avançadas</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Sugestões Automáticas</Label>
+                <p className="text-sm text-muted-foreground">
+                  Exibir sugestões de perguntas após cada resposta
+                </p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Referências Legais</Label>
+                <p className="text-sm text-muted-foreground">
+                  Incluir referências legais nas respostas
+                </p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Histórico de Sessões</Label>
+                <p className="text-sm text-muted-foreground">
+                  Manter histórico de conversas para contexto
+                </p>
+              </div>
+              <Switch defaultChecked />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-4">
+          {onClose && (
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+          )}
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            className="bg-imobipro-blue hover:bg-imobipro-blue-dark"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar Configurações'
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ChatSettings;
