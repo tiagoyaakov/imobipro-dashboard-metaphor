@@ -4,7 +4,7 @@
 // Serviço completo para gestão de funil de vendas com operações CRUD,
 // métricas avançadas, automações e integração com outros módulos
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Deal, 
   DealStage, 
