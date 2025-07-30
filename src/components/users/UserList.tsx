@@ -141,7 +141,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
       isOpen: true,
       type: 'status',
       user,
-      newStatus: !user.is_active,
+      newStatus: !user.isActive,
       reason: '',
     });
   };
@@ -209,7 +209,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-12 w-12">
                     <AvatarImage 
-                      src={user.avatar_url} 
+                      src={user.avatarUrl} 
                       alt={user.name}
                     />
                     <AvatarFallback className="bg-primary/10">
@@ -235,7 +235,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                     
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>
-                        Cadastrado em {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                        Cadastrado em {format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                       {user.company?.name && (
                         <>
@@ -257,18 +257,18 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
 
                   {/* Badge do status */}
                   <Badge 
-                    variant={user.is_active ? "default" : "secondary"} 
-                    className={`gap-1 ${user.is_active 
+                    variant={user.isActive ? "default" : "secondary"} 
+                    className={`gap-1 ${user.isActive 
                       ? "bg-green-100 text-green-800 hover:bg-green-200" 
                       : "bg-red-100 text-red-800 hover:bg-red-200"
                     }`}
                   >
-                    {user.is_active ? (
+                    {user.isActive ? (
                       <UserCheck className="h-3 w-3" />
                     ) : (
                       <UserX className="h-3 w-3" />
                     )}
-                    {user.is_active ? 'Ativo' : 'Inativo'}
+                    {user.isActive ? 'Ativo' : 'Inativo'}
                   </Badge>
 
                   {/* Menu de ações */}
@@ -295,12 +295,12 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                           onClick={() => openStatusDialog(user)}
                           disabled={!canChangeStatus(user)}
                         >
-                          {user.is_active ? (
+                          {user.isActive ? (
                             <UserX className="mr-2 h-4 w-4" />
                           ) : (
                             <UserCheck className="mr-2 h-4 w-4" />
                           )}
-                          {user.is_active ? 'Desativar' : 'Ativar'}
+                          {user.isActive ? 'Desativar' : 'Ativar'}
                         </DropdownMenuItem>
                         
                         <DropdownMenuSeparator />

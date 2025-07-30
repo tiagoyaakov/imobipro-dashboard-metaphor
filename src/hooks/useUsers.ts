@@ -24,12 +24,11 @@ export interface User {
   email: string;
   name: string;
   role: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
-  is_active: boolean;
-  company_id: string;
-  avatar_url?: string;
-  telefone?: string;
-  created_at: string;
-  updated_at: string;
+  isActive: boolean;
+  companyId: string;
+  avatarUrl?: string;
+  createdAt: string;
+  updatedAt: string;
   company?: {
     id: string;
     name: string;
@@ -52,9 +51,8 @@ export interface CreateUserParams {
   email: string;
   name: string;
   role: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
-  company_id: string;
-  telefone?: string;
-  avatar_url?: string;
+  companyId: string;
+  avatarUrl?: string;
 }
 
 // -----------------------------------------------------------
@@ -73,21 +71,20 @@ export const useUsers = () => {
         }
 
         const { data, error } = await supabase
-          .from('users')
+          .from('User')
           .select(`
             id,
             email,
             name,
             role,
-            is_active,
-            company_id,
-            avatar_url,
-            telefone,
-            created_at,
-            updated_at,
-            company:companies(id, name)
+            isActive,
+            companyId,
+            avatarUrl,
+            createdAt,
+            updatedAt,
+            company:Company!companyId(id, name)
           `)
-          .order('created_at', { ascending: false });
+          .order('createdAt', { ascending: false });
 
         if (error) {
           console.error('❌ [useUsers] Erro ao buscar usuários:', error);
@@ -197,9 +194,8 @@ export const useCreateUser = () => {
         user_email: params.email,
         user_name: params.name,
         user_role: params.role,
-        user_company_id: params.company_id,
-        user_telefone: params.telefone || null,
-        user_avatar_url: params.avatar_url || null,
+        user_company_id: params.companyId,
+        user_avatar_url: params.avatarUrl || null,
       });
 
       if (error) {
@@ -353,15 +349,15 @@ export const useUserStats = () => {
 
   const stats = {
     total: users.length,
-    active: users.filter(u => u.is_active).length,
-    inactive: users.filter(u => !u.is_active).length,
+    active: users.filter(u => u.isActive).length,
+    inactive: users.filter(u => !u.isActive).length,
     byRole: {
       DEV_MASTER: users.filter(u => u.role === 'DEV_MASTER').length,
       ADMIN: users.filter(u => u.role === 'ADMIN').length,
       AGENT: users.filter(u => u.role === 'AGENT').length,
     },
     recentSignups: users.filter(u => {
-      const daysDiff = Math.floor((Date.now() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor((Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24));
       return daysDiff <= 7;
     }).length,
   };
