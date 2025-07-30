@@ -209,98 +209,123 @@ const Agenda = () => {
         </Button>
       </div>
 
-      {/* Barra de status com notificações e sincronização */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <NotificationSystem
-          notifications={notifications}
-          settings={mockNotificationSettings}
-          onNotificationAction={handleNotificationAction}
-          onMarkAsRead={markAsRead}
-          onMarkAllAsRead={markAllAsRead}
-          onDeleteNotification={deleteNotification}
-          onUpdateSettings={(settings) => console.log("Configurações atualizadas:", settings)}
-        />
+      {/* Barra de status compacta */}
+      <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-muted-foreground">Google Calendar: Sincronizado</span>
+          </div>
+          {notifications.length > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {notifications.length} notificações
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => console.log("Ver notificações")}
+            className="text-xs"
+          >
+            Status Detalhado
+          </Button>
+        </div>
+      </div>
+
+      {/* Calendário como elemento principal */}
+      <div className="relative">
+        {/* Botões de ação flutuantes */}
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log("Configurações")}
+            className="bg-background/80 backdrop-blur-sm"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log("Disponibilidade")}
+            className="bg-background/80 backdrop-blur-sm"
+          >
+            <Users className="w-4 h-4" />
+          </Button>
+        </div>
         
-        <SyncStatus
-          syncStatus={syncStatus}
-          onManualSync={() => console.log("Sincronização manual iniciada")}
-          onResolveConflicts={() => console.log("Resolvendo conflitos")}
-          onReconnectProvider={handleSyncCalendar}
+        <CalendarView
+          appointments={mockAppointments}
+          selectedDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          onAppointmentClick={(appointment) => console.log("Compromisso clicado:", appointment)}
+          onCreateAppointment={handleCreateAppointment}
         />
       </div>
 
-      <Tabs defaultValue="calendar" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4" />
-            Calendário
-          </TabsTrigger>
-          <TabsTrigger value="agents" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Disponibilidade
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Configurações
-          </TabsTrigger>
-        </TabsList>
+      {/* Abas em modal ou drawer para funcionalidades secundárias */}
+      <div className="hidden">
+        <Tabs defaultValue="calendar" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4" />
+              Calendário
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Disponibilidade
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Configurações
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="calendar" className="mt-6">
-          <CalendarView
-            appointments={mockAppointments}
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            onAppointmentClick={(appointment) => console.log("Compromisso clicado:", appointment)}
-            onCreateAppointment={handleCreateAppointment}
-          />
-        </TabsContent>
-
-        <TabsContent value="agents" className="mt-6">
-          <AgentAvailability
-            availability={mockAgentAvailability}
-            onUpdate={(availability) => console.log("Disponibilidade atualizada:", availability)}
-            onSyncCalendar={handleSyncCalendar}
-          />
-        </TabsContent>
-
-        <TabsContent value="settings" className="mt-6">
-          <div className="space-y-6">
-            {/* Integração Google Calendar */}
-            <GoogleCalendarIntegration
-              userId={user?.id || 'mock-user-id'}
-              onConnectionChange={(isConnected) => {
-                console.log('Google Calendar connection changed:', isConnected);
-                // Atualizar status de sincronização se necessário
-                if (isConnected) {
-                  setSyncStatus(prev => ({
-                    ...prev,
-                    google: { ...prev.google, status: 'connected' }
-                  }));
-                }
-              }}
+          <TabsContent value="agents" className="mt-6">
+            <AgentAvailability
+              availability={mockAgentAvailability}
+              onUpdate={(availability) => console.log("Disponibilidade atualizada:", availability)}
+              onSyncCalendar={handleSyncCalendar}
             />
+          </TabsContent>
 
-            {/* Outras configurações */}
-            <Card className="imobipro-card">
-              <CardHeader>
-                <CardTitle>Outras Configurações</CardTitle>
-                <CardDescription>
-                  Configure preferências gerais e outras integrações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Configurações adicionais em desenvolvimento</p>
-                  <p className="text-xs mt-2">
-                    Use as abas de Notificações e Sincronização para outras funcionalidades
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="settings" className="mt-6">
+            <div className="space-y-6">
+              <NotificationSystem
+                notifications={notifications}
+                settings={mockNotificationSettings}
+                onNotificationAction={handleNotificationAction}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onDeleteNotification={deleteNotification}
+                onUpdateSettings={(settings) => console.log("Configurações atualizadas:", settings)}
+              />
+              
+              <SyncStatus
+                syncStatus={syncStatus}
+                onManualSync={() => console.log("Sincronização manual iniciada")}
+                onResolveConflicts={() => console.log("Resolvendo conflitos")}
+                onReconnectProvider={handleSyncCalendar}
+              />
+              
+              <GoogleCalendarIntegration
+                userId={user?.id || 'mock-user-id'}
+                onConnectionChange={(isConnected) => {
+                  console.log('Google Calendar connection changed:', isConnected);
+                  if (isConnected) {
+                    setSyncStatus(prev => ({
+                      ...prev,
+                      google: { ...prev.google, status: 'connected' }
+                    }));
+                  }
+                }}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Wizard de agendamento */}
       <BookingWizard

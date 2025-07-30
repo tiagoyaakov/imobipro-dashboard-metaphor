@@ -530,9 +530,8 @@ const ScheduledContent = ({ scheduledReports, actions, isLoading }: any) => {
                       <Play className="h-4 w-4" />
                     </Button>
                     <Button 
-                      variant="outline" 
-                      size="sm"
                       variant={report.isActive ? 'outline' : 'default'}
+                      size="sm"
                     >
                       {report.isActive ? (
                         <Pause className="h-4 w-4" />

@@ -135,10 +135,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     <div
       key={appointment.id}
       className={cn(
-        "p-3 border-l-4 rounded-lg cursor-pointer transition-all duration-200",
-        "hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
+        "p-2 border-l-3 rounded-md cursor-pointer transition-all duration-200",
+        "hover:shadow-sm hover:scale-[1.01] active:scale-[0.99]",
         appointmentStatusColors[appointment.status],
-        "focus:outline-none focus:ring-2 focus:ring-imobipro-blue focus:ring-offset-2"
+        "focus:outline-none focus:ring-1 focus:ring-imobipro-blue focus:ring-offset-1"
       )}
       onClick={() => onAppointmentClick?.(appointment)}
       onKeyDown={(e) => {
@@ -152,11 +152,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       aria-label={`Compromisso: ${appointment.title} às ${formatTime(appointment.startTime)}`}
     >
       <div className="flex items-start justify-between mb-2">
-        <h4 className="font-semibold text-sm text-foreground truncate">
+        <h4 className="font-medium text-xs text-foreground truncate">
           {appointment.title}
         </h4>
         <Badge 
-          className={cn("text-xs ml-2 flex-shrink-0", appointmentTypeColors[appointment.type])}
+          className={cn("text-xs ml-1 flex-shrink-0", appointmentTypeColors[appointment.type])}
           variant="secondary"
         >
           {appointment.type === 'visit' && 'Visita'}
@@ -166,9 +166,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         </Badge>
       </div>
       
-      <div className="space-y-1 text-xs text-muted-foreground">
+      <div className="space-y-0.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
+          <Clock className="w-2.5 h-2.5" />
           <span>
             {formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}
             <span className="ml-1 text-xs">({getAppointmentDuration(appointment)})</span>
@@ -176,13 +176,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
         
         <div className="flex items-center gap-1">
-          <User className="w-3 h-3" />
+          <User className="w-2.5 h-2.5" />
           <span className="truncate">{appointment.clientName}</span>
         </div>
         
         {appointment.location && (
           <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
+            <MapPin className="w-2.5 h-2.5" />
             <span className="truncate">{appointment.location}</span>
           </div>
         )}
@@ -240,28 +240,53 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Calendário */}
-          <Card className="lg:col-span-8 imobipro-card">
+          {/* Calendário - Agora ocupa mais espaço */}
+          <Card className="lg:col-span-10 imobipro-card">
             <CardContent className="p-4">
               <TabsContent value="month" className="m-0">
-                <Calendar
-                  mode="single"
-                  selected={currentDate}
-                  onSelect={handleDateSelect}
-                  month={currentDate}
-                  onMonthChange={setCurrentDate}
-                  className="w-full"
-                  modifiers={{
-                    appointment: (date) => getDayAppointments(date).length > 0
-                  }}
-                  modifiersStyles={{
-                    appointment: { 
-                      backgroundColor: 'hsl(var(--imobipro-blue) / 0.1)',
-                      color: 'hsl(var(--imobipro-blue))',
-                      fontWeight: 'bold'
-                    }
-                  }}
-                />
+                <div className="min-h-[600px] flex items-center justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={currentDate}
+                    onSelect={handleDateSelect}
+                    month={currentDate}
+                    onMonthChange={setCurrentDate}
+                    className="w-full max-w-none scale-110 transform-gpu"
+                    classNames={{
+                      months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                      month: "space-y-4 w-full",
+                      caption: "flex justify-center pt-1 relative items-center text-lg font-semibold",
+                      caption_label: "text-lg font-semibold",
+                      nav: "space-x-1 flex items-center",
+                      nav_button: "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100",
+                      nav_button_previous: "absolute left-1",
+                      nav_button_next: "absolute right-1",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex w-full",
+                      head_cell: "text-muted-foreground rounded-md w-full font-normal text-base p-2",
+                      row: "flex w-full mt-2",
+                      cell: "text-center text-base p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 w-full h-14",
+                      day: "h-full w-full p-0 font-normal hover:bg-accent hover:text-accent-foreground rounded-md flex items-center justify-center text-base transition-colors",
+                      day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground font-semibold",
+                      day_today: "bg-accent text-accent-foreground font-semibold",
+                      day_outside: "text-muted-foreground opacity-50",
+                      day_disabled: "text-muted-foreground opacity-50",
+                      day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                      day_hidden: "invisible",
+                    }}
+                    modifiers={{
+                      appointment: (date) => getDayAppointments(date).length > 0
+                    }}
+                    modifiersStyles={{
+                      appointment: { 
+                        backgroundColor: 'hsl(var(--imobipro-blue) / 0.1)',
+                        color: 'hsl(var(--imobipro-blue))',
+                        fontWeight: 'bold',
+                        border: '2px solid hsl(var(--imobipro-blue) / 0.3)'
+                      }
+                    }}
+                  />
+                </div>
               </TabsContent>
               
               <TabsContent value="week" className="m-0">
@@ -306,27 +331,26 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             </CardContent>
           </Card>
 
-          {/* Painel lateral - Compromissos do dia */}
-          <Card className="lg:col-span-4 imobipro-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  Compromissos do Dia
+          {/* Painel lateral compacto - Compromissos do dia */}
+          <Card className="lg:col-span-2 imobipro-card">
+            <CardHeader className="pb-2 px-2">
+              <div className="text-center">
+                <CardTitle className="text-sm font-semibold">
+                  Hoje
                 </CardTitle>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs mt-1">
                   {dayAppointments.length}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground text-center">
                 {currentDate.toLocaleDateString('pt-BR', { 
-                  weekday: 'short',
                   day: 'numeric',
                   month: 'short'
                 })}
               </p>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[400px] px-4">
+              <ScrollArea className="h-[500px] px-2">
                 {dayAppointments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Eye className="w-8 h-8 mx-auto mb-3 opacity-50" />
@@ -342,7 +366,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-3 pb-4">
+                  <div className="space-y-2 pb-4">
                     {dayAppointments.map(renderAppointmentCard)}
                   </div>
                 )}
