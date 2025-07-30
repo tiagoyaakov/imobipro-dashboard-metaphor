@@ -1,15 +1,18 @@
 
-import { PageTemplate } from "@/components/common/PageTemplate";
-import { GitBranch } from "lucide-react";
+// ===================================================================
+// PIPELINE PAGE - ImobiPRO Dashboard
+// ===================================================================
+// Página principal do módulo Pipeline com visualização Kanban completa,
+// métricas em tempo real e gestão avançada do funil de vendas
+
+import React from 'react';
+import { PipelineKanban } from '@/components/pipeline/PipelineKanban';
 
 const Pipeline = () => {
   return (
-    <PageTemplate
-      title="Pipeline"
-      description="Acompanhe o funil de vendas e oportunidades"
-      icon={GitBranch}
-      content="Dashboard do pipeline será implementado aqui com estágios de vendas, conversões e métricas de performance."
-    />
+    <div className="container mx-auto p-6">
+      <PipelineKanban />
+    </div>
   );
 };
 
