@@ -200,13 +200,34 @@ const Agenda = () => {
           <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
           <p className="text-muted-foreground mt-1">Gerencie compromissos, disponibilidade e sincronização</p>
         </div>
-        <Button 
-          className="bg-imobipro-blue hover:bg-imobipro-blue-dark"
-          onClick={() => setShowBookingWizard(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Agendamento
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Botões de ação movidos para o header */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log("Disponibilidade")}
+            className="flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Disponibilidade</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => console.log("Configurações")}
+            className="flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Configurações</span>
+          </Button>
+          <Button 
+            className="bg-imobipro-blue hover:bg-imobipro-blue-dark"
+            onClick={() => setShowBookingWizard(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Agendamento
+          </Button>
+        </div>
       </div>
 
       {/* Barra de status compacta */}
@@ -234,36 +255,14 @@ const Agenda = () => {
         </div>
       </div>
 
-      {/* Calendário como elemento principal */}
-      <div className="relative">
-        {/* Botões de ação flutuantes */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => console.log("Configurações")}
-            className="bg-background/80 backdrop-blur-sm"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => console.log("Disponibilidade")}
-            className="bg-background/80 backdrop-blur-sm"
-          >
-            <Users className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        <CalendarView
-          appointments={mockAppointments}
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          onAppointmentClick={(appointment) => console.log("Compromisso clicado:", appointment)}
-          onCreateAppointment={handleCreateAppointment}
-        />
-      </div>
+      {/* Calendário como elemento principal sem sobreposições */}
+      <CalendarView
+        appointments={mockAppointments}
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+        onAppointmentClick={(appointment) => console.log("Compromisso clicado:", appointment)}
+        onCreateAppointment={handleCreateAppointment}
+      />
 
       {/* Abas em modal ou drawer para funcionalidades secundárias */}
       <div className="hidden">

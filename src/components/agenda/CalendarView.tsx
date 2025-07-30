@@ -194,15 +194,35 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     <div className={cn("w-full", className)}>
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <CalendarIcon className="w-5 h-5 text-imobipro-blue" />
-            <h2 className="text-xl font-semibold text-foreground">
-              {currentDate.toLocaleDateString('pt-BR', { 
-                month: 'long', 
-                year: 'numeric',
-                ...(viewMode === 'day' && { day: 'numeric' })
-              })}
-            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateDate('prev')}
+                aria-label="Mês anterior"
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <h2 className="text-xl font-semibold text-foreground min-w-[180px] text-center">
+                {currentDate.toLocaleDateString('pt-BR', { 
+                  month: 'long', 
+                  year: 'numeric',
+                  ...(viewMode === 'day' && { day: 'numeric' })
+                })}
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateDate('next')}
+                aria-label="Próximo mês"
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -217,25 +237,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 Dia
               </TabsTrigger>
             </TabsList>
-            
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateDate('prev')}
-                aria-label="Período anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateDate('next')}
-                aria-label="Próximo período"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -255,12 +256,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     classNames={{
                       months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                       month: "space-y-4 w-full",
-                      caption: "flex justify-center pt-1 relative items-center text-lg font-semibold",
-                      caption_label: "text-lg font-semibold",
-                      nav: "space-x-1 flex items-center",
-                      nav_button: "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100",
-                      nav_button_previous: "absolute left-1",
-                      nav_button_next: "absolute right-1",
+                      caption: "flex justify-center items-center pt-1 relative text-lg font-semibold min-h-[2.5rem]",
+                      caption_label: "text-lg font-semibold text-center min-w-[200px]",
+                      nav: "hidden",
+                      nav_button: "hidden",
+                      nav_button_previous: "hidden",
+                      nav_button_next: "hidden",
                       table: "w-full border-collapse space-y-1",
                       head_row: "flex w-full",
                       head_cell: "text-muted-foreground rounded-md w-full font-normal text-base p-2",
