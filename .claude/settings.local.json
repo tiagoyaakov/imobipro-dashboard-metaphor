@@ -39,10 +39,7 @@
       "Bash(curl:*)",
       "Bash(find:*)",
       "Bash(del:*)",
-      "mcp__supabase-community-supabase-mcp__list_migrations",
-      "mcp__supabase-community-supabase-mcp__list_tables",
-      "mcp__supabase-community-supabase-mcp__execute_sql",
-      "mcp__supabase-community-supabase-mcp__apply_migration"
+      "Bash(cat:*)"
     ],
     "deny": []
   }

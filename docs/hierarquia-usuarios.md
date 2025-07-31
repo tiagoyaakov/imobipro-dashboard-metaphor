@@ -50,7 +50,7 @@ O sistema ImobiPRO Dashboard implementou uma **nova hierarquia de usuários** pr
 ---
 
 ### **👤 AGENT (Corretor)**
-- **Função**: Corretor/agente imobiliário
+- **Função**: Corretor
 - **Visibilidade**: Visível para DEV_MASTER e ADMIN da sua imobiliária
 - **Permissões**: Acesso apenas aos próprios dados
 
