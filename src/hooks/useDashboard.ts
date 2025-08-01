@@ -7,8 +7,10 @@
 // ================================================================
 
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { useState, useEffect, useCallback } from 'react';
+import { propertyService, contactService, appointmentService, dealService } from '@/services';
+import { EventBus, SystemEvents, useEventBus } from '@/lib/event-bus';
 import type { 
   DashboardStats, 
   DashboardChartData, 
@@ -63,86 +65,85 @@ const CACHE_CONFIG = {
  */
 async function fetchDashboardStats(): Promise<DashboardStats> {
   try {
-    // Executar queries em paralelo para performance
+    // Executar queries em paralelo usando os serviços
     const [
-      propertiesResult,
-      contactsResult,
-      appointmentsResult,
-      dealsResult
+      propertiesStats,
+      contactsStats,
+      appointmentsStats,
+      dealsStats
     ] = await Promise.allSettled([
-      // Total de propriedades e mudança mensal
-      supabase
-        .from('Property')
-        .select('id, createdAt, status, salePrice')
-        .eq('isActive', true),
-      
-      // Clientes ativos
-      supabase
-        .from('Contact')
-        .select('id, createdAt, status, leadStage')
-        .eq('status', 'ACTIVE'),
-      
-      // Agendamentos desta semana
-      supabase
-        .from('Appointment')
-        .select('id, createdAt, status, scheduledFor')
-        .gte('scheduledFor', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-        .lte('scheduledFor', new Date().toISOString()),
-      
-      // Receita mensal
-      supabase
-        .from('Deal')
-        .select('id, value, stage, closedAt')
-        .eq('stage', 'WON')
-        .gte('closedAt', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+      propertyService.getStats(),
+      contactService.getStats(),
+      appointmentService.getStats(),
+      dealService.getStats()
     ]);
 
-    // Processar resultados
-    const properties = propertiesResult.status === 'fulfilled' ? propertiesResult.value.data || [] : [];
-    const contacts = contactsResult.status === 'fulfilled' ? contactsResult.value.data || [] : [];
-    const appointments = appointmentsResult.status === 'fulfilled' ? appointmentsResult.value.data || [] : [];
-    const deals = dealsResult.status === 'fulfilled' ? dealsResult.value.data || [] : [];
+    // Processar resultados com fallback
+    const propertyData = propertiesStats.status === 'fulfilled' ? propertiesStats.value.data : null;
+    const contactData = contactsStats.status === 'fulfilled' ? contactsStats.value.data : null;
+    const appointmentData = appointmentsStats.status === 'fulfilled' ? appointmentsStats.value.data : null;
+    const dealData = dealsStats.status === 'fulfilled' ? dealsStats.value.data : null;
 
-    // Calcular mudanças mensais
-    const currentMonth = new Date();
-    const lastMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-    
-    const propertiesThisMonth = properties.filter(p => 
-      new Date(p.createdAt) >= lastMonth
-    ).length;
-    
-    const contactsThisMonth = contacts.filter(c => 
-      new Date(c.createdAt) >= lastMonth
-    ).length;
+    // Calcular mudanças percentuais
+    const calculateChange = (current: number, previous: number): string => {
+      if (previous === 0) return current > 0 ? '+100%' : '0%';
+      const change = ((current - previous) / previous) * 100;
+      return change >= 0 ? `+${Math.round(change)}%` : `${Math.round(change)}%`;
+    };
 
-    // Calcular receita total
-    const totalRevenue = deals.reduce((sum, deal) => sum + (deal.value || 0), 0);
+    // Determinar tendências
+    const getTrend = (change: string): 'up' | 'down' | 'stable' => {
+      if (change.startsWith('+') && change !== '+0%') return 'up';
+      if (change.startsWith('-')) return 'down';
+      return 'stable';
+    };
+
+    // Valores atuais e históricos
+    const totalProperties = propertyData?.total || 0;
+    const propertiesThisMonth = propertyData?.thisMonth || 0;
+    const propertiesLastMonth = propertyData?.lastMonth || 0;
+
+    const activeClients = contactData?.activeLeads || 0;
+    const clientsThisMonth = contactData?.leadsThisMonth || 0;
+    const clientsLastMonth = contactData?.leadsLastMonth || 0;
+
+    const weeklyAppointments = appointmentData?.thisWeek || 0;
+    const appointmentsLastWeek = appointmentData?.lastWeek || 0;
+
+    const monthlyRevenue = dealData?.closedThisMonth?.value || 0;
+    const revenueLastMonth = dealData?.closedLastMonth?.value || 0;
+
+    // Calcular mudanças
+    const propertiesChange = calculateChange(propertiesThisMonth, propertiesLastMonth);
+    const clientsChange = calculateChange(clientsThisMonth, clientsLastMonth);
+    const appointmentsChange = calculateChange(weeklyAppointments, appointmentsLastWeek);
+    const revenueChange = calculateChange(monthlyRevenue, revenueLastMonth);
 
     return {
       totalProperties: {
-        value: properties.length,
-        change: propertiesThisMonth > 0 ? `+${Math.round((propertiesThisMonth / properties.length) * 100)}%` : '0%',
-        trend: 'up' as const,
+        value: totalProperties,
+        change: propertiesChange,
+        trend: getTrend(propertiesChange),
       },
       activeClients: {
-        value: contacts.length,
-        change: contactsThisMonth > 0 ? `+${Math.round((contactsThisMonth / contacts.length) * 100)}%` : '0%',
-        trend: 'up' as const,
+        value: activeClients,
+        change: clientsChange,
+        trend: getTrend(clientsChange),
       },
       weeklyAppointments: {
-        value: appointments.length,
-        change: appointments.length > 0 ? '+23%' : '0%', // Placeholder para cálculo real
-        trend: 'up' as const,
+        value: weeklyAppointments,
+        change: appointmentsChange,
+        trend: getTrend(appointmentsChange),
       },
       monthlyRevenue: {
-        value: totalRevenue,
-        change: '+15%', // Placeholder para cálculo de comparação mensal
-        trend: 'up' as const,
+        value: monthlyRevenue,
+        change: revenueChange,
+        trend: getTrend(revenueChange),
         formatted: new Intl.NumberFormat('pt-BR', {
           style: 'currency',
           currency: 'BRL',
           minimumFractionDigits: 0,
-        }).format(totalRevenue),
+        }).format(monthlyRevenue),
       },
       lastUpdated: new Date().toISOString(),
     };
@@ -168,33 +169,61 @@ async function fetchChartData(period: string = '6months'): Promise<DashboardChar
 
     const days = periodMap[period as keyof typeof periodMap] || 180;
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const endDate = new Date();
 
-    // Buscar dados de vendas por mês
-    const { data: salesData, error: salesError } = await supabase
-      .from('Deal')
-      .select('value, closedAt, stage')
-      .eq('stage', 'WON')
-      .gte('closedAt', startDate.toISOString())
-      .order('closedAt', { ascending: true });
+    // Buscar dados em paralelo
+    const [dealsResult, propertiesResult] = await Promise.allSettled([
+      // Buscar deals fechados no período
+      dealService.findAll({
+        filters: {
+          stage: 'WON',
+          closedDateFrom: startDate.toISOString(),
+          closedDateTo: endDate.toISOString()
+        },
+        orderBy: 'closedAt',
+        ascending: true
+      }),
+      
+      // Buscar propriedades criadas no período
+      propertyService.findAll({
+        filters: {
+          createdFrom: startDate.toISOString(),
+          createdTo: endDate.toISOString()
+        },
+        orderBy: 'createdAt',
+        ascending: true
+      })
+    ]);
 
-    if (salesError) throw salesError;
+    // Processar dados de vendas
+    const salesData = dealsResult.status === 'fulfilled' && dealsResult.value.data 
+      ? dealsResult.value.data.map(deal => ({
+          value: Number(deal.value),
+          closedAt: deal.closedAt || deal.updatedAt
+        }))
+      : [];
 
-    // Buscar dados de propriedades por mês  
-    const { data: propertiesData, error: propertiesError } = await supabase
-      .from('Property')
-      .select('createdAt, status, salePrice')
-      .gte('createdAt', startDate.toISOString())
-      .order('createdAt', { ascending: true });
-
-    if (propertiesError) throw propertiesError;
+    // Processar dados de propriedades
+    const propertiesData = propertiesResult.status === 'fulfilled' && propertiesResult.value.data
+      ? propertiesResult.value.data.map(prop => ({
+          createdAt: prop.createdAt,
+          status: prop.status,
+          salePrice: Number(prop.salePrice || 0)
+        }))
+      : [];
 
     // Agrupar dados por mês
-    const monthlyRevenue = groupDataByMonth(salesData || [], 'closedAt', 'value');
-    const monthlyProperties = groupDataByMonth(propertiesData || [], 'createdAt');
+    const monthlyRevenue = groupDataByMonth(salesData, 'closedAt', 'value');
+    const monthlyProperties = groupDataByMonth(propertiesData, 'createdAt');
+
+    // Garantir que todos os meses estejam representados
+    const allMonths = generateMonthRange(startDate, endDate);
+    const completeRevenue = fillMissingMonths(monthlyRevenue, allMonths);
+    const completeProperties = fillMissingMonths(monthlyProperties, allMonths);
 
     return {
-      revenue: monthlyRevenue,
-      properties: monthlyProperties,
+      revenue: completeRevenue,
+      properties: completeProperties,
       period,
       lastUpdated: new Date().toISOString(),
     };
@@ -210,29 +239,97 @@ async function fetchChartData(period: string = '6months'): Promise<DashboardChar
  */
 async function fetchRecentActivities(limit: number = 10): Promise<RecentActivity[]> {
   try {
-    const { data: activities, error } = await supabase
-      .from('Activity')
-      .select(`
-        id,
-        type,
-        description,
-        createdAt,
-        user:userId (
-          name
-        )
-      `)
-      .order('createdAt', { ascending: false })
-      .limit(limit);
+    // Por enquanto, vamos buscar atividades de múltiplas fontes e combiná-las
+    const [appointmentsResult, dealsResult, contactsResult] = await Promise.allSettled([
+      // Buscar agendamentos recentes
+      appointmentService.findAll({
+        orderBy: 'createdAt',
+        ascending: false,
+        limit: Math.floor(limit / 3)
+      }),
+      
+      // Buscar deals recentes
+      dealService.findAll({
+        orderBy: 'updatedAt',
+        ascending: false,
+        limit: Math.floor(limit / 3)
+      }),
+      
+      // Buscar contatos recentes
+      contactService.findAll({
+        orderBy: 'updatedAt',
+        ascending: false,
+        limit: Math.floor(limit / 3)
+      })
+    ]);
 
-    if (error) throw error;
+    const activities: RecentActivity[] = [];
 
-    return (activities || []).map(activity => ({
-      id: activity.id,
-      action: activity.description,
-      time: formatRelativeTime(activity.createdAt),
-      type: mapActivityType(activity.type),
-      user: activity.user?.name || 'Sistema',
-    }));
+    // Processar agendamentos
+    if (appointmentsResult.status === 'fulfilled' && appointmentsResult.value.data) {
+      appointmentsResult.value.data.forEach(apt => {
+        activities.push({
+          id: `apt-${apt.id}`,
+          action: `Agendamento ${apt.type === 'VISIT' ? 'de visita' : 'de reunião'} marcado`,
+          time: formatRelativeTime(apt.createdAt),
+          type: 'appointment',
+          user: apt.agent?.name || 'Sistema'
+        });
+      });
+    }
+
+    // Processar deals
+    if (dealsResult.status === 'fulfilled' && dealsResult.value.data) {
+      dealsResult.value.data.forEach(deal => {
+        const action = deal.stage === 'WON' 
+          ? `Negócio fechado: ${deal.title}`
+          : `Negócio atualizado para ${deal.stage}`;
+        
+        activities.push({
+          id: `deal-${deal.id}`,
+          action,
+          time: formatRelativeTime(deal.updatedAt),
+          type: 'deal',
+          user: deal.agent?.name || 'Sistema'
+        });
+      });
+    }
+
+    // Processar contatos
+    if (contactsResult.status === 'fulfilled' && contactsResult.value.data) {
+      contactsResult.value.data.forEach(contact => {
+        activities.push({
+          id: `contact-${contact.id}`,
+          action: `Lead ${contact.name} ${contact.createdAt === contact.updatedAt ? 'adicionado' : 'atualizado'}`,
+          time: formatRelativeTime(contact.updatedAt),
+          type: 'contact',
+          user: contact.agent?.name || 'Sistema'
+        });
+      });
+    }
+
+    // Ordenar por tempo e limitar
+    return activities
+      .sort((a, b) => {
+        // Converter tempo relativo de volta para comparação
+        // Isso é uma simplificação - em produção, seria melhor manter timestamps
+        const getTimeValue = (time: string): number => {
+          if (time === 'agora') return 0;
+          const match = time.match(/(\d+)\s*(min|h|dias?)/);
+          if (!match) return Infinity;
+          
+          const value = parseInt(match[1]);
+          const unit = match[2];
+          
+          if (unit.includes('min')) return value;
+          if (unit === 'h') return value * 60;
+          if (unit.includes('dia')) return value * 24 * 60;
+          return Infinity;
+        };
+        
+        return getTimeValue(a.time) - getTimeValue(b.time);
+      })
+      .slice(0, limit);
 
   } catch (error) {
     console.error('Erro ao buscar atividades recentes:', error);
@@ -348,35 +445,61 @@ export function useDashboard(options: UseDashboardOptions = {}): UseDashboardRet
     };
   }, []);
 
-  // Configurar atualizações em tempo real via Supabase
+  // Configurar atualizações em tempo real via EventBus
   useEffect(() => {
     if (!enableRealtime || !isOnline) return;
 
-    const channel = supabase
-      .channel('dashboard-realtime')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'Property' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
-          queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.chartData(chartPeriod) });
+    const events = [
+      SystemEvents.PROPERTY_CREATED,
+      SystemEvents.PROPERTY_UPDATED,
+      SystemEvents.CONTACT_CREATED,
+      SystemEvents.CONTACT_UPDATED,
+      SystemEvents.CONTACT_STAGE_CHANGED,
+      SystemEvents.APPOINTMENT_CREATED,
+      SystemEvents.APPOINTMENT_UPDATED,
+      SystemEvents.DEAL_CREATED,
+      SystemEvents.DEAL_UPDATED,
+      SystemEvents.DEAL_WON,
+      SystemEvents.DEAL_LOST
+    ];
+
+    const subscriptions = events.map(event => 
+      EventBus.on(event, () => {
+        // Invalidar queries relevantes baseado no evento
+        switch (event) {
+          case SystemEvents.PROPERTY_CREATED:
+          case SystemEvents.PROPERTY_UPDATED:
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.chartData(chartPeriod) });
+            break;
+          
+          case SystemEvents.CONTACT_CREATED:
+          case SystemEvents.CONTACT_UPDATED:
+          case SystemEvents.CONTACT_STAGE_CHANGED:
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.activities(activitiesLimit) });
+            break;
+          
+          case SystemEvents.APPOINTMENT_CREATED:
+          case SystemEvents.APPOINTMENT_UPDATED:
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.activities(activitiesLimit) });
+            break;
+          
+          case SystemEvents.DEAL_CREATED:
+          case SystemEvents.DEAL_UPDATED:
+          case SystemEvents.DEAL_WON:
+          case SystemEvents.DEAL_LOST:
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.chartData(chartPeriod) });
+            queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.activities(activitiesLimit) });
+            break;
         }
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'Contact' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats });
-        }
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'Activity' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.activities(activitiesLimit) });
-        }
-      )
-      .subscribe();
+      })
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      subscriptions.forEach(sub => sub.unsubscribe());
     };
   }, [enableRealtime, isOnline, chartPeriod, activitiesLimit, queryClient]);
 
@@ -485,6 +608,37 @@ function mapActivityType(type: string): 'property' | 'contact' | 'appointment' |
   };
 
   return typeMap[type] || 'other';
+}
+
+/**
+ * Gerar range de meses entre duas datas
+ */
+function generateMonthRange(startDate: Date, endDate: Date): string[] {
+  const months: string[] = [];
+  const current = new Date(startDate);
+  
+  while (current <= endDate) {
+    const monthKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+    months.push(monthKey);
+    current.setMonth(current.getMonth() + 1);
+  }
+  
+  return months;
+}
+
+/**
+ * Preencher meses faltantes com valor zero
+ */
+function fillMissingMonths(
+  data: { month: string; value: number }[],
+  allMonths: string[]
+): { month: string; value: number }[] {
+  const dataMap = new Map(data.map(item => [item.month, item.value]));
+  
+  return allMonths.map(month => ({
+    month,
+    value: dataMap.get(month) || 0
+  }));
 }
 
 // ================================================================

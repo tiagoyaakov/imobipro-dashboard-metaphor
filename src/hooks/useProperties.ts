@@ -1,536 +1,376 @@
-// ================================================
-// HOOKS REACT QUERY - MÓDULO PROPRIEDADES
-// ================================================
-// Data: 30/01/2025
-// Descrição: Hooks personalizados para gestão de propriedades
-// Funcionalidades: CRUD, filtros, busca, métricas, cache inteligente
-// ================================================
+// ================================================================
+// HOOK USEPROPERTIES - INTEGRAÇÃO COM PROPERTYSERVICE
+// ================================================================
+// Data: 01/08/2025
+// Descrição: Hook para gestão de propriedades com cache e real-time
+// ================================================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { propertiesService } from '@/services/propertiesService';
-import { vivaRealService } from '@/services/vivaRealService';
-import type {
-  Property,
-  PropertyOwner,
-  PropertyImage,
-  PropertyFormData,
-  PropertyOwnerFormData,
-  PropertySearchParams,
-  PropertySearchResult,
-  PropertyMetrics,
-  PropertySyncLog,
-  VivaRealProperty,
-  VivaRealSyncOptions,
-} from '@/types/properties';
+import { useCallback, useMemo } from 'react';
+import { useSupabaseQuery, useSupabaseMutation, CacheStrategy, usePaginatedQuery } from './useSupabaseQuery';
+import { propertyService } from '@/services';
+import { EventBus, SystemEvents } from '@/lib/event-bus';
+import { toast } from '@/hooks/use-toast';
+import type { Property, PropertyFilters, PropertyStats } from '@/services';
 
-// ================================================
-// QUERY KEYS
-// ================================================
+// ================================================================
+// INTERFACES
+// ================================================================
 
-export const PROPERTIES_QUERY_KEYS = {
-  all: ['properties'] as const,
-  lists: () => [...PROPERTIES_QUERY_KEYS.all, 'list'] as const,
-  list: (params: PropertySearchParams) => [...PROPERTIES_QUERY_KEYS.lists(), params] as const,
-  details: () => [...PROPERTIES_QUERY_KEYS.all, 'detail'] as const,
-  detail: (id: string) => [...PROPERTIES_QUERY_KEYS.details(), id] as const,
-  metrics: () => [...PROPERTIES_QUERY_KEYS.all, 'metrics'] as const,
-  owners: () => ['property-owners'] as const,
-  syncLogs: () => ['property-sync-logs'] as const,
-  vivaRealStats: () => ['viva-real-stats'] as const,
-} as const;
+export interface UsePropertiesOptions {
+  filters?: PropertyFilters;
+  limit?: number;
+  page?: number;
+  enableRealtime?: boolean;
+  cacheStrategy?: CacheStrategy;
+}
 
-// ================================================
-// HOOKS PARA BUSCA E LISTAGEM
-// ================================================
-
-/**
- * Hook para buscar propriedades com filtros e paginação
- */
-export const useProperties = (params: PropertySearchParams = {}) => {
-  return useQuery({
-    queryKey: PROPERTIES_QUERY_KEYS.list(params),
-    queryFn: () => propertiesService.getProperties(params),
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
-    refetchOnWindowFocus: false,
-  });
-};
-
-/**
- * Hook para buscar propriedade específica por ID
- */
-export const useProperty = (id: string | undefined) => {
-  return useQuery({
-    queryKey: PROPERTIES_QUERY_KEYS.detail(id || ''),
-    queryFn: () => id ? propertiesService.getPropertyById(id) : null,
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-};
-
-/**
- * Hook para buscar propriedades por localização
- */
-export const usePropertiesByLocation = (
-  latitude: number | undefined,
-  longitude: number | undefined,
-  radiusKm: number = 5
-) => {
-  return useQuery({
-    queryKey: [...PROPERTIES_QUERY_KEYS.all, 'location', latitude, longitude, radiusKm],
-    queryFn: () => 
-      latitude && longitude 
-        ? propertiesService.searchPropertiesByLocation(latitude, longitude, radiusKm)
-        : [],
-    enabled: !!(latitude && longitude),
-    staleTime: 10 * 60 * 1000, // 10 minutos
-  });
-};
-
-/**
- * Hook para métricas de propriedades
- */
-export const usePropertyMetrics = () => {
-  return useQuery({
-    queryKey: PROPERTIES_QUERY_KEYS.metrics(),
-    queryFn: () => propertiesService.getPropertyMetrics(),
-    staleTime: 15 * 60 * 1000, // 15 minutos
-    gcTime: 30 * 60 * 1000, // 30 minutos
-  });
-};
-
-// ================================================
-// HOOKS PARA PROPRIETÁRIOS
-// ================================================
-
-/**
- * Hook para buscar proprietários
- */
-export const usePropertyOwners = () => {
-  return useQuery({
-    queryKey: PROPERTIES_QUERY_KEYS.owners(),
-    queryFn: () => propertiesService.getPropertyOwners(),
-    staleTime: 10 * 60 * 1000,
-    gcTime: 20 * 60 * 1000,
-  });
-};
-
-// ================================================
-// HOOKS PARA VIVA REAL
-// ================================================
-
-/**
- * Hook para logs de sincronização
- */
-export const useSyncLogs = (limit: number = 50) => {
-  return useQuery({
-    queryKey: [...PROPERTIES_QUERY_KEYS.syncLogs(), limit],
-    queryFn: () => vivaRealService.getSyncLogs(limit),
-    staleTime: 2 * 60 * 1000, // 2 minutos
-  });
-};
-
-/**
- * Hook para estatísticas do Viva Real
- */
-export const useVivaRealStats = () => {
-  return useQuery({
-    queryKey: PROPERTIES_QUERY_KEYS.vivaRealStats(),
-    queryFn: () => vivaRealService.getSyncStats(),
-    staleTime: 5 * 60 * 1000,
-  });
-};
-
-// ================================================
-// HOOKS DE MUTAÇÃO - PROPRIEDADES
-// ================================================
-
-/**
- * Hook para criar propriedade
- */
-export const useCreateProperty = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: PropertyFormData) => propertiesService.createProperty(data),
-    onSuccess: (newProperty) => {
-      // Invalidar listagens
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.metrics() });
-      
-      // Adicionar ao cache de detalhes
-      queryClient.setQueryData(PROPERTIES_QUERY_KEYS.detail(newProperty.id), newProperty);
-      
-      toast.success('Propriedade criada com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar propriedade: ${error.message}`);
-    },
-  });
-};
-
-/**
- * Hook para atualizar propriedade
- */
-export const useUpdateProperty = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PropertyFormData> }) =>
-      propertiesService.updateProperty(id, data),
-    onSuccess: (updatedProperty) => {
-      // Atualizar cache de detalhes
-      queryClient.setQueryData(PROPERTIES_QUERY_KEYS.detail(updatedProperty.id), updatedProperty);
-      
-      // Invalidar listagens
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.metrics() });
-      
-      toast.success('Propriedade atualizada com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar propriedade: ${error.message}`);
-    },
-  });
-};
-
-/**
- * Hook para excluir propriedade
- */
-export const useDeleteProperty = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => propertiesService.deleteProperty(id),
-    onSuccess: (_, deletedId) => {
-      // Remover do cache de detalhes
-      queryClient.removeQueries({ queryKey: PROPERTIES_QUERY_KEYS.detail(deletedId) });
-      
-      // Invalidar listagens
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.metrics() });
-      
-      toast.success('Propriedade excluída com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir propriedade: ${error.message}`);
-    },
-  });
-};
-
-// ================================================
-// HOOKS DE MUTAÇÃO - PROPRIETÁRIOS
-// ================================================
-
-/**
- * Hook para criar proprietário
- */
-export const useCreatePropertyOwner = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: PropertyOwnerFormData) => propertiesService.createPropertyOwner(data),
-    onSuccess: (newOwner) => {
-      // Invalidar lista de proprietários
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.owners() });
-      
-      toast.success('Proprietário criado com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar proprietário: ${error.message}`);
-    },
-  });
-};
-
-// ================================================
-// HOOKS DE MUTAÇÃO - IMAGENS
-// ================================================
-
-/**
- * Hook para upload de imagem
- */
-export const useUploadPropertyImage = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ 
-      propertyId, 
-      file, 
-      metadata 
-    }: { 
-      propertyId: string; 
-      file: File; 
-      metadata?: Partial<PropertyImage> 
-    }) => propertiesService.uploadPropertyImage(propertyId, file, metadata),
-    onSuccess: (_, { propertyId }) => {
-      // Invalidar detalhes da propriedade para recarregar imagens
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.detail(propertyId) });
-      
-      toast.success('Imagem enviada com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao enviar imagem: ${error.message}`);
-    },
-  });
-};
-
-/**
- * Hook para excluir imagem
- */
-export const useDeletePropertyImage = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ imageId, propertyId }: { imageId: string; propertyId: string }) => 
-      propertiesService.deletePropertyImage(imageId),
-    onSuccess: (_, { propertyId }) => {
-      // Invalidar detalhes da propriedade para recarregar imagens
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.detail(propertyId) });
-      
-      toast.success('Imagem excluída com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir imagem: ${error.message}`);
-    },
-  });
-};
-
-// ================================================
-// HOOKS DE MUTAÇÃO - VIVA REAL
-// ================================================
-
-/**
- * Hook para importar do Viva Real
- */
-export const useImportFromVivaReal = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ 
-      jsonData, 
-      options 
-    }: { 
-      jsonData: VivaRealProperty[]; 
-      options?: VivaRealSyncOptions 
-    }) => vivaRealService.importFromJsonFile(jsonData, options),
-    onSuccess: (result) => {
-      // Invalidar todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.metrics() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.syncLogs() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.vivaRealStats() });
-      
-      toast.success(
-        `Importação concluída! ${result.success} propriedades importadas${
-          result.failed > 0 ? `, ${result.failed} falharam` : ''
-        }`
-      );
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro na importação: ${error.message}`);
-    },
-  });
-};
-
-/**
- * Hook para sincronizar propriedade específica
- */
-export const useSyncProperty = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (vivaRealProperty: VivaRealProperty) => 
-      vivaRealService.syncProperty(vivaRealProperty),
-    onSuccess: (property) => {
-      // Atualizar cache
-      queryClient.setQueryData(PROPERTIES_QUERY_KEYS.detail(property.id), property);
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.lists() });
-      queryClient.invalidateQueries({ queryKey: PROPERTIES_QUERY_KEYS.syncLogs() });
-      
-      toast.success('Propriedade sincronizada com sucesso!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Erro na sincronização: ${error.message}`);
-    },
-  });
-};
-
-// ================================================
-// HOOKS COMPOSTOS PARA UI
-// ================================================
-
-/**
- * Hook composto para gerenciamento completo de propriedades
- */
-export const usePropertiesManager = (searchParams: PropertySearchParams = {}) => {
-  const propertiesQuery = useProperties(searchParams);
-  const metricsQuery = usePropertyMetrics();
-  const ownersQuery = usePropertyOwners();
+export interface UsePropertiesReturn {
+  // Dados
+  properties: Property[] | undefined;
+  totalCount: number;
+  stats: PropertyStats | undefined;
   
-  const createMutation = useCreateProperty();
-  const updateMutation = useUpdateProperty();
-  const deleteMutation = useDeleteProperty();
+  // Estados
+  isLoading: boolean;
+  isLoadingStats: boolean;
+  error: Error | null;
   
-  return {
-    // Queries
-    properties: propertiesQuery.data,
-    metrics: metricsQuery.data,
-    owners: ownersQuery.data,
-    
-    // Estados de loading
-    isLoading: propertiesQuery.isLoading,
-    isLoadingMetrics: metricsQuery.isLoading,
-    isLoadingOwners: ownersQuery.isLoading,
-    
-    // Estados de erro
-    error: propertiesQuery.error,
-    metricsError: metricsQuery.error,
-    ownersError: ownersQuery.error,
-    
-    // Mutations
-    createProperty: createMutation.mutate,
-    updateProperty: updateMutation.mutate,
-    deleteProperty: deleteMutation.mutate,
-    
-    // Estados das mutations
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    
-    // Refetch functions
-    refetchProperties: propertiesQuery.refetch,
-    refetchMetrics: metricsQuery.refetch,
-    refetchOwners: ownersQuery.refetch,
-  };
-};
+  // Paginação
+  page: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: () => void;
+  previousPage: () => void;
+  goToPage: (page: number) => void;
+  
+  // Ações
+  createProperty: (data: any) => Promise<void>;
+  updateProperty: (id: string, data: any) => Promise<void>;
+  deleteProperty: (id: string) => Promise<void>;
+  uploadImages: (propertyId: string, files: File[]) => Promise<void>;
+  
+  // Utilidades
+  refetch: () => void;
+  refetchStats: () => void;
+}
 
-/**
- * Hook para dashboard de propriedades
- */
-export const usePropertiesDashboard = () => {
-  const metrics = usePropertyMetrics();
-  const recentProperties = useProperties({ 
-    sortBy: 'createdAt', 
-    sortOrder: 'desc', 
-    limit: 10 
-  });
-  const vivaRealStats = useVivaRealStats();
-  
-  return {
-    metrics: metrics.data,
-    recentProperties: recentProperties.data?.properties || [],
-    vivaRealStats: vivaRealStats.data,
-    
-    isLoading: metrics.isLoading || recentProperties.isLoading || vivaRealStats.isLoading,
-    
-    error: metrics.error || recentProperties.error || vivaRealStats.error,
-    
-    refetch: () => {
-      metrics.refetch();
-      recentProperties.refetch();
-      vivaRealStats.refetch();
-    },
-  };
-};
+// ================================================================
+// HOOK PRINCIPAL
+// ================================================================
 
-/**
- * Hook para formulário de propriedade com validação
- */
-export const usePropertyForm = (propertyId?: string) => {
-  const propertyQuery = useProperty(propertyId);
-  const ownersQuery = usePropertyOwners();
-  
-  const createMutation = useCreateProperty();
-  const updateMutation = useUpdateProperty();
-  
-  const handleSubmit = async (data: PropertyFormData) => {
-    try {
-      if (propertyId) {
-        await updateMutation.mutateAsync({ id: propertyId, data });
-      } else {
-        await createMutation.mutateAsync(data);
-      }
-    } catch (error) {
-      // Error já tratado nos hooks de mutation
-      throw error;
+export function useProperties(options: UsePropertiesOptions = {}): UsePropertiesReturn {
+  const {
+    filters,
+    limit = 20,
+    enableRealtime = true,
+    cacheStrategy = CacheStrategy.DYNAMIC
+  } = options;
+
+  // Query para listar propriedades com paginação
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    page,
+    nextPage,
+    previousPage,
+    goToPage,
+    hasNextPage,
+    hasPreviousPage
+  } = usePaginatedQuery(
+    ['properties', ...(filters ? [JSON.stringify(filters)] : [])],
+    (page, limit) => propertyService.findAll({
+      filters,
+      limit,
+      offset: page * limit,
+      orderBy: 'createdAt',
+      ascending: false
+    }),
+    limit,
+    {
+      cacheStrategy,
+      staleTime: cacheStrategy === CacheStrategy.STATIC ? 30 * 60 * 1000 : 60 * 1000
     }
-  };
-  
-  return {
-    property: propertyQuery.data,
-    owners: ownersQuery.data,
-    
-    isLoading: propertyQuery.isLoading || ownersQuery.isLoading,
-    isSubmitting: createMutation.isPending || updateMutation.isPending,
-    
-    error: propertyQuery.error || ownersQuery.error,
-    
-    handleSubmit,
-    
-    refetch: () => {
-      propertyQuery.refetch();
-      ownersQuery.refetch();
+  );
+
+  // Query para estatísticas
+  const {
+    data: stats,
+    isLoading: isLoadingStats,
+    refetch: refetchStats
+  } = useSupabaseQuery(
+    ['properties', 'stats', ...(filters ? [JSON.stringify(filters)] : [])],
+    () => propertyService.getStats(filters),
+    {
+      cacheStrategy: CacheStrategy.DYNAMIC,
+      staleTime: 5 * 60 * 1000
+    }
+  );
+
+  // Mutation para criar propriedade
+  const createMutation = useSupabaseMutation(
+    async (data: any) => {
+      const result = await propertyService.create(data);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_CREATED, {
+          property: result.data,
+          userId: data.agentId
+        });
+      }
+      return result;
     },
-  };
-};
+    {
+      invalidateQueries: [['properties'], ['properties', 'stats']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade criada',
+          description: 'A propriedade foi adicionada com sucesso'
+        });
+      }
+    }
+  );
 
-/**
- * Hook para gerenciamento de imagens
- */
-export const usePropertyImages = (propertyId: string) => {
-  const propertyQuery = useProperty(propertyId);
-  
-  const uploadMutation = useUploadPropertyImage();
-  const deleteMutation = useDeletePropertyImage();
-  
-  const handleUpload = (file: File, metadata?: Partial<PropertyImage>) => {
-    return uploadMutation.mutateAsync({ propertyId, file, metadata });
-  };
-  
-  const handleDelete = (imageId: string) => {
-    return deleteMutation.mutateAsync({ imageId, propertyId });
-  };
-  
+  // Mutation para atualizar propriedade
+  const updateMutation = useSupabaseMutation(
+    async ({ id, data }: { id: string; data: any }) => {
+      const result = await propertyService.update(id, data);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_UPDATED, {
+          property: result.data,
+          userId: data.agentId
+        });
+      }
+      return result;
+    },
+    {
+      invalidateQueries: [['properties'], ['properties', 'stats']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade atualizada',
+          description: 'As alterações foram salvas com sucesso'
+        });
+      }
+    }
+  );
+
+  // Mutation para deletar propriedade
+  const deleteMutation = useSupabaseMutation(
+    async (id: string) => {
+      const result = await propertyService.delete(id);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_DELETED, {
+          propertyId: id
+        });
+      }
+      return result;
+    },
+    {
+      invalidateQueries: [['properties'], ['properties', 'stats']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade removida',
+          description: 'A propriedade foi removida com sucesso'
+        });
+      }
+    }
+  );
+
+  // Mutation para upload de imagens
+  const uploadImagesMutation = useSupabaseMutation(
+    async ({ propertyId, files }: { propertyId: string; files: File[] }) => {
+      const result = await propertyService.uploadImages(propertyId, files);
+      return result;
+    },
+    {
+      invalidateQueries: [['properties']],
+      onSuccess: () => {
+        toast({
+          title: 'Imagens enviadas',
+          description: 'As imagens foram adicionadas com sucesso'
+        });
+      }
+    }
+  );
+
+  // Funções wrapper para as mutations
+  const createProperty = useCallback(async (data: any) => {
+    await createMutation.mutateAsync(data);
+  }, [createMutation]);
+
+  const updateProperty = useCallback(async (id: string, data: any) => {
+    await updateMutation.mutateAsync({ id, data });
+  }, [updateMutation]);
+
+  const deleteProperty = useCallback(async (id: string) => {
+    await deleteMutation.mutateAsync(id);
+  }, [deleteMutation]);
+
+  const uploadImages = useCallback(async (propertyId: string, files: File[]) => {
+    await uploadImagesMutation.mutateAsync({ propertyId, files });
+  }, [uploadImagesMutation]);
+
+  // Dados processados
+  const properties = useMemo(() => data?.items, [data]);
+  const totalCount = useMemo(() => data?.totalCount || 0, [data]);
+  const totalPages = useMemo(() => data?.totalPages || 0, [data]);
+
   return {
-    images: propertyQuery.data?.images || [],
+    // Dados
+    properties,
+    totalCount,
+    stats,
     
-    isLoading: propertyQuery.isLoading,
-    isUploading: uploadMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    // Estados
+    isLoading,
+    isLoadingStats,
+    error,
     
-    error: propertyQuery.error,
+    // Paginação
+    page,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
+    nextPage,
+    previousPage,
+    goToPage,
     
-    handleUpload,
-    handleDelete,
+    // Ações
+    createProperty,
+    updateProperty,
+    deleteProperty,
+    uploadImages,
     
-    refetch: propertyQuery.refetch,
+    // Utilidades
+    refetch,
+    refetchStats
   };
-};
+}
 
-// ================================================
-// EXPORT DEFAULT
-// ================================================
+// ================================================================
+// HOOK PARA PROPRIEDADE INDIVIDUAL
+// ================================================================
 
-export default {
-  useProperties,
-  useProperty,
-  usePropertiesByLocation,
-  usePropertyMetrics,
-  usePropertyOwners,
-  useCreateProperty,
-  useUpdateProperty,
-  useDeleteProperty,
-  useCreatePropertyOwner,
-  useUploadPropertyImage,
-  useDeletePropertyImage,
-  useImportFromVivaReal,
-  useSyncProperty,
-  usePropertiesManager,
-  usePropertiesDashboard,
-  usePropertyForm,
-  usePropertyImages,
-  useSyncLogs,
-  useVivaRealStats,
-};
+export interface UsePropertyOptions {
+  enableRealtime?: boolean;
+}
+
+export interface UsePropertyReturn {
+  property: Property | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  update: (data: any) => Promise<void>;
+  remove: () => Promise<void>;
+  uploadImages: (files: File[]) => Promise<void>;
+  refetch: () => void;
+}
+
+export function useProperty(
+  id: string,
+  options: UsePropertyOptions = {}
+): UsePropertyReturn {
+  const { enableRealtime = true } = options;
+
+  // Query para buscar propriedade
+  const {
+    data: property,
+    isLoading,
+    error,
+    refetch
+  } = useSupabaseQuery(
+    ['property', id],
+    () => propertyService.findById(id),
+    {
+      cacheStrategy: CacheStrategy.DYNAMIC,
+      enabled: !!id
+    }
+  );
+
+  // Mutations
+  const updateMutation = useSupabaseMutation(
+    async (data: any) => {
+      const result = await propertyService.update(id, data);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_UPDATED, {
+          property: result.data
+        });
+      }
+      return result;
+    },
+    {
+      invalidateQueries: [['property', id], ['properties']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade atualizada',
+          description: 'As alterações foram salvas com sucesso'
+        });
+      }
+    }
+  );
+
+  const deleteMutation = useSupabaseMutation(
+    async () => {
+      const result = await propertyService.delete(id);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_DELETED, {
+          propertyId: id
+        });
+      }
+      return result;
+    },
+    {
+      invalidateQueries: [['properties'], ['properties', 'stats']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade removida',
+          description: 'A propriedade foi removida com sucesso'
+        });
+      }
+    }
+  );
+
+  const uploadImagesMutation = useSupabaseMutation(
+    async (files: File[]) => {
+      const result = await propertyService.uploadImages(id, files);
+      return result;
+    },
+    {
+      invalidateQueries: [['property', id]],
+      onSuccess: () => {
+        toast({
+          title: 'Imagens enviadas',
+          description: 'As imagens foram adicionadas com sucesso'
+        });
+      }
+    }
+  );
+
+  const update = useCallback(async (data: any) => {
+    await updateMutation.mutateAsync(data);
+  }, [updateMutation]);
+
+  const remove = useCallback(async () => {
+    await deleteMutation.mutateAsync();
+  }, [deleteMutation]);
+
+  const uploadImages = useCallback(async (files: File[]) => {
+    await uploadImagesMutation.mutateAsync(files);
+  }, [uploadImagesMutation]);
+
+  return {
+    property,
+    isLoading,
+    error,
+    update,
+    remove,
+    uploadImages,
+    refetch
+  };
+}
+
+// ================================================================
+// EXPORTS
+// ================================================================
+
+export default useProperties;

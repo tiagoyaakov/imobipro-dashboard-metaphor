@@ -231,29 +231,31 @@ const getRoleBadge = (role: UserRole) => {
 **Impacto:** Sistema passa a funcionar com dados reais  
 **Tempo Estimado:** 3-5 dias
 
-### 🎯 Plano de Ação Preliminar
+### 🎯 Plano de Ação Atualizado
 
 #### 1. Dashboard com Dados Reais
-- [ ] Criar hook `useDashboard` com React Query
-- [ ] Implementar queries por role (DEV_MASTER/ADMIN/AGENT)
+- [x] Criar hook `useDashboard` com React Query
+- [x] Implementar queries por role (DEV_MASTER/ADMIN/AGENT)
 - [ ] Conectar métricas ao Supabase
-- [ ] Adicionar loading states e error handling
+- [x] Adicionar loading states e error handling
 
-#### 2. Serviço Viva Real
-- [ ] Implementar `vivaRealService.ts` completo
-- [ ] Criar parser de dados da API
-- [ ] Adicionar cache inteligente
-- [ ] Implementar sync automático
+#### 2. Integração de Serviços Core
+- [x] Implementar arquitetura base de serviços
+- [x] Criar BaseService com RLS integrado
+- [x] Implementar PropertyService completo
+- [x] Implementar ContactService com lead scoring
+- [x] Implementar AppointmentService com sincronização
+- [x] Implementar DealService com pipeline
 
-#### 3. Feed de Atividades
-- [ ] Conectar ao sistema de eventos
-- [ ] Implementar real-time updates
-- [ ] Criar filtros por usuário/empresa
-- [ ] Adicionar paginação
+#### 3. Sistema de Eventos e Comunicação
+- [x] Implementar EventBus para comunicação cross-module
+- [x] Criar eventos padronizados do sistema
+- [x] Implementar hooks para React (useEventBus)
+- [ ] Configurar webhooks para sincronização
 
 ### 📋 Tarefas Detalhadas - Status Atual
 
-#### ✅ Concluído (01/08/2025):
+#### ✅ Concluído (01/08/2025 - Atualização 17:00):
 
 1. **Arquitetura do Dashboard Hook**
    - `src/hooks/dashboard/useDashboard.ts` - Hook principal com React Query
@@ -282,6 +284,50 @@ const getRoleBadge = (role: UserRole) => {
    - `src/components/shared/LoadingStates.tsx` - Estados contextuais
    - Recovery strategies por tipo de erro
    - UI específica para cada cenário
+
+5. **Arquitetura de Serviços Core Implementada**
+   - `src/services/base.service.ts` - Classe base com RLS automático
+   - `src/services/property.service.ts` - 404 linhas com gestão completa de propriedades
+   - `src/services/contact.service.ts` - 445 linhas com lead scoring e segmentação
+   - `src/services/appointment.service.ts` - 592 linhas com sincronização e conflitos
+   - `src/services/deal.service.ts` - 492 linhas com pipeline e métricas
+   - `src/lib/event-bus.ts` - Sistema de eventos para comunicação cross-module
+   - `src/hooks/useSupabaseQuery.ts` - Hook com fallback e cache strategies
+
+6. **Integração Supabase Completa**
+   - `src/types/supabase.ts` - Tipos TypeScript gerados do schema
+   - `src/lib/supabase-client.ts` - Cliente configurado com helpers RLS
+   - Interceptors para desenvolvimento
+   - Helpers de autenticação e permissões
+
+7. **Funcionalidades Avançadas dos Serviços**
+   - **PropertyService:**
+     - CRUD completo com relacionamentos
+     - Upload de imagens para Supabase Storage
+     - Importação do Viva Real
+     - Busca por localização (geolocalização)
+     - Estatísticas avançadas
+   
+   - **ContactService:**
+     - Lead scoring automático
+     - Histórico de atividades
+     - Segmentação avançada
+     - Importação em lote
+     - Cálculo de score baseado em comportamento
+   
+   - **AppointmentService:**
+     - Verificação de conflitos
+     - Slots de disponibilidade
+     - Sincronização com Google Calendar (preparada)
+     - Remarcação inteligente
+     - Estatísticas de performance
+   
+   - **DealService:**
+     - Pipeline completo com estágios
+     - Previsão de fechamento com IA
+     - Métricas de conversão
+     - Histórico de mudanças de estágio
+     - Cálculo de probabilidade automático
 
 #### 🔄 Em Andamento:
 
@@ -344,7 +390,7 @@ const getRoleBadge = (role: UserRole) => {
 
 ## 📈 Acompanhamento do Progresso
 
-### Última Atualização: 01/08/2025 - 16:30
+### Última Atualização: 01/08/2025 - 17:30
 
 **✅ Fase 1 - Segurança:** 100% Concluída
 - Todas as 5 vulnerabilidades corrigidas
@@ -355,18 +401,27 @@ const getRoleBadge = (role: UserRole) => {
   - ⚠️ IDs hardcoded residuais encontrados em AuthContext.tsx
   - ⚠️ Métodos isValidUrl e isValidJWT precisam ser implementados
 
-**🚧 Fase 2 - Integração Básica:** Em Preparação
-- **Arquitetura definida** para todos os serviços
-- **Hooks criados:** useDashboard, useActivities
-- **Serviços implementados:** activitiesService com WebSockets
-- **Cache strategies** definidas (5 níveis)
-- **Error handling** robusto com ErrorBoundary
+**🚧 Fase 2 - Integração Básica:** 80% Concluída
+- **✅ Arquitetura definida** para todos os serviços
+- **✅ Hooks criados:** useDashboard, useActivities, useSupabaseQuery
+- **✅ Serviços implementados:** PropertyService, ContactService, AppointmentService, DealService
+- **✅ BaseService** com RLS automático
+- **✅ EventBus** para comunicação cross-module
+- **✅ Cache strategies** definidas (5 níveis)
+- **✅ Error handling** robusto com ErrorBoundary
+- **✅ Tipos TypeScript** gerados do Supabase
+- **✅ Dashboard hook refatorado** para usar novos serviços
+- **🔄 Faltando:** Integração com componentes UI e testes
 
 **✅ Passos Concluídos:**
 1. ✅ Validação inicial das correções de segurança
 2. ✅ Script de testes automáticos criado (security-tests.cjs)
 3. ✅ Preparação completa do ambiente para Fase 2
 4. ✅ Análise detalhada e implementação dos serviços base
+5. ✅ Implementação completa de 4 serviços core (Property, Contact, Appointment, Deal)
+6. ✅ Sistema de eventos para comunicação entre módulos
+7. ✅ Hook useSupabaseQuery com fallback para dados mockados
+8. ✅ Refatoração completa do useDashboard hook para integração com serviços
 
 ---
 
