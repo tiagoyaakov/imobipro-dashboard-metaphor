@@ -156,6 +156,19 @@ export const SystemEvents = {
   // Erros
   ERROR_OCCURRED: 'error.occurred',
   ERROR_RESOLVED: 'error.resolved',
+  
+  // Seleções globais (cross-module)
+  PROPERTY_SELECTED: 'property.selected',
+  CONTACT_SELECTED: 'contact.selected',
+  APPOINTMENT_SELECTED: 'appointment.selected',
+  
+  // Filtros globais
+  FILTERS_CHANGED: 'filters.changed',
+  FILTERS_CLEARED: 'filters.cleared',
+  
+  // Notificações globais
+  NOTIFICATION_ADDED: 'notification.added',
+  USER_LOGIN: 'user.login',
 } as const
 
 // Hook React para usar EventBus

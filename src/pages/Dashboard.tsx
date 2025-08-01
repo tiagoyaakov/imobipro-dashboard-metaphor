@@ -3,10 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Home, Users, Calendar, TrendingUp, TrendingDown, DollarSign, Eye, RefreshCw, Minus, AlertCircle } from "lucide-react";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useGlobal, useGlobalSelections } from "@/contexts/GlobalContext";
+import { GlobalSelectionIndicator, SyncBadge, useNotifications } from "@/components/common/GlobalNotifications";
+import { useCrossModuleSync } from "@/hooks/useCrossModuleSync";
 import {
   LineChart,
   Line,
@@ -43,9 +47,39 @@ const Dashboard = () => {
     enableRealtime: true
   });
 
+  // Sistema global
+  const { isSyncing } = useGlobal();
+  const { property, contact, appointment } = useGlobalSelections();
+  const { syncWithProperty, syncWithContact } = useCrossModuleSync();
+  const notify = useNotifications();
+
   const handleRefresh = useCallback(() => {
     refetchAll();
-  }, [refetchAll]);
+    notify.info('Atualizando dados', 'Sincronizando informações do dashboard...');
+  }, [refetchAll, notify]);
+
+  // Handlers de demonstração para ações rápidas
+  const handleQuickAction = useCallback((action: string) => {
+    switch (action) {
+      case 'Nova Propriedade':
+        property.select('demo-property-123');
+        notify.success('Propriedade selecionada', 'Navegue para o módulo de propriedades para continuar');
+        break;
+      case 'Adicionar Cliente':
+        contact.select('demo-contact-456');
+        notify.success('Contato selecionado', 'Navegue para o módulo de contatos para continuar');
+        break;
+      case 'Agendar Visita':
+        appointment.select('demo-appointment-789');
+        notify.success('Agendamento selecionado', 'Navegue para a agenda para continuar');
+        break;
+      case 'Ver Relatórios':
+        notify.info('Relatórios', 'Navegue para o módulo de relatórios para visualizar');
+        break;
+      default:
+        notify.warning('Ação não disponível', 'Esta funcionalidade está em desenvolvimento');
+    }
+  }, [property, contact, appointment, notify]);
 
   // Função para obter ícone de tendência
   const getTrendIcon = (trend?: 'up' | 'down' | 'stable') => {
@@ -149,6 +183,34 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Global Selection Indicators */}
+      {(property.id || contact.id || appointment.id) && (
+        <div className="flex items-center gap-3 flex-wrap">
+          {property.id && (
+            <GlobalSelectionIndicator
+              type="property"
+              id={property.id}
+              onClear={() => property.select(null)}
+            />
+          )}
+          {contact.id && (
+            <GlobalSelectionIndicator
+              type="contact"
+              id={contact.id}
+              onClear={() => contact.select(null)}
+            />
+          )}
+          {appointment.id && (
+            <GlobalSelectionIndicator
+              type="appointment"
+              id={appointment.id}
+              onClear={() => appointment.select(null)}
+            />
+          )}
+          <SyncBadge isSyncing={isSyncing} />
+        </div>
+      )}
 
       {/* Error Alert */}
       {hasError && (
@@ -384,6 +446,7 @@ const Dashboard = () => {
             ].map((action, index) => (
               <button
                 key={index}
+                onClick={() => handleQuickAction(action.name)}
                 className="p-4 rounded-xl border border-border hover:border-border/80 hover:shadow-md transition-all duration-200 text-center group hover:bg-muted/30"
               >
                 <div className={`${action.bg} ${action.color} w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>

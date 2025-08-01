@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Providers de Autenticação
 import { UnifiedAuthProvider } from "@/contexts/AuthProvider";
+import { GlobalProvider } from "@/contexts/GlobalContext";
+import { GlobalNotificationsProvider } from "@/components/common/GlobalNotifications";
 
 // Debug para verificar configuração
 import { getAuthMode, authConfig, validateAuthConfig } from "@/config/auth";
@@ -121,11 +123,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 const AppWithAuth = () => (
   <QueryClientProvider client={queryClient}>
     <UnifiedAuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+      <GlobalProvider>
+        <GlobalNotificationsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
             {/* Rotas Públicas (apenas para não autenticados) */}
             <Route 
               path="/auth/login" 
@@ -352,6 +356,8 @@ const AppWithAuth = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </GlobalNotificationsProvider>
+      </GlobalProvider>
     </UnifiedAuthProvider>
   </QueryClientProvider>
 );
