@@ -170,7 +170,73 @@ src/
 
 ---
 
-## 9. 🏗️ Arquitetura do Sistema
+## 9. 🤖 Agentes Disponíveis e Delegação de Funções
+
+**O Claude Code deve PROATIVAMENTE utilizar os agentes especializados disponíveis em `C:\Users\1992t\.claude\agents` para delegar tarefas específicas durante o desenvolvimento.**
+
+### Agentes Especializados Disponíveis:
+
+| Agente | Função Específica | Quando Utilizar Proativamente |
+|---|---|---|
+| **general-purpose** | Pesquisa de código e tarefas multi-step | Ao procurar implementações específicas no codebase ou executar tarefas complexas |
+| **workflow-optimizer** | Otimização de workflows humano-IA | Ao identificar gargalos no desenvolvimento ou melhorar processos |
+| **tool-evaluator** | Avaliação de ferramentas e frameworks | Ao considerar novas bibliotecas ou tecnologias para o projeto |
+| **test-results-analyzer** | Análise de resultados de testes | Após executar testes para identificar tendências e melhorias |
+| **performance-benchmarker** | Testes de performance e otimização | Ao detectar lentidão ou necessidade de otimização |
+| **api-tester** | Testes completos de API | Ao implementar ou modificar endpoints da API |
+| **tiktok-strategist** | Estratégias de marketing TikTok | Para features virais ou campanhas de divulgação |
+| **app-store-optimizer** | Otimização para app stores | Ao preparar releases ou melhorar visibilidade |
+| **test-writer-fixer** | Escrita e correção de testes | **SEMPRE** após modificações de código |
+| **rapid-prototyper** | Prototipagem rápida de MVPs | Ao iniciar novos módulos ou experimentos |
+| **mobile-app-builder** | Desenvolvimento mobile nativo | Para features mobile específicas |
+| **frontend-developer** | Desenvolvimento de interfaces | Ao criar ou modificar componentes UI |
+| **devops-automator** | Automação DevOps e CI/CD | Para pipelines e infraestrutura |
+| **backend-architect** | Arquitetura backend e APIs | Ao projetar sistemas backend |
+| **ai-engineer** | Implementação de features IA/ML | Para funcionalidades com IA |
+| **support-responder** | Gestão de suporte ao cliente | Para documentação de suporte |
+| **legal-compliance-checker** | Verificação de compliance legal | Para termos e privacidade |
+| **infrastructure-maintainer** | Manutenção de infraestrutura | Para monitoramento e scaling |
+| **finance-tracker** | Gestão financeira e orçamentos | Para controle de custos |
+| **analytics-reporter** | Relatórios e análises de dados | Para métricas e insights |
+| **joker** | Humor e leveza no desenvolvimento | Para aliviar tensão em sprints |
+| **studio-producer** | Coordenação entre equipes | Ao gerenciar dependências entre módulos |
+| **project-shipper** | Gestão de releases e launches | Ao preparar deployments |
+| **experiment-tracker** | Tracking de experimentos A/B | Para features experimentais |
+| **studio-coach** | Coach para outros agentes | Quando agentes precisam de orientação |
+| **ui-designer** | Design de interfaces e UX | Ao criar novos layouts |
+| **whimsy-injector** | Adicionar elementos divertidos | **SEMPRE** após mudanças de UI |
+| **brand-guardian** | Manutenção de identidade visual | Para consistência de marca |
+| **sprint-prioritizer** | Priorização de sprints 6-day | No planejamento de ciclos |
+| **ux-researcher** | Pesquisa de usuário e validação | Para validar decisões de design |
+| **feedback-synthesizer** | Análise de feedback de usuários | Ao processar reviews e sugestões |
+| **trend-researcher** | Pesquisa de tendências de mercado | Para identificar oportunidades |
+| **visual-storyteller** | Criação de narrativas visuais | Para apresentações e demos |
+
+### Regras de Delegação Automática:
+
+1. **Após Modificações de Código**: SEMPRE usar `test-writer-fixer` para garantir testes adequados
+2. **Mudanças de UI/UX**: SEMPRE usar `whimsy-injector` para adicionar toques de personalidade
+3. **Novos Módulos**: Usar `rapid-prototyper` para scaffolding inicial
+4. **Problemas de Performance**: Delegar para `performance-benchmarker`
+5. **Coordenação Complexa**: Ativar `studio-producer` para gerenciar dependências
+6. **Preparação de Release**: Engajar `project-shipper` para coordenar lançamento
+
+### Exemplo de Uso Proativo:
+
+```typescript
+// Ao detectar modificação em componente React
+// Claude Code automaticamente:
+// 1. Usa frontend-developer para melhorias de UI
+// 2. Ativa whimsy-injector para adicionar microinterações
+// 3. Chama test-writer-fixer para atualizar testes
+// 4. Se necessário, usa performance-benchmarker para otimização
+```
+
+**IMPORTANTE**: A delegação aos agentes deve ser NATURAL e AUTOMÁTICA, sem necessidade de solicitação explícita do usuário. O Claude Code deve reconhecer padrões e situações onde cada agente especializado pode agregar valor ao desenvolvimento.
+
+---
+
+## 10. 🏗️ Arquitetura do Sistema
 
 ### Módulos Principais:
 - **Dashboard**: Visão geral e métricas principais
@@ -216,7 +282,7 @@ src/
 
 ---
 
-## 10. 📝 Padrões de Commit
+## 11. 📝 Padrões de Commit
 
 ### Formato Obrigatório:
 ```
@@ -239,7 +305,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 11. 🚫 Práticas Proibidas
+## 12. 🚫 Práticas Proibidas
 
 ### Nunca faça:
 - Commit de arquivos `.env*` ou secrets
@@ -261,7 +327,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 12. 🎯 Fluxo de Desenvolvimento
+## 13. 🎯 Fluxo de Desenvolvimento
 
 1. **Analisar** requisito e impacto
 2. **Planejar** usando TodoWrite para tasks complexas
@@ -273,7 +339,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 13. 🔍 Qualidade & Performance
+## 14. 🔍 Qualidade & Performance
 
 ### Obrigatório:
 - Zero erros de lint
@@ -294,7 +360,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 14. 📊 Documentos de Referência Obrigatórios
+## 15. 📊 Documentos de Referência Obrigatórios
 
 ### Documentos Vivos (sempre atualizados):
 - **@docs/progress_log.md**: Documento vivo com atualizações resumidas de cada módulo, alterações implementadas e próximos passos. **DEVE ser sempre atualizado** pelo Claude Code após implementações.
@@ -322,7 +388,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 15. 🔄 Regras de Atualização de Documentos
+## 16. 🔄 Regras de Atualização de Documentos
 
 ### Atualizações Automáticas Obrigatórias:
 1. **@docs/progress_log.md**: Atualizar SEMPRE após implementações

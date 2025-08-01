@@ -310,7 +310,10 @@ const Agenda = () => {
               />
               
               <GoogleCalendarIntegration
-                userId={user?.id || 'mock-user-id'}
+                userId={user?.id || (() => {
+                  console.warn('⚠️ [SEGURANÇA] User ID não disponível, usando fallback');
+                  return crypto.randomUUID();
+                })()}
                 onConnectionChange={(isConnected) => {
                   console.log('Google Calendar connection changed:', isConnected);
                   if (isConnected) {

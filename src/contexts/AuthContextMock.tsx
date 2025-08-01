@@ -47,8 +47,26 @@ export const AuthProviderMock: React.FC<AuthProviderMockProps> = ({
   children, 
   defaultUserId = null // Alterado para não fazer login automático
 }) => {
+  // SEGURANÇA: Bloquear uso em produção
+  React.useEffect(() => {
+    if (import.meta.env.PROD) {
+      throw new Error(
+        'ERRO CRÍTICO DE SEGURANÇA: AuthProviderMock não pode ser usado em produção. '
+        + 'Verifique a configuração de autenticação.'
+      );
+    }
+    
+    // Aviso visível em desenvolvimento
+    console.warn(
+      '⚠️ [SEGURANÇA] AuthProviderMock ativo. Apenas para desenvolvimento!'
+    );
+  }, []);
+
   // Estado do usuário atual - não logado por padrão
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    // SEGURANÇA: Não permitir login automático em produção
+    if (import.meta.env.PROD) return null;
+    
     // Só fazer login automático se explicitamente especificado
     if (!defaultUserId) return null;
     

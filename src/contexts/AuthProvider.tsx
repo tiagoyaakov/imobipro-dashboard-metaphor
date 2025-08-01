@@ -22,11 +22,24 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({
   children, 
   forceMock = false 
 }) => {
+  // SEGURANÇA: Bloquear mock em produção
+  if (import.meta.env.PROD && (forceMock || getAuthMode() === 'mock')) {
+    throw new Error(
+      'ERRO DE SEGURANÇA: Tentativa de usar autenticação mock em produção. '
+      + 'Verifique as variáveis VITE_USE_REAL_AUTH, VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.'
+    );
+  }
+
   // Validar configuração na inicialização
   React.useEffect(() => {
     const validation = validateAuthConfig();
     if (!validation.isValid) {
       console.error('[AUTH] Configuração inválida:', validation.errors);
+      
+      // Em produção, falhar completamente se configuração inválida
+      if (import.meta.env.PROD) {
+        throw new Error(`Configuração de autenticação inválida: ${validation.errors.join(', ')}`);
+      }
     }
     
     debugLog('UnifiedAuthProvider inicializado', {
@@ -41,7 +54,8 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({
   const authMode = getAuthMode();
   const shouldUseReal = !forceMock && authMode === 'real';
 
-  if (shouldUseReal) {
+  // SEGURANÇA: Em produção, sempre usar auth real
+  if (import.meta.env.PROD || shouldUseReal) {
     return (
       <AuthProviderReal>
         {children}
@@ -49,10 +63,25 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({
     );
   }
 
+  // DESENVOLVIMENTO: Permitir mock apenas em dev com aviso explícito
+  if (import.meta.env.DEV) {
+    console.warn(
+      '⚠️ [SEGURANÇA] Usando autenticação MOCK em desenvolvimento. '
+      + 'Nunca deve aparecer em produção!'
+    );
+    
+    return (
+      <AuthProviderMock>
+        {children}
+      </AuthProviderMock>
+    );
+  }
+
+  // Fallback seguro: sempre auth real
   return (
-    <AuthProviderMock>
+    <AuthProviderReal>
       {children}
-    </AuthProviderMock>
+    </AuthProviderReal>
   );
 };
 

@@ -45,12 +45,12 @@ export const authConfig = {
   development: {
     // Usuário mock padrão para desenvolvimento
     defaultUser: {
-      id: 'mock-user-id',
-      email: 'dev@imobipro.com',
-      name: 'Desenvolvedor',
-      role: 'DEV_MASTER' as const,
+      id: import.meta.env.VITE_DEV_USER_ID || crypto.randomUUID(),
+      email: import.meta.env.VITE_DEV_USER_EMAIL || 'dev@imobipro.local',
+      name: import.meta.env.VITE_DEV_USER_NAME || 'Desenvolvedor Local',
+      role: 'AGENT' as const, // SEGURANÇA: Nunca DEV_MASTER por padrão
       is_active: true,
-      company_id: 'mock-company-id',
+      company_id: import.meta.env.VITE_DEV_COMPANY_ID || crypto.randomUUID(),
       avatar_url: null,
       telefone: null,
       created_at: new Date().toISOString(),
@@ -143,26 +143,70 @@ export const authConfig = {
 /**
  * Verificar se todas as variáveis de ambiente necessárias estão configuradas
  */
-export const validateAuthConfig = (): { isValid: boolean; errors: string[] } => {
+export const validateAuthConfig = (): { isValid: boolean; errors: string[]; warnings: string[] } => {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
+  // Validações críticas
   if (authConfig.useRealAuth) {
     if (!authConfig.supabase.url) {
       errors.push('VITE_SUPABASE_URL não está configurada');
+    } else {
+      // Validar formato da URL
+      try {
+        const url = new URL(authConfig.supabase.url);
+        if (url.protocol !== 'https:') {
+          errors.push('VITE_SUPABASE_URL deve usar HTTPS');
+        }
+        if (!url.hostname.includes('supabase.co')) {
+          warnings.push('URL do Supabase pode não ser válida');
+        }
+      } catch {
+        errors.push('VITE_SUPABASE_URL tem formato inválido');
+      }
     }
     
     if (!authConfig.supabase.anonKey) {
       errors.push('VITE_SUPABASE_ANON_KEY não está configurada');
+    } else {
+      // Validar formato JWT básico
+      const parts = authConfig.supabase.anonKey.split('.');
+      if (parts.length !== 3) {
+        errors.push('VITE_SUPABASE_ANON_KEY não parece ser um JWT válido');
+      }
     }
     
-    if (authConfig.supabase.url && !authConfig.supabase.url.startsWith('https://')) {
-      errors.push('VITE_SUPABASE_URL deve usar HTTPS');
+    if (!authConfig.supabase.authRedirectUrl) {
+      warnings.push('VITE_SUPABASE_AUTH_REDIRECT_URL não configurada');
     }
+  }
+
+  // Validações de segurança
+  if (import.meta.env.PROD) {
+    if (import.meta.env.VITE_DEBUG_AUTH === 'true') {
+      warnings.push('Debug de autenticação ativo em produção');
+    }
+    
+    if (!authConfig.useRealAuth) {
+      errors.push('Autenticação mock não pode ser usada em produção');
+    }
+  }
+
+  // Validar variáveis sensíveis não expostas no frontend
+  if (typeof window !== 'undefined') {
+    // Verificar se variáveis privadas não vazaram
+    const sensitiveVars = ['SUPABASE_SERVICE_ROLE_KEY', 'DATABASE_URL'];
+    sensitiveVars.forEach(varName => {
+      if ((import.meta.env as any)[varName]) {
+        errors.push(`Variável sensível ${varName} exposta no frontend`);
+      }
+    });
   }
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
+  Crown,
   Home,
   Shield,
   User,
@@ -91,10 +92,16 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter ícone da função
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'PROPRIETARIO':
-        return <Home className="h-4 w-4 text-yellow-600" />;
+      case 'DEV_MASTER':
+        return <Crown className="h-4 w-4 text-red-600" />;
       case 'ADMIN':
-        return <Shield className="h-4 w-4 text-blue-600" />;
+        return <Home className="h-4 w-4 text-blue-600" />;
+      case 'AGENT':
+        return <User className="h-4 w-4 text-gray-600" />;
+      // DEPRECATED: Manter compatibilidade temporária
+      case 'PROPRIETARIO':
+        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
+        return <Home className="h-4 w-4 text-yellow-600" />;
       default:
         return <User className="h-4 w-4 text-gray-600" />;
     }
@@ -103,10 +110,16 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter texto da função
   const getRoleText = (role: string) => {
     switch (role) {
-      case 'PROPRIETARIO':
-        return 'Proprietário';
+      case 'DEV_MASTER':
+        return 'Dev Master';
       case 'ADMIN':
         return 'Administrador';
+      case 'AGENT':
+        return 'Corretor';
+      // DEPRECATED: Manter compatibilidade temporária
+      case 'PROPRIETARIO':
+        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
+        return 'Proprietário (Deprecated)';
       default:
         return 'Corretor';
     }
@@ -115,10 +128,16 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   // Função para obter cor do badge da função
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'PROPRIETARIO':
-        return 'default' as const;
+      case 'DEV_MASTER':
+        return 'destructive' as const;
       case 'ADMIN':
         return 'secondary' as const;
+      case 'AGENT':
+        return 'outline' as const;
+      // DEPRECATED: Manter compatibilidade temporária
+      case 'PROPRIETARIO':
+        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
+        return 'default' as const;
       default:
         return 'outline' as const;
     }
