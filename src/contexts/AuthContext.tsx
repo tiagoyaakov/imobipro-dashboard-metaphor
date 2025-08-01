@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
 import { User } from '../schemas/crm';
 import { authKeys, AUTH_ERROR_MESSAGES, LoginFormData } from '../schemas/auth';
+import { authConfig } from '../config/auth';
 import '../utils/authDebug'; // Importar debug helper
 
 // -----------------------------------------------------------
@@ -84,18 +85,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Fallback: usar dados básicos do Supabase Auth
         console.log('🔐 [Auth] Usando fallback com dados do Supabase Auth');
+        
+        // Usar o company ID padrão da configuração
+        const defaultCompanyId = authConfig.development.defaultCompanyId;
+        console.warn('⚠️ [Auth] Usando company ID padrão. Configure VITE_DEFAULT_COMPANY_ID em produção');
+        
         const fallbackUser: User = {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
           name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
-          role: 'ADMIN', // Use ADMIN as fallback since DEV_MASTER might not exist in DB
+          role: 'AGENT', // SEGURANÇA: Use AGENT como fallback seguro
           isActive: true,
-          companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Company padrão
+          companyId: defaultCompanyId,
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
           createdAt: supabaseUser.created_at || new Date().toISOString(),
           updatedAt: supabaseUser.updated_at || new Date().toISOString(),
           company: { 
-            id: 'c1036c09-e971-419b-9244-e9f6792954e2', 
+            id: defaultCompanyId, 
             name: 'ImobiPRO Default' 
           }, // Default company
         };
@@ -109,6 +115,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       else if (data.role === 'MANAGER') mappedRole = 'ADMIN'; // Map MANAGER to ADMIN
       else if (data.role === 'VIEWER') mappedRole = 'AGENT'; // Map VIEWER to AGENT
 
+      // Use company ID from config or database
+      const companyId = data.companyId || authConfig.development.defaultCompanyId;
+      
+      if (!data.companyId && !import.meta.env.PROD) {
+        console.warn('⚠️ [Auth] Usuário sem company_id. Usando padrão:', companyId);
+      }
+      
       // Create user object with defaults for missing fields
       const user: User = {
         id: data.id,
@@ -116,12 +129,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         name: data.name,
         role: mappedRole,
         isActive: true, // Default to active since field doesn't exist in DB
-        companyId: 'c1036c09-e971-419b-9244-e9f6792954e2', // Default company ID
+        companyId: companyId,
         avatarUrl: null, // Default to null since field doesn't exist in DB
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         company: { 
-          id: 'c1036c09-e971-419b-9244-e9f6792954e2', 
+          id: companyId, 
           name: 'ImobiPRO Default' 
         }, // Default company
       };

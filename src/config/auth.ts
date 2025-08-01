@@ -57,6 +57,9 @@ export const authConfig = {
       updated_at: new Date().toISOString(),
     },
     
+    // Company ID padrão para desenvolvimento/fallback
+    defaultCompanyId: import.meta.env.VITE_DEFAULT_COMPANY_ID || crypto.randomUUID(),
+    
     // Se true, mostra logs detalhados de autenticação
     enableDebugLogs: process.env.NODE_ENV === 'development',
     

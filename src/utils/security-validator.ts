@@ -5,6 +5,27 @@
 import React from 'react';
 
 /**
+ * Valida se uma string é uma URL válida
+ */
+function isValidUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Valida se uma string é um JWT válido (formato básico)
+ */
+function isValidJWT(token: string): boolean {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  return parts.length === 3;
+}
+
+/**
  * Validações críticas de segurança que devem ser executadas
  * antes do build e durante a inicialização da aplicação
  */
@@ -76,11 +97,15 @@ function validateAuthSecurity(result: SecurityValidationResult): void {
   }
 
   // Validar formato das credenciais
-  if (supabaseUrl && !supabaseUrl.startsWith('https://')) {
+  if (supabaseUrl && !isValidUrl(supabaseUrl)) {
+    result.criticalErrors.push('CRÍTICO: VITE_SUPABASE_URL não é uma URL válida');
+  }
+
+  if (supabaseUrl && isValidUrl(supabaseUrl) && !supabaseUrl.startsWith('https://')) {
     result.criticalErrors.push('CRÍTICO: VITE_SUPABASE_URL deve usar HTTPS');
   }
 
-  if (supabaseKey && supabaseKey.split('.').length !== 3) {
+  if (supabaseKey && !isValidJWT(supabaseKey)) {
     result.criticalErrors.push('CRÍTICO: VITE_SUPABASE_ANON_KEY não é um JWT válido');
   }
 

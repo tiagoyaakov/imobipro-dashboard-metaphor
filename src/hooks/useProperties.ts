@@ -370,6 +370,106 @@ export function useProperty(
 }
 
 // ================================================================
+// HOOK PARA DASHBOARD DE PROPRIEDADES
+// ================================================================
+
+export interface UsePropertiesDashboardReturn {
+  stats: PropertyStats | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export function usePropertiesDashboard(): UsePropertiesDashboardReturn {
+  const {
+    data: stats,
+    isLoading,
+    error,
+    refetch
+  } = useSupabaseQuery(
+    ['properties', 'dashboard-stats'],
+    () => propertyService.getStats(),
+    {
+      cacheStrategy: CacheStrategy.STATIC,
+      staleTime: 5 * 60 * 1000 // 5 minutos
+    }
+  );
+
+  return {
+    stats,
+    isLoading,
+    error,
+    refetch
+  };
+}
+
+// ================================================================
+// HOOK PARA IMPORTAÇÃO VIVA REAL
+// ================================================================
+
+export interface UseImportFromVivaRealReturn {
+  importProperty: (url: string) => Promise<void>;
+  isImporting: boolean;
+  error: Error | null;
+}
+
+export function useImportFromVivaReal(): UseImportFromVivaRealReturn {
+  const importMutation = useSupabaseMutation(
+    async (url: string) => {
+      const result = await propertyService.importFromVivaReal(url);
+      if (result.data) {
+        EventBus.emit(SystemEvents.PROPERTY_CREATED, {
+          property: result.data
+        });
+      }
+      return result;
+    },
+    {
+      invalidateQueries: [['properties'], ['properties', 'stats']],
+      onSuccess: () => {
+        toast({
+          title: 'Propriedade importada',
+          description: 'Os dados foram importados do Viva Real com sucesso'
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Erro na importação',
+          description: error.message || 'Não foi possível importar a propriedade',
+          variant: 'destructive'
+        });
+      }
+    }
+  );
+
+  const importProperty = useCallback(async (url: string) => {
+    await importMutation.mutateAsync(url);
+  }, [importMutation]);
+
+  return {
+    importProperty,
+    isImporting: importMutation.isPending,
+    error: importMutation.error
+  };
+}
+
+// ================================================================
+// HOOK PARA GESTÃO COMPLETA (MANAGER)
+// ================================================================
+
+export function usePropertiesManager(options: UsePropertiesOptions = {}) {
+  const properties = useProperties(options);
+  const dashboard = usePropertiesDashboard();
+  const vivaReal = useImportFromVivaReal();
+
+  return {
+    ...properties,
+    dashboard,
+    vivaReal
+  };
+}
+
+// ================================================================
 // EXPORTS
 // ================================================================
 
