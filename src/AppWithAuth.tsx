@@ -54,6 +54,7 @@ const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
 
 // Páginas de Teste (apenas em desenvolvimento)
 const DashboardTest = lazy(() => import("./pages/DashboardTest"));
+const PropertiesTest = lazy(() => import("./pages/PropertiesTest"));
 
 // -----------------------------------------------------------
 // DEBUG: Verificar configuração na inicialização
@@ -357,6 +358,18 @@ const AppWithAuth = () => (
                   element={
                     <ProtectedRoute allowedRoles={['DEV_MASTER']}>
                       <DashboardTest />
+                    </ProtectedRoute>
+                  } 
+                />
+              )}
+
+              {/* Properties Test - DEV_MASTER apenas (desenvolvimento) */}
+              {import.meta.env.DEV && (
+                <Route 
+                  path="properties-test" 
+                  element={
+                    <ProtectedRoute allowedRoles={['DEV_MASTER']}>
+                      <PropertiesTest />
                     </ProtectedRoute>
                   } 
                 />

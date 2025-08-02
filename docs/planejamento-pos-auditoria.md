@@ -530,6 +530,8 @@ const getRoleBadge = (role: UserRole) => {
 19. ✅ Migração do useDashboard para useDashboardV2 com cache unificado
 20. ✅ Sistema de monitoramento de cache com CacheHealthIndicator
 21. ✅ Página de teste DashboardTest para comparação V1 vs V2
+22. ✅ Migração do useProperties para usePropertiesV2 com cache unificado
+23. ✅ Página de teste PropertiesTest para comparação V1 vs V2
 
 ---
 
