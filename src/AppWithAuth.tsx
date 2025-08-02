@@ -52,6 +52,9 @@ const AuthCallbackPage = lazy(() => import("./pages/auth/AuthCallbackPage"));
 const ProfilePage = lazy(() => import("./pages/auth/ProfilePage"));
 const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
 
+// Páginas de Teste (apenas em desenvolvimento)
+const DashboardTest = lazy(() => import("./pages/DashboardTest"));
+
 // -----------------------------------------------------------
 // DEBUG: Verificar configuração na inicialização
 // -----------------------------------------------------------
@@ -346,6 +349,18 @@ const AppWithAuth = () => (
                   </ProtectedRoute>
                 } 
               />
+
+              {/* Dashboard Test - DEV_MASTER apenas (desenvolvimento) */}
+              {import.meta.env.DEV && (
+                <Route 
+                  path="dashboard-test" 
+                  element={
+                    <ProtectedRoute allowedRoles={['DEV_MASTER']}>
+                      <DashboardTest />
+                    </ProtectedRoute>
+                  } 
+                />
+              )}
             </Route>
 
             {/* Página 404 - Disponível para usuários autenticados */}
