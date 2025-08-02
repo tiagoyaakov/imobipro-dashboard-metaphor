@@ -10,6 +10,8 @@ import { useSupabaseQuery, useSupabaseMutation, CacheStrategy, usePaginatedQuery
 import { propertyService } from '@/services';
 import { EventBus, SystemEvents } from '@/lib/event-bus';
 import { toast } from '@/hooks/use-toast';
+import { useUnifiedCache, useCrossModuleInvalidation } from '@/hooks/useUnifiedCache';
+import { QUERY_KEYS, getQueryConfig } from '@/lib/cache-manager';
 import type { Property, PropertyFilters, PropertyStats } from '@/services';
 
 // ================================================================
@@ -67,6 +69,15 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
     cacheStrategy = CacheStrategy.DYNAMIC
   } = options;
 
+  // Cache unificado
+  const cache = useUnifiedCache({ 
+    module: 'properties',
+    enableAutoSync: true,
+    enableOptimisticUpdates: true
+  });
+  
+  const { invalidateRelated } = useCrossModuleInvalidation();
+
   // Query para listar propriedades com paginação
   const {
     data,
@@ -80,7 +91,7 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
     hasNextPage,
     hasPreviousPage
   } = usePaginatedQuery(
-    ['properties', ...(filters ? [JSON.stringify(filters)] : [])],
+    QUERY_KEYS.properties.list(filters),
     (page, limit) => propertyService.findAll({
       filters,
       limit,
@@ -90,8 +101,9 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
     }),
     limit,
     {
+      ...cache.queryConfig,
       cacheStrategy,
-      staleTime: cacheStrategy === CacheStrategy.STATIC ? 30 * 60 * 1000 : 60 * 1000
+      staleTime: cacheStrategy === CacheStrategy.STATIC ? 30 * 60 * 1000 : cache.queryConfig.staleTime
     }
   );
 
@@ -109,8 +121,8 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
     }
   );
 
-  // Mutation para criar propriedade
-  const createMutation = useSupabaseMutation(
+  // Mutation para criar propriedade com cache unificado
+  const createMutation = cache.createMutation(
     async (data: any) => {
       const result = await propertyService.create(data);
       if (result.data) {
@@ -122,12 +134,19 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
       return result;
     },
     {
-      invalidateQueries: [['properties'], ['properties', 'stats']],
-      onSuccess: () => {
+      optimisticUpdate: (data) => ({
+        ...data,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+      onSuccess: async () => {
         toast({
           title: 'Propriedade criada',
           description: 'A propriedade foi adicionada com sucesso'
         });
+        // Invalidar módulos relacionados
+        await invalidateRelated('properties', ['dashboard', 'activities']);
       }
     }
   );

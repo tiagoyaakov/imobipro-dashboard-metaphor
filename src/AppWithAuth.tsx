@@ -81,20 +81,26 @@ if (import.meta.env.PROD && import.meta.env.VITE_DEBUG_AUTH === 'true') {
   });
 }
 
-// Configuração do QueryClient com otimizações
+// Importar configurações de cache
+import { getCacheManager, CACHE_CONFIG } from "@/lib/cache-manager";
+
+// Configuração do QueryClient com cache unificado
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000, // 10 minutos (antes cacheTime)
+      staleTime: CACHE_CONFIG.staleTime.default,
+      gcTime: CACHE_CONFIG.cacheTime.default,
       retry: 2,
       refetchOnWindowFocus: false,
     },
     mutations: {
-      retry: 1,
+      retry: CACHE_CONFIG.retry.default,
     },
   },
 });
+
+// Inicializar o cache manager
+getCacheManager(queryClient);
 
 // -----------------------------------------------------------
 // Componente de Rota Protegida com Suspense

@@ -5,6 +5,7 @@ import { AppSidebar } from "./AppSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { AuthInitializingSpinner } from "@/components/auth/AuthLoadingSpinner";
 import { ImpersonationIndicator } from "@/components/impersonation";
+import { CacheMonitor } from "@/components/dev/CacheMonitor";
 
 const DashboardLayout = () => {
   return (
@@ -27,6 +28,9 @@ const DashboardLayout = () => {
             </main>
           </div>
         </div>
+        
+        {/* Monitor de Cache em Desenvolvimento */}
+        <CacheMonitor />
       </SidebarProvider>
     </React.Suspense>
   );
