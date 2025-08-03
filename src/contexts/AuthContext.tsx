@@ -82,19 +82,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar dados do usuário:', error);
+        console.error('🔐 [Auth] Detalhes do erro:', error.message, error.code);
         
         // Fallback: usar dados básicos do Supabase Auth
         console.log('🔐 [Auth] Usando fallback com dados do Supabase Auth');
+        console.log('🔐 [Auth] Metadata do Supabase:', supabaseUser.user_metadata);
         
         // Usar o company ID padrão da configuração
         const defaultCompanyId = authConfig.development.defaultCompanyId;
         console.warn('⚠️ [Auth] Usando company ID padrão. Configure VITE_DEFAULT_COMPANY_ID em produção');
         
+        // Verificar metadata role primeiro
+        const metadataRole = supabaseUser.user_metadata?.role;
+        console.log('🔐 [Auth] Role no metadata:', metadataRole);
+        
         const fallbackUser: User = {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
           name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
-          role: 'AGENT', // SEGURANÇA: Use AGENT como fallback seguro
+          role: 'AGENT', // SEGURANÇA: SEMPRE AGENT no fallback para evitar escalation de privilégios
           isActive: true,
           companyId: defaultCompanyId,
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
@@ -105,6 +111,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             name: 'ImobiPRO Default' 
           }, // Default company
         };
+        
+        console.log('🔐 [Auth] Fallback user criado:', fallbackUser);
         
         return fallbackUser;
       }
