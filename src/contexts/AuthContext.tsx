@@ -301,18 +301,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Atualizar dados customizados na tabela users
-      const updateData: { name: string; email: string; updated_at: string; avatar_url?: string } = {
+      const updateData: { name: string; email: string; updatedAt: string; avatarUrl?: string } = {
         name: data.name,
         email: data.email,
-        updated_at: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       if (data.avatarUrl !== undefined) {
-        updateData.avatar_url = data.avatarUrl;
+        updateData.avatarUrl = data.avatarUrl;
       }
 
       const { error: updateError } = await supabase
-        .from('users')
+        .from('User')
         .update(updateData)
         .eq('id', supabaseUser.id);
 
@@ -344,10 +344,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Atualizar dados customizados na tabela users
       const { error: updateError } = await supabase
-        .from('users')
+        .from('User')
         .update({
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
+          avatarUrl: avatarUrl,
+          updatedAt: new Date().toISOString(),
         })
         .eq('id', supabaseUser.id);
 
@@ -589,7 +589,7 @@ export const useSignup = () => {
         
         // Buscar uma empresa padrão ou criar uma se necessário
         const { data: companies, error: companiesError } = await supabase
-          .from('companies')
+          .from('Company')
           .select('id')
           .limit(1);
 
@@ -603,7 +603,7 @@ export const useSignup = () => {
         if (!companyId) {
           console.log('[DEBUG] Criando empresa padrão...');
           const { data: newCompany, error: createCompanyError } = await supabase
-            .from('companies')
+            .from('Company')
             .insert([
               { name: 'Empresa Padrão' }
             ])
@@ -619,7 +619,7 @@ export const useSignup = () => {
 
         // Inserir o usuário na tabela custom users
         const { data: userData, error: userError } = await supabase
-          .from('users')
+          .from('User')
           .insert([
             {
               id: authData.user.id, // Usar o ID do Supabase Auth
@@ -627,8 +627,8 @@ export const useSignup = () => {
               password: '[HANDLED_BY_SUPABASE_AUTH]', // Placeholder, auth é gerenciado pelo Supabase
               name: metadata?.name || '',
               role: metadata?.role || 'AGENT',
-              company_id: companyId,
-              is_active: true,
+              companyId: companyId,
+              isActive: true,
             }
           ])
           .select()
