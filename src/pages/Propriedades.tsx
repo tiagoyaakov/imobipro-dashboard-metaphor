@@ -29,10 +29,10 @@ import PropertyFilters from '@/components/properties/PropertyFilters';
 
 // Hooks
 import { 
-  usePropertiesManager,
-  usePropertiesDashboard,
-  useImportFromVivaReal 
-} from '@/hooks/useProperties';
+  usePropertiesV2,
+  usePropertiesDashboardV2 
+} from '@/hooks/usePropertiesV2';
+import { useImportFromVivaReal } from '@/hooks/useProperties';
 
 // Types
 import type { 
@@ -47,7 +47,7 @@ import type {
 // ================================================
 
 const DashboardStats: React.FC = () => {
-  const { metrics, isLoading } = usePropertiesDashboard();
+  const { metrics, isLoading } = usePropertiesDashboardV2();
 
   if (isLoading) {
     return (
@@ -294,7 +294,7 @@ const PropriedadesPage: React.FC = () => {
     createProperty,
     updateProperty,
     deleteProperty,
-  } = usePropertiesManager(searchParams);
+  } = usePropertiesV2(searchParams);
 
   // ================================================
   // HANDLERS

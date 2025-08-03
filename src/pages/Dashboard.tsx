@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Home, Users, Calendar, TrendingUp, TrendingDown, DollarSign, Eye, RefreshCw, Minus, AlertCircle } from "lucide-react";
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardV2 } from "@/hooks/useDashboardV2";
 import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGlobal, useGlobalSelections } from "@/contexts/GlobalContext";
@@ -41,7 +41,7 @@ const Dashboard = () => {
     activitiesError,
     refetchAll,
     isOnline
-  } = useDashboard({
+  } = useDashboardV2({
     chartPeriod,
     activitiesLimit: 10,
     enableRealtime: true

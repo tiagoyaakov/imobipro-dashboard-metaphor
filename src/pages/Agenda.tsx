@@ -24,6 +24,7 @@ import {
 // Importar componente Google Calendar Integration
 import GoogleCalendarIntegration from "@/components/agenda/GoogleCalendarIntegration";
 import { useAuth } from "@/hooks/useAuth";
+import { useAgendaV2 } from "@/hooks/useAgendaV2";
 
 const Agenda = () => {
   const [showBookingWizard, setShowBookingWizard] = useState(false);
@@ -33,6 +34,24 @@ const Agenda = () => {
   const { user } = useAuth();
   const { syncStatus, setSyncStatus } = useSyncStatus();
   const { notifications, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  
+  // Hook V2 para dados reais
+  const {
+    appointments,
+    slots,
+    schedule,
+    isLoading,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment,
+    bookSlot,
+    syncWithGoogle
+  } = useAgendaV2({
+    agentId: user?.id,
+    date: selectedDate.toISOString().split('T')[0],
+    enableRealtime: true,
+    enableOfflineQueue: true
+  });
 
   // Dados mockados para demonstração
   const mockAppointments: Appointment[] = [
@@ -257,7 +276,7 @@ const Agenda = () => {
 
       {/* Calendário como elemento principal sem sobreposições */}
       <CalendarView
-        appointments={mockAppointments}
+        appointments={appointments || []}
         selectedDate={selectedDate}
         onDateSelect={setSelectedDate}
         onAppointmentClick={(appointment) => console.log("Compromisso clicado:", appointment)}
@@ -335,7 +354,7 @@ const Agenda = () => {
         onClose={() => setShowBookingWizard(false)}
         onComplete={handleBookingComplete}
         preselectedDate={selectedDate}
-        availableAgents={mockAgents}
+        availableAgents={[]}
         getAvailableSlots={getAvailableSlots}
       />
     </div>

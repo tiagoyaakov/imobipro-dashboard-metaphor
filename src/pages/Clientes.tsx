@@ -29,7 +29,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useFunnelStats } from '@/hooks/useClients';
+import { useClientsV2 } from '@/hooks/useClientsV2';
 // import type { ContactWithDetails } from '@/types/clients';
 
 const Clientes = () => {
@@ -39,9 +39,14 @@ const Clientes = () => {
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  const { data: stats } = useFunnelStats(userWithFallback?.id);
+  const { funnel, isLoadingFunnel } = useClientsV2({
+    filters: {
+      agentId: userWithFallback?.id
+    }
+  });
+  
   // Fallback para stats mockados caso não carregue
-  const statsData = stats || { 
+  const statsData = funnel || { 
     totalLeads: 25, 
     byStage: { NEW: 8, QUALIFIED: 6, CONVERTED: 3, NEGOTIATING: 4 },
     topSources: [
