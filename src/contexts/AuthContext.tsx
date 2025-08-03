@@ -111,9 +111,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Map database role to app role (handle role differences)
       let mappedRole: 'DEV_MASTER' | 'ADMIN' | 'AGENT' = 'AGENT'; // Default to AGENT
-      if (data.role === 'ADMIN') mappedRole = 'ADMIN';
+      if (data.role === 'DEV_MASTER') mappedRole = 'DEV_MASTER';
+      else if (data.role === 'ADMIN') mappedRole = 'ADMIN';
       else if (data.role === 'MANAGER') mappedRole = 'ADMIN'; // Map MANAGER to ADMIN
       else if (data.role === 'VIEWER') mappedRole = 'AGENT'; // Map VIEWER to AGENT
+      else mappedRole = 'AGENT'; // FORÇAR AGENT para qualquer role desconhecida
 
       // Use company ID from config or database
       const companyId = data.companyId || authConfig.development.defaultCompanyId;
@@ -559,7 +561,7 @@ export const useSignup = () => {
         options: {
           data: {
             name: metadata?.name || '',
-            role: metadata?.role || 'AGENT',
+            role: 'AGENT', // FORÇAR SEMPRE AGENT NO SIGNUP
           }
         },
       });
@@ -618,19 +620,21 @@ export const useSignup = () => {
         }
 
         // Inserir o usuário na tabela custom users
+        const insertData = {
+          id: authData.user.id, // Usar o ID do Supabase Auth
+          email: email.trim().toLowerCase(),
+          password: '[HANDLED_BY_SUPABASE_AUTH]', // Placeholder, auth é gerenciado pelo Supabase
+          name: metadata?.name || '',
+          role: 'AGENT', // FORÇAR SEMPRE AGENT NO SIGNUP
+          companyId: companyId,
+          isActive: true,
+        };
+        
+        console.log('[DEBUG] Dados que serão inseridos na tabela User:', insertData);
+        
         const { data: userData, error: userError } = await supabase
           .from('User')
-          .insert([
-            {
-              id: authData.user.id, // Usar o ID do Supabase Auth
-              email: email.trim().toLowerCase(),
-              password: '[HANDLED_BY_SUPABASE_AUTH]', // Placeholder, auth é gerenciado pelo Supabase
-              name: metadata?.name || '',
-              role: metadata?.role || 'AGENT',
-              companyId: companyId,
-              isActive: true,
-            }
-          ])
+          .insert([insertData])
           .select()
           .single();
 
