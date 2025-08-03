@@ -1,4 +1,4 @@
-# 🔧 Plano de Refinamento - MÓDULO DASHBOARD
+de# 🔧 Plano de Refinamento - MÓDULO DASHBOARD
 
 **Data de Criação:** 03/08/2025  
 **Status:** 📋 Documento de Planejamento  

@@ -426,7 +426,8 @@ export function usePropertiesV2(options: UsePropertiesOptions = {}): UseProperti
     if (!enablePrefetch || !propertiesQuery.data) return;
 
     // Prefetch próxima página
-    if (currentPage < propertiesQuery.data.pages) {
+    const totalPages = propertiesQuery.data.pagination?.totalPages || 0;
+    if (currentPage < totalPages) {
       prefetch(
         PROPERTY_QUERY_KEYS.list({ ...filters, page: currentPage + 1 }),
         () => fetchProperties(currentPage + 1, limit, filters)

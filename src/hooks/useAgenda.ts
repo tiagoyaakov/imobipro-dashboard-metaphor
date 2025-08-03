@@ -410,3 +410,6 @@ export function useAgendaManager(agentId: string) {
     isBookingSlot: bookSlot.isPending || releaseSlot.isPending,
   };
 }
+
+// Export alias para compatibilidade
+export const useAgenda = useAgendaManager;

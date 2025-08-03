@@ -283,3 +283,16 @@ export function useCacheMonitor() {
     isHealthy: stats.staleQueries < stats.totalQueries * 0.3, // Menos de 30% stale
   }
 }
+
+// Hook para gerenciar cache - exportação adicionada para compatibilidade
+export function useCacheManager() {
+  const queryClient = useQueryClient()
+  const cacheManager = useMemo(() => getCacheManager(queryClient), [queryClient])
+  
+  return {
+    cacheManager,
+    clearAll: () => cacheManager.clearAll(),
+    getStats: () => cacheManager.getCacheStats(),
+    logState: () => cacheManager.logCacheState(),
+  }
+}

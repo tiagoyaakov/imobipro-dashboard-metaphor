@@ -334,3 +334,144 @@ export function useTransformedCache<T = any, R = T>(
     rawData: cache.data
   };
 }
+
+/**
+ * Hook para mutations com cache
+ */
+export function useCacheMutation<T = any>(
+  key: string,
+  mutationFn: (data: any) => Promise<T>,
+  options?: CacheOptions & {
+    onSuccess?: (data: T) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const cache = getUnifiedCache();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const mutate = useCallback(async (variables: any) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const result = await mutationFn(variables);
+      
+      // Atualizar cache com resultado
+      await cache.set(key, result, options);
+      
+      options?.onSuccess?.(result);
+      return result;
+    } catch (err) {
+      const error = err as Error;
+      setError(error);
+      options?.onError?.(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [key, mutationFn, options]);
+
+  return {
+    mutate,
+    isLoading,
+    error
+  };
+}
+
+/**
+ * Hook para prefetch de cache
+ */
+export function useCachePrefetch() {
+  const cache = getUnifiedCache();
+
+  const prefetch = useCallback(async (
+    key: string | QueryKey,
+    fetcher: () => Promise<any>,
+    options?: CacheOptions
+  ) => {
+    const cacheKey = Array.isArray(key) ? key.join(':') : String(key);
+    
+    // Só fazer prefetch se não existir no cache
+    const existingValue = await cache.get(cacheKey);
+    if (existingValue !== null) {
+      return existingValue;
+    }
+
+    try {
+      const data = await fetcher();
+      await cache.set(cacheKey, data, options);
+      return data;
+    } catch (error) {
+      console.warn('Prefetch failed for key:', cacheKey, error);
+      throw error;
+    }
+  }, [cache]);
+
+  return {
+    prefetch
+  };
+}
+
+/**
+ * Hook para invalidação em lote
+ */
+export function useCacheBatchInvalidation() {
+  const cache = getUnifiedCache();
+
+  const batchInvalidate = useCallback(async (patterns: (string | RegExp)[]) => {
+    await Promise.all(
+      patterns.map(pattern => cache.invalidate(pattern))
+    );
+  }, [cache]);
+
+  const batchInvalidateByTags = useCallback(async (tagGroups: string[][]) => {
+    await Promise.all(
+      tagGroups.map(tags => cache.clearByTags(tags))
+    );
+  }, [cache]);
+
+  return {
+    batchInvalidate,
+    batchInvalidateByTags
+  };
+}
+
+/**
+ * Hook para subscription de cache
+ */
+export function useCacheSubscription<T = any>(
+  key: string,
+  callback: (value: T | null) => void,
+  options?: CacheOptions
+) {
+  const cache = getUnifiedCache();
+
+  useEffect(() => {
+    // Carregar valor inicial
+    const loadInitialValue = async () => {
+      try {
+        const value = await cache.get<T>(key);
+        callback(value);
+      } catch (error) {
+        console.error('Error loading initial cache value:', error);
+      }
+    };
+
+    loadInitialValue();
+
+    // Escutar mudanças
+    const unsubscribe = cache.addEventListener((event) => {
+      if (event.type === 'set' && event.key === key) {
+        loadInitialValue();
+      }
+    });
+
+    return unsubscribe;
+  }, [key, callback, cache]);
+
+  return {
+    key,
+    isSubscribed: true
+  };
+}
