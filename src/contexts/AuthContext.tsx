@@ -72,6 +72,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email,
           name,
           role,
+          companyId,
+          isActive,
+          avatarUrl,
           createdAt,
           updatedAt
         `)
@@ -132,21 +135,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('⚠️ [Auth] Usuário sem company_id. Usando padrão:', companyId);
       }
       
-      // Create user object with defaults for missing fields
+      // Create user object using real database fields
       const user: User = {
         id: data.id,
         email: data.email,
         name: data.name,
         role: mappedRole,
-        isActive: true, // Default to active since field doesn't exist in DB
-        companyId: companyId,
-        avatarUrl: null, // Default to null since field doesn't exist in DB
+        isActive: data.isActive ?? true, // Use DB value or default to true
+        companyId: data.companyId || companyId,
+        avatarUrl: data.avatarUrl || null, // Use DB value or null
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         company: { 
-          id: companyId, 
+          id: data.companyId || companyId, 
           name: 'ImobiPRO Default' 
-        }, // Default company
+        }, // Use real company ID
       };
 
       return user;
