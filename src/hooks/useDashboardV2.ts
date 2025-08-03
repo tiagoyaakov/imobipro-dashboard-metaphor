@@ -677,4 +677,5 @@ class DashboardError extends Error {
 // ================================================================
 
 export default useDashboard;
+export { useDashboard as useDashboardV2 }; // Alias para testes V2
 export { DashboardError };

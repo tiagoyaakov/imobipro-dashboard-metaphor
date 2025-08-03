@@ -6,6 +6,122 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+// ===================================
+// TYPES FOR SERVICES AND TESTS
+// ===================================
+
+// Property Types
+export type Property = Database['public']['Tables']['Property']['Row']
+export type PropertyInsert = Database['public']['Tables']['Property']['Insert']
+export type PropertyUpdate = Database['public']['Tables']['Property']['Update']
+export type PropertyType = Database['public']['Enums']['PropertyType']
+export type PropertyStatus = Database['public']['Enums']['PropertyStatus']
+
+// Contact Types
+export type Contact = Database['public']['Tables']['Contact']['Row']
+export type ContactInsert = Database['public']['Tables']['Contact']['Insert']
+export type ContactUpdate = Database['public']['Tables']['Contact']['Update']
+export type ContactCategory = Database['public']['Enums']['ContactCategory']
+export type ContactStatus = Database['public']['Enums']['ContactStatus']
+export type LeadStage = Database['public']['Enums']['LeadStage']
+
+// Appointment Types
+export type Appointment = Database['public']['Tables']['Appointment']['Row']
+export type AppointmentInsert = Database['public']['Tables']['Appointment']['Insert']
+export type AppointmentUpdate = Database['public']['Tables']['Appointment']['Update']
+export type AppointmentType = Database['public']['Enums']['AppointmentType']
+export type AppointmentStatus = Database['public']['Enums']['AppointmentStatus']
+export type AppointmentPriority = Database['public']['Enums']['AppointmentPriority']
+export type AppointmentSource = Database['public']['Enums']['AppointmentSource']
+
+// Deal Types
+export type Deal = Database['public']['Tables']['Deal']['Row']
+export type DealInsert = Database['public']['Tables']['Deal']['Insert']
+export type DealUpdate = Database['public']['Tables']['Deal']['Update']
+export type DealStage = Database['public']['Enums']['DealStage']
+
+// Availability Slot Types
+export type AvailabilitySlot = Database['public']['Tables']['AvailabilitySlot']['Row']
+export type SlotStatus = Database['public']['Enums']['SlotStatus']
+export type SlotType = Database['public']['Enums']['SlotType']
+
+// Activity Types
+export type Activity = Database['public']['Tables']['Activity']['Row']
+export type ActivityType = Database['public']['Enums']['ActivityType']
+
+// User Types
+export type User = Database['public']['Tables']['User']['Row']
+export type UserRole = Database['public']['Enums']['UserRole']
+
+// Additional Filter Types for Services
+export interface PropertyFilters {
+  status?: PropertyStatus
+  type?: PropertyType
+  minPrice?: number
+  maxPrice?: number
+  city?: string
+  search?: string
+  agentId?: string
+}
+
+export interface ContactFilters {
+  category?: ContactCategory
+  status?: ContactStatus
+  leadStage?: LeadStage
+  minScore?: number
+  maxScore?: number
+  search?: string
+  agentId?: string
+}
+
+export interface AppointmentFilters {
+  status?: AppointmentStatus
+  type?: AppointmentType
+  priority?: AppointmentPriority
+  agentId?: string
+  contactId?: string
+  propertyId?: string
+  dateStart?: string
+  dateEnd?: string
+  search?: string
+}
+
+export interface DealFilters {
+  stage?: DealStage
+  status?: string
+  agentId?: string
+  clientId?: string
+  propertyId?: string
+  minValue?: number
+  maxValue?: number
+  search?: string
+}
+
+// Common result types
+export interface ServiceResult<T> {
+  data: T | null
+  error: Error | null
+  count?: number
+}
+
+// Additional Types for Tests
+export interface TimeSlot {
+  startTime: string
+  endTime: string
+  duration: number
+}
+
+export interface DealMetrics {
+  totalValue: number
+  averageValue: number
+  conversionRate: number
+  winRate: number
+}
+
+// Tables shorthand
+export type Tables = Database['public']['Tables']
+export type Enums = Database['public']['Enums']
+
 export type Database = {
   public: {
     Tables: {

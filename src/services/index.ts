@@ -1,8 +1,14 @@
-// Exportar todos os serviços do sistema
+// Exportar todos os serviços do sistema (instâncias)
 export { propertyService } from './property.service'
 export { contactService } from './contact.service'
 export { appointmentService } from './appointment.service'
 export { dealService } from './deal.service'
+
+// Exportar classes dos serviços (para testes e extensão)
+export { PropertyService } from './property.service'
+export { ContactService } from './contact.service'
+export { AppointmentService } from './appointment.service'
+export { DealService } from './deal.service'
 
 // Exportar tipos dos serviços
 export type { 

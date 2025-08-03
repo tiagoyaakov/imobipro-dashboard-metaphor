@@ -49,7 +49,7 @@ export interface LeadActivity {
   createdAt: string
 }
 
-class ContactServiceClass extends BaseService<'Contact'> {
+export class ContactService extends BaseService<'Contact'> {
   constructor() {
     super('Contact', 'contact')
   }
@@ -553,4 +553,4 @@ class ContactServiceClass extends BaseService<'Contact'> {
 }
 
 // Exportar instância única
-export const contactService = new ContactServiceClass()
+export const contactService = new ContactService()

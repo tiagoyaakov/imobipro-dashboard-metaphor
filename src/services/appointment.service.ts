@@ -55,7 +55,7 @@ export interface AppointmentConflict {
   suggestedSlots?: AvailabilitySlot[]
 }
 
-class AppointmentServiceClass extends BaseService<'Appointment'> {
+export class AppointmentService extends BaseService<'Appointment'> {
   constructor() {
     super('Appointment', 'appointment')
   }
@@ -635,4 +635,4 @@ class AppointmentServiceClass extends BaseService<'Appointment'> {
 }
 
 // Exportar instância única
-export const appointmentService = new AppointmentServiceClass()
+export const appointmentService = new AppointmentService()

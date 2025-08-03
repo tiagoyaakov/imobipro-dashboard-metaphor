@@ -35,7 +35,7 @@ export interface PropertyStats {
   byCity: Record<string, number>
 }
 
-class PropertyServiceClass extends BaseService<'Property'> {
+export class PropertyService extends BaseService<'Property'> {
   constructor() {
     super('Property', 'property')
   }
@@ -401,4 +401,4 @@ class PropertyServiceClass extends BaseService<'Property'> {
 }
 
 // Exportar instância única
-export const propertyService = new PropertyServiceClass()
+export const propertyService = new PropertyService()

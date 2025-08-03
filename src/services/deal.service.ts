@@ -58,7 +58,7 @@ export interface DealForecast {
   recommendations: string[]
 }
 
-class DealServiceClass extends BaseService<'Deal'> {
+export class DealService extends BaseService<'Deal'> {
   constructor() {
     super('Deal', 'deal')
   }
@@ -646,4 +646,4 @@ class DealServiceClass extends BaseService<'Deal'> {
 }
 
 // Exportar instância única
-export const dealService = new DealServiceClass()
+export const dealService = new DealService()
