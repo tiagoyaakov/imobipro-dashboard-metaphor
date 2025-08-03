@@ -95,4 +95,105 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 // Configurar fetch mock básico
 global.fetch = vi.fn();
 
+// Mock do matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock do navigator.onLine
+Object.defineProperty(navigator, 'onLine', {
+  writable: true,
+  value: true,
+});
+
+// Mock do IndexedDB
+const indexedDBMock = {
+  open: vi.fn().mockReturnValue({
+    onsuccess: null,
+    onerror: null,
+    onupgradeneeded: null,
+    result: {
+      createObjectStore: vi.fn(),
+      transaction: vi.fn().mockReturnValue({
+        objectStore: vi.fn().mockReturnValue({
+          add: vi.fn(),
+          put: vi.fn(),
+          get: vi.fn().mockReturnValue({
+            onsuccess: null,
+            onerror: null,
+          }),
+          delete: vi.fn(),
+          clear: vi.fn(),
+          getAllKeys: vi.fn().mockReturnValue({
+            onsuccess: null,
+            onerror: null,
+          }),
+        }),
+      }),
+    },
+  }),
+  deleteDatabase: vi.fn(),
+};
+Object.defineProperty(window, 'indexedDB', {
+  value: indexedDBMock,
+});
+
+// Mock do BroadcastChannel
+class BroadcastChannelMock {
+  name: string;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  
+  constructor(name: string) {
+    this.name = name;
+  }
+  
+  postMessage = vi.fn();
+  close = vi.fn();
+  addEventListener = vi.fn();
+  removeEventListener = vi.fn();
+  dispatchEvent = vi.fn();
+}
+global.BroadcastChannel = BroadcastChannelMock as any;
+
+// Mock do crypto.subtle
+Object.defineProperty(global.crypto, 'subtle', {
+  value: {
+    encrypt: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
+    decrypt: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
+    generateKey: vi.fn().mockResolvedValue({}),
+    importKey: vi.fn().mockResolvedValue({}),
+    exportKey: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
+  },
+});
+
+// Mock do performance.now
+performance.now = vi.fn(() => Date.now());
+
+// Mock de variáveis de ambiente adicionais
+Object.defineProperty(import.meta.env, 'VITE_N8N_WEBHOOK_URL', {
+  value: 'https://test.n8n.webhook',
+  writable: true,
+});
+
+// Configuração de cleanup automático
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+  localStorageMock.clear();
+  sessionStorageMock.clear();
+});
+
 export {};
