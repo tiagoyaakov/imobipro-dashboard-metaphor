@@ -105,11 +105,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const metadataRole = supabaseUser.user_metadata?.role;
         console.log('🔐 [Auth] Role no metadata:', metadataRole);
         
+        // Mapear role do metadata se existir (com segurança)
+        let fallbackRole: 'DEV_MASTER' | 'ADMIN' | 'AGENT' = 'AGENT';
+        if (metadataRole === 'CREATOR' || metadataRole === 'DEV_MASTER') {
+          // Verificar se o email é um email autorizado para DEV_MASTER
+          const authorizedEmails = ['1992tiagofranca@gmail.com']; // Lista de emails autorizados
+          if (authorizedEmails.includes(supabaseUser.email || '')) {
+            fallbackRole = 'DEV_MASTER';
+          }
+        } else if (metadataRole === 'ADMIN') {
+          fallbackRole = 'ADMIN';
+        }
+        
         const fallbackUser: User = {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
           name: supabaseUser.user_metadata?.name || supabaseUser.email || 'Usuário',
-          role: 'AGENT', // SEGURANÇA: SEMPRE AGENT no fallback para evitar escalation de privilégios
+          role: fallbackRole,
           isActive: true,
           companyId: defaultCompanyId,
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
@@ -125,7 +137,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Map database role to app role (handle role differences)
       let mappedRole: 'DEV_MASTER' | 'ADMIN' | 'AGENT' = 'AGENT'; // Default to AGENT
-      if (data.role === 'DEV_MASTER') mappedRole = 'DEV_MASTER';
+      if (data.role === 'CREATOR') mappedRole = 'DEV_MASTER'; // Map CREATOR to DEV_MASTER
+      else if (data.role === 'DEV_MASTER') mappedRole = 'DEV_MASTER';
       else if (data.role === 'ADMIN') mappedRole = 'ADMIN';
       else if (data.role === 'MANAGER') mappedRole = 'ADMIN'; // Map MANAGER to ADMIN
       else if (data.role === 'VIEWER') mappedRole = 'AGENT'; // Map VIEWER to AGENT

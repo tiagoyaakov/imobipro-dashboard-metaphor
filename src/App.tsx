@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProviderMock } from "@/contexts/AuthContextMock";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthDebugPanel } from "@/components/debug/AuthDebugPanel";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
@@ -43,10 +44,11 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProviderMock>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <AuthDebugPanel />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<DashboardLayout />}>
@@ -183,7 +185,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProviderMock>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
