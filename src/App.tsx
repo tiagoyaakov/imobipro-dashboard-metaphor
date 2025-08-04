@@ -16,7 +16,6 @@ const Contatos = lazy(() => import("./pages/Contatos"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Pipeline = lazy(() => import("./pages/Pipeline"));
-const CRM = lazy(() => import("./pages/CRM"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Conexoes = lazy(() => import("./pages/Conexoes"));
 const Usuarios = lazy(() => import("./pages/Usuarios"));
@@ -98,14 +97,6 @@ const App = () => (
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Pipeline />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="crm" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <CRM />
                   </Suspense>
                 } 
               />

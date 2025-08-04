@@ -41,7 +41,7 @@ function AppSidebarContent() {
    */
   const getModuleOrder = (path: string): number => {
     const orderMap: Record<string, number> = {
-      '/': 1,           // Dashboard
+      '/': 1,           // Dashboard (antigo CRM Avançado)
       '/agenda': 2,     // Agenda
       '/clientes': 3,   // Clientes
       '/conexoes': 4,   // Conexões
@@ -50,10 +50,9 @@ function AppSidebarContent() {
       '/pipeline': 7,   // Pipeline
       '/propriedades': 8, // Propriedades
       '/chats': 9,      // Chats
-      '/crm': 10,       // CRM Avançado
-      '/relatorios': 11, // Relatórios
-      '/usuarios': 12,  // Usuários
-      '/configuracoes': 13, // Configurações
+      '/relatorios': 10, // Relatórios
+      '/usuarios': 11,  // Usuários
+      '/configuracoes': 12, // Configurações
     };
     return orderMap[path] || 999;
   };
@@ -62,7 +61,7 @@ function AppSidebarContent() {
    * Verificar se o módulo tem acesso especial (ícone dourado)
    */
   const hasSpecialAccess = (path: string): boolean => {
-    const specialPaths = ['/crm', '/relatorios', '/usuarios', '/configuracoes'];
+    const specialPaths = ['/', '/relatorios', '/usuarios', '/configuracoes'];
     return specialPaths.includes(path);
   };
 

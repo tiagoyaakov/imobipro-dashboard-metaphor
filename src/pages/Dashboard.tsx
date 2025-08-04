@@ -1,463 +1,346 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Home, Users, Calendar, TrendingUp, TrendingDown, DollarSign, Eye, RefreshCw, Minus, AlertCircle } from "lucide-react";
-import { useDashboardV2 } from "@/hooks/useDashboardV2";
-import { useCallback, useState } from "react";
-import { cn } from "@/lib/utils";
-import { useGlobal, useGlobalSelections } from "@/contexts/GlobalContext";
-import { GlobalSelectionIndicator, SyncBadge, useNotifications } from "@/components/common/GlobalNotifications";
-import { useCrossModuleSync } from "@/hooks/useCrossModuleSync";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
+import { useState, useMemo } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Users, 
+  Target, 
+  BarChart3, 
+  Zap, 
+  TrendingUp, 
+  Activity, 
+  Award,
+  RefreshCw,
+  Settings
+} from 'lucide-react';
+import { 
+  LeadScoreCard, 
+  LeadScoreDashboard, 
+  SegmentationRules, 
+  AutomationBuilder 
+} from '@/components/crm';
+import { useCRMData } from '@/hooks/useCRMData';
+import { useAuth } from '@/hooks/useAuth';
+import type { Contact, Deal, LeadScore } from '@/schemas/crm';
+
+// Tipos para os dados retornados pelos hooks
+interface ContactsResponse {
+  data: Contact[];
+  total: number;
+}
+
+interface DealsResponse {
+  data: Deal[];
+  total: number;
+}
 
 const Dashboard = () => {
-  const [chartPeriod, setChartPeriod] = useState('6months');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const { user } = useAuth();
   
-  const {
-    stats,
-    chartData,
-    activities,
-    isLoading,
-    isLoadingStats,
-    isLoadingCharts,
-    isLoadingActivities,
-    hasError,
-    statsError,
-    chartsError,
-    activitiesError,
-    refetchAll,
-    isOnline
-  } = useDashboardV2({
-    chartPeriod,
-    activitiesLimit: 10,
-    enableRealtime: true
-  });
-
-  // Sistema global
-  const { isSyncing } = useGlobal();
-  const { property, contact, appointment } = useGlobalSelections();
-  const { syncWithProperty, syncWithContact } = useCrossModuleSync();
-  const notify = useNotifications();
-
-  const handleRefresh = useCallback(() => {
-    refetchAll();
-    notify.info('Atualizando dados', 'Sincronizando informações do dashboard...');
-  }, [refetchAll, notify]);
-
-  // Handlers de demonstração para ações rápidas
-  const handleQuickAction = useCallback((action: string) => {
-    switch (action) {
-      case 'Nova Propriedade':
-        property.select('demo-property-123');
-        notify.success('Propriedade selecionada', 'Navegue para o módulo de propriedades para continuar');
-        break;
-      case 'Adicionar Cliente':
-        contact.select('demo-contact-456');
-        notify.success('Contato selecionado', 'Navegue para o módulo de contatos para continuar');
-        break;
-      case 'Agendar Visita':
-        appointment.select('demo-appointment-789');
-        notify.success('Agendamento selecionado', 'Navegue para a agenda para continuar');
-        break;
-      case 'Ver Relatórios':
-        notify.info('Relatórios', 'Navegue para o módulo de relatórios para visualizar');
-        break;
-      default:
-        notify.warning('Ação não disponível', 'Esta funcionalidade está em desenvolvimento');
+  // Hooks do CRM - usando a estrutura correta
+  const { 
+    contacts, 
+    deals, 
+    leadScoring, 
+    activities 
+  } = useCRMData();
+  
+  const { data: contactsData, isLoading: contactsLoading } = contacts.getContacts();
+  const { data: dealsData, isLoading: dealsLoading } = deals.getDeals();
+  const { data: leadScores, isLoading: scoresLoading } = leadScoring.getLeadScores();
+  const { data: activitiesData, isLoading: activitiesLoading } = activities.getActivities();
+  
+  // Métricas resumidas
+  const metrics = useMemo(() => {
+    if (!(contactsData as ContactsResponse)?.data || !leadScores || !(dealsData as DealsResponse)?.data) {
+      return {
+        totalContacts: 0,
+        hotLeads: 0,
+        avgScore: 0,
+        activeAutomations: 0,
+        totalDeals: 0,
+        recentActivities: 0
+      };
     }
-  }, [property, contact, appointment, notify]);
-
-  // Função para obter ícone de tendência
-  const getTrendIcon = (trend?: 'up' | 'down' | 'stable') => {
-    switch (trend) {
-      case 'up':
-        return TrendingUp;
-      case 'down':
-        return TrendingDown;
-      default:
-        return Minus;
-    }
-  };
-
-  // Função para obter cor da tendência
-  const getTrendColor = (trend?: 'up' | 'down' | 'stable') => {
-    switch (trend) {
-      case 'up':
-        return 'text-imobipro-success';
-      case 'down':
-        return 'text-red-400';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
-
-  // Mapear tipo de atividade para ícone
-  const getActivityIcon = (type: string) => {
-    const iconMap = {
-      property: '🏠',
-      contact: '👤',
-      appointment: '📅',
-      deal: '💰',
-      other: '📌'
+    
+    const contactsArray = (contactsData as ContactsResponse).data;
+    const dealsArray = (dealsData as DealsResponse).data;
+    
+    const hotLeads = (leadScores as LeadScore[]).filter(score => score.score >= 80).length;
+    const avgScore = Math.round(
+      (leadScores as LeadScore[]).reduce((sum: number, score: LeadScore) => sum + score.score, 0) / (leadScores as LeadScore[]).length
+    );
+    
+    return {
+      totalContacts: contactsArray.length,
+      hotLeads,
+      avgScore,
+      activeAutomations: 2, // Simulado
+      totalDeals: dealsArray.length,
+      recentActivities: activitiesData?.length || 0
     };
-    return iconMap[type as keyof typeof iconMap] || '📌';
-  };
-
-  const statsConfig = [
-    {
-      title: "Total de Propriedades",
-      key: 'totalProperties' as const,
-      icon: Home,
-      color: "text-imobipro-blue",
-      bgColor: "bg-imobipro-blue/10",
-    },
-    {
-      title: "Clientes Ativos",
-      key: 'activeClients' as const,
-      icon: Users,
-      color: "text-imobipro-success",
-      bgColor: "bg-imobipro-success/10",
-    },
-    {
-      title: "Visitas Agendadas",
-      key: 'weeklyAppointments' as const,
-      icon: Calendar,
-      color: "text-purple-400",
-      bgColor: "bg-purple-400/10",
-    },
-    {
-      title: "Receita Mensal",
-      key: 'monthlyRevenue' as const,
-      icon: DollarSign,
-      color: "text-emerald-400",
-      bgColor: "bg-emerald-400/10",
-    },
-  ];
-
+  }, [contactsData, leadScores, dealsData, activitiesData]);
+  
+  const isLoading = contactsLoading || dealsLoading || scoresLoading || activitiesLoading;
+  
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Visão geral do seu negócio imobiliário</p>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Sistema completo de gestão de relacionamento com clientes
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "border",
-              isOnline 
-                ? "text-imobipro-success border-imobipro-success/30" 
-                : "text-red-400 border-red-400/30"
-            )}
-          >
-            {isOnline ? 'Online' : 'Offline'}
-          </Badge>
-          {stats?.lastUpdated && (
-            <Badge variant="secondary">
-              Atualizado: {new Date(stats.lastUpdated).toLocaleTimeString('pt-BR')}
-            </Badge>
-          )}
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
-            title="Atualizar dados"
-          >
-            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-          </button>
+          <Button variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Configurações
+          </Button>
         </div>
       </div>
-
-      {/* Global Selection Indicators */}
-      {(property.id || contact.id || appointment.id) && (
-        <div className="flex items-center gap-3 flex-wrap">
-          {property.id && (
-            <GlobalSelectionIndicator
-              type="property"
-              id={property.id}
-              onClear={() => property.select(null)}
-            />
-          )}
-          {contact.id && (
-            <GlobalSelectionIndicator
-              type="contact"
-              id={contact.id}
-              onClear={() => contact.select(null)}
-            />
-          )}
-          {appointment.id && (
-            <GlobalSelectionIndicator
-              type="appointment"
-              id={appointment.id}
-              onClear={() => appointment.select(null)}
-            />
-          )}
-          <SyncBadge isSyncing={isSyncing} />
-        </div>
-      )}
-
-      {/* Error Alert */}
-      {hasError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erro ao carregar dados. Por favor, tente novamente.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsConfig.map((config) => {
-          const statData = stats?.[config.key];
-          const TrendIcon = statData ? getTrendIcon(statData.trend) : Minus;
-          
-          return (
-            <Card key={config.key} className="imobipro-card hover:shadow-lg">
-              <CardContent className="p-6">
-                {isLoadingStats ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="h-4 w-40" />
-                  </div>
-                ) : statData ? (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{config.title}</p>
-                      <p className="text-2xl font-bold text-foreground mt-2">
-                        {config.key === 'monthlyRevenue' 
-                          ? statData.formatted || `R$ ${statData.value.toLocaleString('pt-BR')}`
-                          : statData.value.toLocaleString('pt-BR')
-                        }
-                      </p>
-                      <div className="flex items-center mt-2">
-                        <TrendIcon className={cn("h-4 w-4 mr-1", getTrendColor(statData.trend))} />
-                        <span className={cn("text-sm font-medium", getTrendColor(statData.trend))}>
-                          {statData.change}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
-                      </div>
-                    </div>
-                    <div className={`${config.bgColor} ${config.color} p-3 rounded-xl`}>
-                      <config.icon className="h-6 w-6" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground">Sem dados</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Charts and Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Performance Chart */}
-        <Card className="lg:col-span-2 imobipro-card">
-          <CardHeader>
-            <CardTitle>Performance de Vendas</CardTitle>
-            <CardDescription>Receita dos últimos 6 meses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="revenue" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="revenue">Receita</TabsTrigger>
-                <TabsTrigger value="properties">Propriedades</TabsTrigger>
-              </TabsList>
-              <TabsContent value="revenue" className="mt-6">
-                {isLoadingCharts ? (
-                  <Skeleton className="h-64 w-full" />
-                ) : chartsError ? (
-                  <div className="h-64 bg-red-500/10 rounded-lg flex items-center justify-center">
-                    <p className="text-red-400">Erro ao carregar gráfico</p>
-                  </div>
-                ) : chartData?.salesData && chartData.salesData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={256}>
-                    <LineChart data={chartData.salesData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="month" 
-                        className="text-xs"
-                        tick={{ fill: 'currentColor' }}
-                      />
-                      <YAxis 
-                        className="text-xs"
-                        tick={{ fill: 'currentColor' }}
-                        tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Receita']}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="hsl(var(--imobipro-blue))" 
-                        strokeWidth={2}
-                        dot={{ fill: 'hsl(var(--imobipro-blue))' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-64 bg-gradient-to-r from-imobipro-blue/10 to-imobipro-blue-dark/10 rounded-lg flex items-center justify-center border border-border">
-                    <p className="text-muted-foreground">Sem dados de receita disponíveis</p>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="properties" className="mt-6">
-                {isLoadingCharts ? (
-                  <Skeleton className="h-64 w-full" />
-                ) : chartsError ? (
-                  <div className="h-64 bg-red-500/10 rounded-lg flex items-center justify-center">
-                    <p className="text-red-400">Erro ao carregar gráfico</p>
-                  </div>
-                ) : chartData?.propertyData && chartData.propertyData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={256}>
-                    <BarChart data={chartData.propertyData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="month" 
-                        className="text-xs"
-                        tick={{ fill: 'currentColor' }}
-                      />
-                      <YAxis 
-                        className="text-xs"
-                        tick={{ fill: 'currentColor' }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Bar 
-                        dataKey="sold" 
-                        name="Vendidas"
-                        fill="hsl(var(--imobipro-success))" 
-                      />
-                      <Bar 
-                        dataKey="rented" 
-                        name="Alugadas"
-                        fill="hsl(var(--imobipro-blue))" 
-                      />
-                      <Legend />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-64 bg-gradient-to-r from-imobipro-success/10 to-emerald-400/10 rounded-lg flex items-center justify-center border border-border">
-                    <p className="text-muted-foreground">Sem dados de propriedades disponíveis</p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+      
+      {/* Métricas Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total de Contatos</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? '...' : metrics.totalContacts}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {metrics.hotLeads} hot leads
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
           </CardContent>
         </Card>
-
-        {/* Recent Activities */}
-        <Card className="imobipro-card">
-          <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
-            <CardDescription>Últimas ações no sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {isLoadingActivities ? (
-                // Loading skeleton
-                Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3">
-                    <Skeleton className="w-2 h-2 rounded-full mt-2" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </div>
-                ))
-              ) : activitiesError ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Erro ao carregar atividades
-                  </AlertDescription>
-                </Alert>
-              ) : activities && activities.length > 0 ? (
-                activities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="text-xl flex-shrink-0 mt-1">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(activity.createdAt).toLocaleString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhuma atividade recente
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Score Médio</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? '...' : metrics.avgScore}
                 </p>
-              )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {metrics.hotLeads > 0 ? '+' : ''}{metrics.hotLeads} desde ontem
+                </p>
+              </div>
+              <Target className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Hot Leads</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? '...' : metrics.hotLeads}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {Math.round((metrics.hotLeads / metrics.totalContacts) * 100 || 0)}% do total
+                </p>
+              </div>
+              <Award className="w-8 h-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Automações</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? '...' : metrics.activeAutomations}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {metrics.activeAutomations} ativas
+                </p>
+              </div>
+              <Zap className="w-8 h-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card className="imobipro-card">
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-          <CardDescription>Acesse as funcionalidades mais utilizadas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: "Nova Propriedade", icon: Home, color: "text-imobipro-blue", bg: "bg-imobipro-blue/10" },
-              { name: "Adicionar Cliente", icon: Users, color: "text-imobipro-success", bg: "bg-imobipro-success/10" },
-              { name: "Agendar Visita", icon: Calendar, color: "text-purple-400", bg: "bg-purple-400/10" },
-              { name: "Ver Relatórios", icon: Eye, color: "text-orange-400", bg: "bg-orange-400/10" },
-            ].map((action, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickAction(action.name)}
-                className="p-4 rounded-xl border border-border hover:border-border/80 hover:shadow-md transition-all duration-200 text-center group hover:bg-muted/30"
-              >
-                <div className={`${action.bg} ${action.color} w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
-                  <action.icon className="w-6 h-6" />
-                </div>
-                <p className="text-sm font-medium text-foreground">{action.name}</p>
-              </button>
-            ))}
+      
+      <Separator />
+      
+      {/* Tabs Principais */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="scoring" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Lead Scoring
+          </TabsTrigger>
+          <TabsTrigger value="segmentation" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Segmentação
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Automação
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Tab: Dashboard */}
+        <TabsContent value="dashboard" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Dashboard de Lead Scoring
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LeadScoreDashboard />
+              </CardContent>
+            </Card>
+            
+            {/* Atividades Recentes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Atividades Recentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activitiesData?.slice(0, 5).map((activity) => (
+                      <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{activity.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {activity.type} • {activity.entityType || 'Sistema'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="outline">{activity.type}</Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(activity.createdAt).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    )) || (
+                      <p className="text-muted-foreground text-center py-4">
+                        Nenhuma atividade encontrada
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+        
+        {/* Tab: Lead Scoring */}
+        <TabsContent value="scoring" className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Lead Scoring</h2>
+                <p className="text-muted-foreground">
+                  Gerencie a pontuação dos seus leads
+                </p>
+              </div>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {metrics.totalContacts} contatos
+              </Badge>
+            </div>
+            
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="p-6">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-2 bg-gray-200 rounded w-full"></div>
+                        <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {(contactsData as ContactsResponse)?.data?.map((contact) => (
+                  <LeadScoreCard 
+                    key={contact.id} 
+                    contact={contact}
+                    className="h-fit"
+                  />
+                )) || (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-muted-foreground">
+                      Nenhum contato encontrado
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Tab: Segmentação */}
+        <TabsContent value="segmentation" className="space-y-6">
+          <SegmentationRules />
+        </TabsContent>
+        
+        {/* Tab: Automação */}
+        <TabsContent value="automation" className="space-y-6">
+          <AutomationBuilder />
+        </TabsContent>
+      </Tabs>
+      
+      {/* Status da Integração */}
+      <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            MODO DESENVOLVIMENTO
+          </Badge>
+          <Badge variant="outline">
+            Dados Mockados
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Esta página está usando dados mockados para desenvolvimento isolado. 
+          Todos os componentes e funcionalidades estão integrados e funcionais.
+          {user && ` Usuário atual: ${user.name} (${user.role})`}
+        </p>
+      </div>
     </div>
   );
 };

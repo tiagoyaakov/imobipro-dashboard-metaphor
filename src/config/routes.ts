@@ -32,15 +32,17 @@ export interface RouteConfig {
 // -----------------------------------------------------------
 
 export const routeConfigs: RouteConfig[] = [
-  // Dashboard Principal
+  // Dashboard Principal (antigo CRM Avançado)
   {
     path: '/',
     name: 'dashboard',
     title: 'Dashboard',
-    description: 'Visão geral do sistema',
+    description: 'Sistema completo de gestão de relacionamento com clientes',
+    allowedRoles: ['ADMIN', 'DEV_MASTER'],
     showInSidebar: true,
-    icon: 'LayoutDashboard',
-    category: 'main'
+    icon: 'Brain',
+    category: 'main',
+    requiredFeature: 'crm-automation'
   },
 
   // Gestão de Propriedades
@@ -98,18 +100,6 @@ export const routeConfigs: RouteConfig[] = [
     category: 'sales'
   },
 
-  // CRM Avançado - Apenas Admin e DEV_MASTER
-  {
-    path: '/crm',
-    name: 'crm',
-    title: 'CRM Avançado',
-    description: 'Gestão avançada de relacionamento',
-    allowedRoles: ['ADMIN', 'DEV_MASTER'],
-    showInSidebar: true,
-    icon: 'Brain',
-    category: 'advanced',
-    requiredFeature: 'crm-automation'
-  },
 
   // Relatórios - Apenas Admin e DEV_MASTER
   {

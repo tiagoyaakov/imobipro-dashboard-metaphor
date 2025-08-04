@@ -372,7 +372,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## 15. 📊 Documentos de Referência Obrigatórios
 
 ### Documentos Vivos (sempre atualizados):
-- **@docs/progress_log.md**: Documento vivo com atualizações resumidas de cada módulo, alterações implementadas e próximos passos. **DEVE ser sempre atualizado** pelo Claude Code após implementações.
+- **@docs/progress_log.md**: Documento vivo com atualizações resumidas de cada módulo, alterações implementadas e próximos passos. **DEVE ser sempre atualizado** pelo Claude Code após implementações. **OBRIGATÓRIO**: Todas as ações tomadas devem ser citadas de forma resumida e simples no final das respostas neste arquivo.
 
 ### Documentos Base de Planejamento:
 - **@docs/planejamento-imobipro.md**: Planejamento completo e detalhado do sistema. Base fundamental para implementações. **PODE ser alterado** quando necessário para ajustes de planejamento.
