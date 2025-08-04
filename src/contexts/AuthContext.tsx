@@ -60,10 +60,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { data: customUser, isLoading: isLoadingUser } = useQuery({
     queryKey: authKeys.user(),
     queryFn: async (): Promise<User | null> => {
-      if (!supabaseUser) return null;
+      if (!supabaseUser || !session) {
+        console.log('🔐 [Auth] Aguardando usuário ou sessão...', { user: !!supabaseUser, session: !!session });
+        return null;
+      }
       
       // Buscar dados customizados do usuário na tabela users (sem JOIN por enquanto)
       console.log('🔐 [Auth] Buscando dados do usuário:', supabaseUser.id);
+      console.log('🔐 [Auth] Session ativa:', session?.access_token ? 'SIM' : 'NÃO');
       
       const { data, error } = await supabase
         .from('User')
@@ -82,6 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single();
 
       console.log('🔐 [Auth] Resultado da query:', { data, error });
+      console.log('🔐 [Auth] Erro detalhado:', error?.code, error?.message, error?.details);
 
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar dados do usuário:', error);
@@ -154,7 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return user;
     },
-    enabled: !!supabaseUser,
+    enabled: !!supabaseUser && !!session,
     staleTime: 5 * 60 * 1000, // 5 minutos
     retry: 2,
   });
