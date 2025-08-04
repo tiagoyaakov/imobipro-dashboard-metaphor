@@ -26,6 +26,7 @@ const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const GoogleCalendarCallback = lazy(() => import("./pages/GoogleCalendarCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // Configuração do QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -171,6 +172,15 @@ const App = () => (
               element={
                 <Suspense fallback={<PageLoadingFallback />}>
                   <GoogleCalendarCallback />
+                </Suspense>
+              } 
+            />
+            {/* Rota para redefinição de senha (fora do DashboardLayout) */}
+            <Route 
+              path="reset-password" 
+              element={
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <ResetPassword />
                 </Suspense>
               } 
             />
