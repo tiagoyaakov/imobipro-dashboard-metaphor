@@ -5,7 +5,7 @@ import { User, Building2, Phone, Mail, UserPlus, Loader2 } from 'lucide-react';
 
 // Hooks
 import { useAuth } from '@/hooks/useAuth';
-import { useCreateUserFixed as useCreateUser, useCompaniesFixed as useCompanies } from '@/hooks/useUsersFixed';
+import { useCreateUserReal as useCreateUser, useCompaniesReal as useCompanies } from '@/hooks/useUsersReal';
 
 // Schemas
 import { 

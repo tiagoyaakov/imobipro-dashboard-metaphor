@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 
 // Types
-import type { User as UserType } from '@/hooks/useUsersFixed';
+import type { User as UserType } from '@/hooks/useUsersReal';
 
 // Hooks
-import { useUpdateUserRoleFixed as useUpdateUserRole, useToggleUserStatusFixed as useToggleUserStatus, useUserPermissionsFixed as useUserPermissions } from '@/hooks/useUsersFixed';
+import { useUpdateUserRoleReal as useUpdateUserRole, useToggleUserStatusReal as useToggleUserStatus, useUserPermissionsReal as useUserPermissions } from '@/hooks/useUsersReal';
 
 // Components UI
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
