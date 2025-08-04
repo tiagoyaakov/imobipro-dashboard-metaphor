@@ -121,6 +121,7 @@ export const validateEmail = (email: string): boolean => {
 // -----------------------------------------------------------
 
 export const roleOptions = [
+  { value: 'DEV_MASTER', label: 'Dev Master' },
   { value: 'ADMIN', label: 'Administrador' },
   { value: 'AGENT', label: 'Corretor' },
 ] as const;
@@ -128,8 +129,10 @@ export const roleOptions = [
 export const getRoleOptionsByUser = (currentUserRole: UserRole) => {
   switch (currentUserRole) {
     case 'DEV_MASTER':
-      return roleOptions;
+      // DEV_MASTER pode criar ADMIN e AGENT (mas não outros DEV_MASTER)
+      return roleOptions.filter(option => option.value !== 'DEV_MASTER');
     case 'ADMIN':
+      // ADMIN pode criar apenas AGENT
       return roleOptions.filter(option => option.value === 'AGENT');
     default:
       return [];

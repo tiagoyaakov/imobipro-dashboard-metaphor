@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, UserX, Home, Shield, User } from 'lucide-react';
+import { Users, UserCheck, UserX, Home, Shield, User, Crown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -85,7 +85,7 @@ export const UserStats: React.FC<UserStatsProps> = ({ stats, isLoading = false }
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Home className="h-3 w-3 text-yellow-600" />
+              <Crown className="h-3 w-3 text-red-600" />
               <span className="text-xs font-medium">Dev Master</span>
             </div>
             <Badge variant="secondary" className="text-xs">
@@ -94,7 +94,7 @@ export const UserStats: React.FC<UserStatsProps> = ({ stats, isLoading = false }
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Shield className="h-3 w-3 text-blue-600" />
+              <Home className="h-3 w-3 text-blue-600" />
               <span className="text-xs font-medium">Admin</span>
             </div>
             <Badge variant="secondary" className="text-xs">

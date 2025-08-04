@@ -5,7 +5,7 @@ import { User, Building2, Phone, Mail, UserPlus, Loader2 } from 'lucide-react';
 
 // Hooks
 import { useAuth } from '@/hooks/useAuth';
-import { useCreateUser } from '@/hooks/useUsers';
+import { useCreateUser, useCompanies } from '@/hooks/useUsers';
 
 // Schemas
 import { 
@@ -42,10 +42,14 @@ interface AddUserFormProps {
 export const AddUserForm: React.FC<AddUserFormProps> = ({
   onSuccess,
   onCancel,
-  companies = []
+  companies: providedCompanies = []
 }) => {
   const { user: currentUser } = useAuth();
   const createUserMutation = useCreateUser();
+  const { data: fetchedCompanies = [], isLoading: companiesLoading } = useCompanies();
+  
+  // Usar empresas fornecidas ou buscadas
+  const companies = providedCompanies.length > 0 ? providedCompanies : fetchedCompanies;
   
   // Estado para controlar formatação do telefone
   const [phoneValue, setPhoneValue] = useState('');
@@ -57,7 +61,7 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({
       email: '',
       name: '',
       role: 'AGENT', // Valor padrão mais seguro
-      company_id: '',
+      company_id: currentUser?.companyId || '',
       telefone: '',
       avatar_url: '',
     },
@@ -84,9 +88,9 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({
         email: data.email,
         name: data.name,
         role: data.role,
-        company_id: data.company_id,
+        companyId: data.company_id,
+        avatarUrl: data.avatar_url || undefined,
         telefone: data.telefone || undefined,
-        avatar_url: data.avatar_url || undefined,
       });
 
       console.log('✅ [AddUserForm] Usuário criado:', result);
@@ -245,21 +249,33 @@ export const AddUserForm: React.FC<AddUserFormProps> = ({
               <Select
                 value={form.watch('company_id')}
                 onValueChange={(value) => form.setValue('company_id', value)}
+                disabled={companiesLoading}
               >
                 <SelectTrigger className={form.formState.errors.company_id ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Selecione a empresa" />
+                  <SelectValue placeholder={companiesLoading ? "Carregando empresas..." : "Selecione a empresa"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name}
+                  {companies.length === 0 && !companiesLoading ? (
+                    <SelectItem value="no-companies" disabled>
+                      Nenhuma empresa disponível
                     </SelectItem>
-                  ))}
+                  ) : (
+                    companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {form.formState.errors.company_id && (
                 <p className="text-sm text-destructive">
                   {form.formState.errors.company_id.message}
+                </p>
+              )}
+              {companiesLoading && (
+                <p className="text-xs text-muted-foreground">
+                  Carregando lista de empresas...
                 </p>
               )}
             </div>

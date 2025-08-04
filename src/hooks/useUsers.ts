@@ -27,6 +27,7 @@ export interface User {
   isActive: boolean;
   companyId: string;
   avatarUrl?: string;
+  telefone?: string;
   createdAt: string;
   updatedAt: string;
   company?: {
@@ -53,6 +54,7 @@ export interface CreateUserParams {
   role: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
   companyId: string;
   avatarUrl?: string;
+  telefone?: string;
 }
 
 // -----------------------------------------------------------
@@ -62,44 +64,56 @@ export interface CreateUserParams {
 export const useUsers = () => {
   const { user: currentUser } = useAuth();
   
-      return useQuery({
-      queryKey: ['users', 'admin-management'],
-      queryFn: async (): Promise<User[]> => {
-        // Verificar se usuário atual tem permissão (apenas ADMIN)
-        if (!currentUser || currentUser.role !== 'ADMIN') {
-          throw new Error('Acesso negado. Apenas administradores podem visualizar usuários.');
-        }
+  return useQuery({
+    queryKey: ['users', 'management', currentUser?.role],
+    queryFn: async (): Promise<User[]> => {
+      // Verificar se usuário atual tem permissão (DEV_MASTER ou ADMIN)
+      if (!currentUser || !['DEV_MASTER', 'ADMIN'].includes(currentUser.role)) {
+        throw new Error('Acesso negado. Apenas DEV_MASTER e Administradores podem visualizar usuários.');
+      }
 
-        const { data, error } = await supabase
-          .from('User')
-          .select(`
-            id,
-            email,
-            name,
-            role,
-            isActive,
-            companyId,
-            avatarUrl,
-            createdAt,
-            updatedAt,
-            company:Company!companyId(id, name)
-          `)
-          .order('createdAt', { ascending: false });
+      console.log('🔄 [useUsers] Buscando usuários para role:', currentUser.role);
 
-        if (error) {
-          console.error('❌ [useUsers] Erro ao buscar usuários:', error);
-          throw new Error('Erro ao carregar lista de usuários');
-        }
+      const { data, error } = await supabase
+        .from('User')
+        .select(`
+          id,
+          email,
+          name,
+          role,
+          isActive,
+          companyId,
+          avatarUrl,
+          createdAt,
+          updatedAt,
+          company:Company!companyId(id, name)
+        `)
+        .order('createdAt', { ascending: false });
 
-        console.log('✅ [useUsers] Usuários carregados:', data?.length || 0);
-        return data || [];
-      },
-      enabled: !!currentUser && currentUser.role === 'ADMIN',
-      staleTime: 2 * 60 * 1000, // 2 minutos
-      gcTime: 5 * 60 * 1000, // 5 minutos (substituindo cacheTime)
-      retry: 2,
-      retryDelay: 1000,
-    });
+      if (error) {
+        console.error('❌ [useUsers] Erro ao buscar usuários:', error);
+        throw new Error('Erro ao carregar lista de usuários');
+      }
+
+      console.log('✅ [useUsers] Usuários carregados:', data?.length || 0);
+      
+      // Filtrar usuários baseado na hierarquia
+      let filteredUsers = data || [];
+      
+      // Se for ADMIN, filtrar para não mostrar DEV_MASTER
+      if (currentUser.role === 'ADMIN') {
+        filteredUsers = filteredUsers.filter(user => user.role !== 'DEV_MASTER');
+        console.log('🔍 [useUsers] Usuários filtrados para ADMIN:', filteredUsers.length);
+      }
+      
+      return filteredUsers;
+    },
+    enabled: !!currentUser && ['DEV_MASTER', 'ADMIN'].includes(currentUser.role),
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    gcTime: 5 * 60 * 1000, // 5 minutos (substituindo cacheTime)
+    retry: 2,
+    retryDelay: 1000,
+  });
 };
 
 // -----------------------------------------------------------
@@ -112,13 +126,27 @@ export const useUpdateUserRole = () => {
 
   return useMutation({
     mutationFn: async ({ userId, newRole, reason }: UpdateUserRoleParams) => {
-      // Verificar permissões no frontend (apenas ADMIN)
-      if (!currentUser || currentUser.role !== 'ADMIN') {
-        throw new Error('Acesso negado');
+      // Verificar permissões no frontend (DEV_MASTER ou ADMIN)
+      if (!currentUser || !['DEV_MASTER', 'ADMIN'].includes(currentUser.role)) {
+        throw new Error('Acesso negado. Apenas DEV_MASTER e Administradores podem alterar funções.');
       }
 
       if (userId === currentUser.id) {
         throw new Error('Você não pode alterar sua própria função');
+      }
+
+      // Verificar hierarquia de permissões
+      if (currentUser.role === 'ADMIN') {
+        if (newRole === 'DEV_MASTER') {
+          throw new Error('Administradores não podem promover usuários para DEV_MASTER');
+        }
+        if (newRole === 'ADMIN') {
+          throw new Error('Administradores não podem criar outros Administradores');
+        }
+      }
+      
+      if (currentUser.role === 'DEV_MASTER' && newRole === 'DEV_MASTER') {
+        throw new Error('DEV_MASTER não pode criar outros usuários DEV_MASTER');
       }
 
       console.log('🔄 [useUpdateUserRole] Atualizando função:', { userId, newRole, reason });
@@ -195,6 +223,7 @@ export const useCreateUser = () => {
         user_name: params.name,
         user_role: params.role,
         user_company_id: params.companyId,
+        user_telefone: params.telefone || null,
         user_avatar_url: params.avatarUrl || null,
       });
 
@@ -243,9 +272,9 @@ export const useToggleUserStatus = () => {
 
   return useMutation({
     mutationFn: async ({ userId, newStatus, reason }: ToggleUserStatusParams) => {
-      // Verificar permissões no frontend (apenas ADMIN)
-      if (!currentUser || currentUser.role !== 'ADMIN') {
-        throw new Error('Acesso negado');
+      // Verificar permissões no frontend (DEV_MASTER ou ADMIN)
+      if (!currentUser || !['DEV_MASTER', 'ADMIN'].includes(currentUser.role)) {
+        throw new Error('Acesso negado. Apenas DEV_MASTER e Administradores podem alterar status.');
       }
 
       if (userId === currentUser.id) {

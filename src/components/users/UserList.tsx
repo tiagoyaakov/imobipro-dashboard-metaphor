@@ -67,7 +67,7 @@ interface UserActionDialogState {
   isOpen: boolean;
   type: 'role' | 'status' | null;
   user: UserType | null;
-  newRole?: 'PROPRIETARIO' | 'ADMIN' | 'AGENT';
+  newRole?: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
   newStatus?: boolean;
   reason?: string;
 }
@@ -98,10 +98,6 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
         return <Home className="h-4 w-4 text-blue-600" />;
       case 'AGENT':
         return <User className="h-4 w-4 text-gray-600" />;
-      // DEPRECATED: Manter compatibilidade temporária
-      case 'PROPRIETARIO':
-        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
-        return <Home className="h-4 w-4 text-yellow-600" />;
       default:
         return <User className="h-4 w-4 text-gray-600" />;
     }
@@ -116,10 +112,6 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
         return 'Administrador';
       case 'AGENT':
         return 'Corretor';
-      // DEPRECATED: Manter compatibilidade temporária
-      case 'PROPRIETARIO':
-        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
-        return 'Proprietário (Deprecated)';
       default:
         return 'Corretor';
     }
@@ -134,10 +126,6 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
         return 'secondary' as const;
       case 'AGENT':
         return 'outline' as const;
-      // DEPRECATED: Manter compatibilidade temporária
-      case 'PROPRIETARIO':
-        console.warn('⚠️ Role PROPRIETARIO é deprecated, use ADMIN');
-        return 'default' as const;
       default:
         return 'outline' as const;
     }
@@ -360,7 +348,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                 <Label>Nova Função</Label>
                 <Select
                   value={dialogState.newRole}
-                  onValueChange={(value: 'PROPRIETARIO' | 'ADMIN' | 'AGENT') => {
+                  onValueChange={(value: 'DEV_MASTER' | 'ADMIN' | 'AGENT') => {
                     setDialogState(prev => ({ ...prev, newRole: value }));
                   }}
                 >
@@ -370,8 +358,8 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                   <SelectContent>
                     <SelectItem value="AGENT">Corretor</SelectItem>
                     <SelectItem value="ADMIN">Administrador</SelectItem>
-                    {permissions.canPromoteToProprietario && (
-                      <SelectItem value="PROPRIETARIO">Proprietário</SelectItem>
+                    {permissions.isCurrentUserDevMaster && (
+                      <SelectItem value="DEV_MASTER">Dev Master</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
