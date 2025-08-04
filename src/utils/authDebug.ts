@@ -50,17 +50,17 @@ export const debugAuthState = async () => {
     if (userData.user) {
       try {
         const { data: customData, error: customError } = await supabase
-          .from('users')
+          .from('User')
           .select(`
             id,
             email,
             name,
             role,
-            is_active,
-            company_id,
-            avatar_url,
-            created_at,
-            updated_at
+            isActive,
+            companyId,
+            avatarUrl,
+            createdAt,
+            updatedAt
           `)
           .eq('id', userData.user.id)
           .single();
@@ -75,18 +75,18 @@ export const debugAuthState = async () => {
         // 4. Testar join com companies se dados customizados funcionam
         if (customData) {
           const { data: joinData, error: joinError } = await supabase
-            .from('users')
+            .from('User')
             .select(`
               id,
               email,
               name,
               role,
-              is_active,
-              company_id,
-              avatar_url,
-              company:companies(id, name),
-              created_at,
-              updated_at
+              isActive,
+              companyId,
+              avatarUrl,
+              company:Company(id, name),
+              createdAt,
+              updatedAt
             `)
             .eq('id', userData.user.id)
             .single();

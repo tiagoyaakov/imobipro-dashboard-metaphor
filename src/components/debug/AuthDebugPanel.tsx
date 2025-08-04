@@ -50,7 +50,7 @@ export const AuthDebugPanel: React.FC = () => {
       if (sessionData.session) {
         // Buscar dados do usuário novamente
         const { data: userData } = await supabase
-          .from('users')
+          .from('User')
           .select('*')
           .eq('id', sessionData.session.user.id)
           .single();
