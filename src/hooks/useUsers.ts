@@ -80,6 +80,7 @@ export const useUsers = () => {
           isActive,
           companyId,
           avatarUrl,
+          telefone,
           createdAt,
           updatedAt
         `)
@@ -101,7 +102,7 @@ export const useUsers = () => {
         isActive: user.isActive,
         companyId: user.companyId,
         avatarUrl: user.avatarUrl,
-        telefone: null, // Campo não está no select, será null
+        telefone: user.telefone || null,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       }));

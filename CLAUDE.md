@@ -37,15 +37,24 @@
 
 ## 4. 🗄️ Padrões de Banco de Dados (Supabase)
 
-### Nomenclatura:
+### ⚠️ OBRIGATÓRIO - Nomenclatura camelCase:
 - **Tabelas**: PascalCase (`User`, `Company`, `Property`)
-- **Colunas**: camelCase (`isActive`, `companyId`, `createdAt`)
+- **Colunas**: **SEMPRE camelCase** (`isActive`, `companyId`, `createdAt`, `updatedAt`)
 - **Relacionamentos**: usar `!` para joins (`Company!companyId`)
+- **JAMAIS usar snake_case** (`is_active`, `company_id`) - PROIBIDO
+- **JAMAIS usar lowercase** (`users`, `companies`) - PROIBIDO
+
+### Regras de Consistência:
+- **Frontend**: Todos os tipos TypeScript em camelCase
+- **Backend**: Queries Supabase devem usar exatamente os nomes camelCase do banco
+- **Mapeamento**: NÃO fazer conversão snake_case ↔ camelCase
+- **Validação**: Sempre verificar que banco e código usam mesma nomenclatura
 
 ### Estrutura:
 - Migrations versionadas em `supabase/migrations/`
 - RLS policies obrigatórias para todas as tabelas
 - Índices para colunas de busca frequente
+- Schema Prisma deve refletir exatamente a estrutura do Supabase
 
 ---
 
