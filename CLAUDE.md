@@ -52,7 +52,7 @@
 
 ### Estrutura:
 - Migrations versionadas em `supabase/migrations/`
-- RLS policies obrigatórias para todas as tabelas
+- As RLS serão a última coisa a serem implementadas no projeto, quando o desenvolvedor solicitar.
 - Índices para colunas de busca frequente
 - Schema Prisma deve refletir exatamente a estrutura do Supabase
 
@@ -121,7 +121,7 @@ src/
 ## 8. 📋 MCPs Disponíveis e Regras de Uso
 
 **O Claude Code deve ser PROATIVO em utilizar estes MCPs durante o desenvolvimento, conforme as oportunidades surgem.**
-
+**REGRA FUNDAMENTAL: Sempre tentar reconectar cada MCP antes do uso, de forma automática, sem que o usuário peça.**
 ### MCPs Atualmente Configurados:
 
 | MCP | Servidor | Status | Regra de Uso Proativa |
@@ -248,7 +248,7 @@ src/
 ## 10. 🏗️ Arquitetura do Sistema
 
 ### Módulos Principais:
-- **Dashboard**: Visão geral e métricas principais
+- **Dashboard**: Funcionalidades avançadas de CRM *(Apenas DEV_MASTER e ADMIN)*
 - **Usuários**: Gestão de usuários e permissões *(Apenas DEV_MASTER e ADMIN)*
 - **Propriedades**: Catálogo e gestão de imóveis
 - **Pipeline**: Funil de vendas e oportunidades
@@ -260,7 +260,7 @@ src/
 - **Contatos**: Base de contatos e comunicação
 - **Lei do Inquilino**: Assistente jurídico com IA
 - **Chats**: Sistema de mensagens integrado
-- **CRM AVANÇADO**: Funcionalidades avançadas de CRM *(Apenas DEV_MASTER e ADMIN)*
+- **CRM AVANÇADO**: 
 - **CONFIGURAÇÕES**: Configurações do sistema *(Apenas DEV_MASTER e ADMIN)*
 
 ### Hierarquia de Usuários (baseada em @docs/hierarquia-usuarios.md):

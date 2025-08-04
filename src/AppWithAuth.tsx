@@ -32,7 +32,6 @@ const Contatos = lazy(() => import("./pages/Contatos"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Pipeline = lazy(() => import("./pages/Pipeline"));
-const CRM = lazy(() => import("./pages/CRM"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Conexoes = lazy(() => import("./pages/Conexoes"));
 const Usuarios = lazy(() => import("./pages/Usuarios"));
@@ -202,11 +201,11 @@ const AppWithAuth = () => (
                 </PrivateRoute>
               }
             >
-              {/* Dashboard - Acesso para todos usuários autenticados */}
+              {/* Dashboard - Acesso para DEV_MASTER e Admin */}
               <Route 
                 index 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <Dashboard />
                   </ProtectedRoute>
                 } 
@@ -262,15 +261,6 @@ const AppWithAuth = () => (
                 } 
               />
 
-              {/* CRM - Acesso para DEV_MASTER e Admin */}
-              <Route 
-                path="crm" 
-                element={
-                  <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
-                    <CRM />
-                  </ProtectedRoute>
-                } 
-              />
 
               {/* Relatórios - Acesso para DEV_MASTER e Admin */}
               <Route 

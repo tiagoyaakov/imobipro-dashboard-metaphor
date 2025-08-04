@@ -30,7 +30,7 @@ import {
 
 // Hooks das duas versões
 import useDashboard from '@/hooks/useDashboard'; // V1
-import useDashboardV2 from '@/hooks/useDashboardV2'; // V2
+// import useDashboardV2 from '@/hooks/useDashboardV2'; // V2 - REMOVIDO
 
 // Componentes de monitoramento
 // import { CacheHealthIndicator } from '@/components/monitoring';
@@ -51,12 +51,16 @@ export default function DashboardTest() {
     enableRealtime: true 
   });
   
-  // Hook V2 (Com Cache Unificado)
-  const v2 = useDashboardV2({ 
-    chartPeriod, 
-    enableRealtime: true,
-    enableCache: true 
-  });
+  // Hook V2 (Com Cache Unificado) - REMOVIDO
+  const v2 = {
+    stats: null,
+    chartData: null,
+    activities: null,
+    isLoading: false,
+    hasError: false,
+    refetchAll: () => {},
+    isOnline: true
+  };
 
   const currentVersion = useV2 ? v2 : v1;
 
