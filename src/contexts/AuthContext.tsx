@@ -2,7 +2,7 @@ import React, { createContext, useContext, ReactNode, useState, useCallback, use
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../integrations/supabase/client';
-import { User } from '../schemas/crm';
+import type { User } from '../hooks/useUsers';
 import { authKeys, AUTH_ERROR_MESSAGES, LoginFormData } from '../schemas/auth';
 import { authConfig } from '../config/auth';
 import '../utils/authDebug'; // Importar debug helper
@@ -79,6 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           companyId,
           isActive,
           avatarUrl,
+          telefone,
           createdAt,
           updatedAt
         `)
@@ -112,12 +113,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isActive: true,
           companyId: defaultCompanyId,
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+          telefone: supabaseUser.user_metadata?.telefone || null,
           createdAt: supabaseUser.created_at || new Date().toISOString(),
           updatedAt: supabaseUser.updated_at || new Date().toISOString(),
-          company: { 
-            id: defaultCompanyId, 
-            name: 'ImobiPRO Default' 
-          }, // Default company
         };
         
         console.log('🔐 [Auth] Fallback user criado:', fallbackUser);
@@ -149,12 +147,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isActive: data.isActive ?? true, // Use DB value or default to true
         companyId: data.companyId || companyId,
         avatarUrl: data.avatarUrl || null, // Use DB value or null
+        telefone: data.telefone || null,
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
-        company: { 
-          id: data.companyId || companyId, 
-          name: 'ImobiPRO Default' 
-        }, // Use real company ID
       };
 
       return user;
