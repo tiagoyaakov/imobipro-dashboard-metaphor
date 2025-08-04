@@ -71,19 +71,19 @@ export const useUsers = () => {
       console.log('🔄 [useUsers] Buscando usuários para role:', currentUser.role);
 
       const { data, error } = await supabase
-        .from('User')
+        .from('users')
         .select(`
           id,
           email,
           name,
           role,
-          isActive,
-          companyId,
-          avatarUrl,
-          createdAt,
-          updatedAt
+          is_active,
+          company_id,
+          avatar_url,
+          created_at,
+          updated_at
         `)
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('❌ [useUsers] Erro ao buscar usuários:', error);
@@ -92,8 +92,22 @@ export const useUsers = () => {
 
       console.log('✅ [useUsers] Usuários carregados:', data?.length || 0);
       
+      // Mapear dados do banco (snake_case) para interface (camelCase)
+      const mappedUsers: User[] = (data || []).map(user => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role === 'CREATOR' ? 'DEV_MASTER' : user.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT',
+        isActive: user.is_active,
+        companyId: user.company_id,
+        avatarUrl: user.avatar_url,
+        telefone: null, // Não está no select, será null
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+      }));
+      
       // Filtrar usuários baseado na hierarquia
-      let filteredUsers = data || [];
+      let filteredUsers = mappedUsers;
       
       // Se for ADMIN, filtrar para não mostrar DEV_MASTER
       if (currentUser.role === 'ADMIN') {

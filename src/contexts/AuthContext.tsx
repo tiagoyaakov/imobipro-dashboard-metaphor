@@ -70,18 +70,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔐 [Auth] Session ativa:', session?.access_token ? 'SIM' : 'NÃO');
       
       const { data, error } = await supabase
-        .from('User')
+        .from('users')
         .select(`
           id,
           email,
           name,
           role,
-          companyId,
-          isActive,
-          avatarUrl,
+          company_id,
+          is_active,
+          avatar_url,
           telefone,
-          createdAt,
-          updatedAt
+          created_at,
+          updated_at
         `)
         .eq('id', supabaseUser.id)
         .single();
@@ -145,9 +145,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       else mappedRole = 'AGENT'; // FORÇAR AGENT para qualquer role desconhecida
 
       // Use company ID from config or database
-      const companyId = data.companyId || authConfig.development.defaultCompanyId;
+      const companyId = data.company_id || authConfig.development.defaultCompanyId;
       
-      if (!data.companyId && !import.meta.env.PROD) {
+      if (!data.company_id && !import.meta.env.PROD) {
         console.warn('⚠️ [Auth] Usuário sem company_id. Usando padrão:', companyId);
       }
       
@@ -157,12 +157,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: data.email,
         name: data.name,
         role: mappedRole,
-        isActive: data.isActive ?? true, // Use DB value or default to true
-        companyId: data.companyId || companyId,
-        avatarUrl: data.avatarUrl || null, // Use DB value or null
+        isActive: data.is_active ?? true, // Use DB value or default to true
+        companyId: data.company_id || companyId,
+        avatarUrl: data.avatar_url || null, // Use DB value or null
         telefone: data.telefone || null,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
       };
 
       return user;
@@ -327,18 +327,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Atualizar dados customizados na tabela users
-      const updateData: { name: string; email: string; updatedAt: string; avatarUrl?: string } = {
+      const updateData: { name: string; email: string; updated_at: string; avatar_url?: string } = {
         name: data.name,
         email: data.email,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       if (data.avatarUrl !== undefined) {
-        updateData.avatarUrl = data.avatarUrl;
+        updateData.avatar_url = data.avatarUrl;
       }
 
       const { error: updateError } = await supabase
-        .from('User')
+        .from('users')
         .update(updateData)
         .eq('id', supabaseUser.id);
 
@@ -370,10 +370,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Atualizar dados customizados na tabela users
       const { error: updateError } = await supabase
-        .from('User')
+        .from('users')
         .update({
-          avatarUrl: avatarUrl,
-          updatedAt: new Date().toISOString(),
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', supabaseUser.id);
 
@@ -615,7 +615,7 @@ export const useSignup = () => {
         
         // Buscar uma empresa padrão ou criar uma se necessário
         const { data: companies, error: companiesError } = await supabase
-          .from('Company')
+          .from('companies')
           .select('id')
           .limit(1);
 
@@ -629,7 +629,7 @@ export const useSignup = () => {
         if (!companyId) {
           console.log('[DEBUG] Criando empresa padrão...');
           const { data: newCompany, error: createCompanyError } = await supabase
-            .from('Company')
+            .from('companies')
             .insert([
               { name: 'Empresa Padrão' }
             ])
@@ -650,14 +650,14 @@ export const useSignup = () => {
           password: '[HANDLED_BY_SUPABASE_AUTH]', // Placeholder, auth é gerenciado pelo Supabase
           name: metadata?.name || '',
           role: 'AGENT', // FORÇAR SEMPRE AGENT NO SIGNUP
-          companyId: companyId,
-          isActive: true,
+          company_id: companyId,
+          is_active: true,
         };
         
-        console.log('[DEBUG] Dados que serão inseridos na tabela User:', insertData);
+        console.log('[DEBUG] Dados que serão inseridos na tabela users:', insertData);
         
         const { data: userData, error: userError } = await supabase
-          .from('User')
+          .from('users')
           .insert([insertData])
           .select()
           .single();
