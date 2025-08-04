@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { useEffectiveUser } from './useImpersonation';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/integrations/supabase/types';
-import { canManageUser, filterUsersByHierarchy } from '@/contexts/AuthContextMock';
+// Removendo import do AuthContextMock - não é mais necessário no contexto real
 import { 
   canCreateUsers, 
   canCreateUserWithRole, 
@@ -359,7 +359,20 @@ export const useUserPermissions = () => {
     
     // Helpers
     hasAdminPermissions: userForPermissions?.role === 'DEV_MASTER' || userForPermissions?.role === 'ADMIN',
-    canManageOtherUser: (targetUser: { role: UserRole } | null) => canManageUser(userForManagement, targetUser),
+    canManageOtherUser: (targetUser: { role: UserRole } | null) => {
+      if (!userForManagement || !targetUser) return false;
+      
+      // DEV_MASTER pode gerenciar qualquer usuário
+      if (userForManagement.role === 'DEV_MASTER') return true;
+      
+      // ADMIN pode gerenciar apenas AGENT
+      if (userForManagement.role === 'ADMIN') {
+        return targetUser.role === 'AGENT';
+      }
+      
+      // AGENT não pode gerenciar ninguém
+      return false;
+    },
     getAvailableRolesForCreation: () => getAvailableRolesForCreation(userForManagement?.role),
   };
 };
