@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Shield, Users, UserCheck, UserX, Filter, Search, Plus } from 'lucide-react';
 
 // Hooks
-import { useUsers, useUserStats, useUserPermissions } from '@/hooks/useUsers';
+import { useUsersFixed as useUsers, useUserStatsFixed as useUserStats, useUserPermissionsFixed as useUserPermissions } from '@/hooks/useUsersFixed';
 import { useAuth } from '@/hooks/useAuth';
 
 // Components UI

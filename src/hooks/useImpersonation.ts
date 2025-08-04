@@ -48,92 +48,32 @@ export const useImpersonation = () => {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
 
-  // Query para verificar impersonation ativa
+  // Query simplificada para impersonation (SEM RPC)
   const {
     data: impersonationData,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['impersonation', 'active'],
+    queryKey: ['impersonation', 'active', 'simplified'],
     queryFn: async (): Promise<ImpersonationData> => {
-      // Apenas DEV_MASTER pode ter impersonations
-      if (!currentUser || currentUser.role !== 'DEV_MASTER') {
-        return { has_active_impersonation: false };
-      }
-
-      const { data, error } = await supabase.rpc('get_active_impersonation', {
-        admin_user_id: currentUser.id,
-      });
-
-      if (error) {
-        console.error('❌ [useImpersonation] Erro ao verificar impersonation:', error);
-        throw new Error('Erro ao verificar impersonation ativa');
-      }
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Erro ao verificar impersonation');
-      }
-
-      console.log('✅ [useImpersonation] Status verificado:', {
-        hasActive: data.has_active_impersonation,
-        targetUser: data.target_user?.email
-      });
-
-      return {
-        has_active_impersonation: data.has_active_impersonation,
-        impersonation: data.impersonation,
-        target_user: data.target_user
-      };
+      // Por enquanto, sempre retornar que não há impersonation ativa
+      // até as funções RPC serem implementadas
+      return { has_active_impersonation: false };
     },
     enabled: !!currentUser && currentUser.role === 'DEV_MASTER',
     staleTime: 30 * 1000, // 30 segundos
-    refetchInterval: 60 * 1000, // Verificar a cada minuto
-    retry: 2,
+    retry: false, // Não fazer retry
   });
 
-  // Mutation para iniciar impersonation
+  // Mutation simplificada para iniciar impersonation (SEM RPC)
   const startImpersonationMutation = useMutation({
     mutationFn: async ({ targetUserId }: StartImpersonationParams) => {
-      if (!currentUser || currentUser.role !== 'DEV_MASTER') {
-        throw new Error('Apenas DEV_MASTER pode usar impersonation');
-      }
-
-      console.log('🔄 [startImpersonation] Iniciando impersonation:', { targetUserId });
-
-      const { data, error } = await supabase.rpc('start_user_impersonation', {
-        target_user_id: targetUserId,
-        admin_user_id: currentUser.id,
-      });
-
-      if (error) {
-        console.error('❌ [startImpersonation] Erro na função RPC:', error);
-        throw new Error(error.message || 'Erro ao iniciar impersonation');
-      }
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Erro desconhecido ao iniciar impersonation');
-      }
-
-      console.log('✅ [startImpersonation] Impersonation iniciada:', data);
-      return data;
+      // Por enquanto, retornar erro informativo
+      throw new Error('Funcionalidade temporariamente indisponível. Execute o arquivo sql_fixes/user_management_functions.sql no Supabase para habilitar.');
     },
-    onSuccess: (data) => {
-      // Invalidar todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['impersonation'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-      
-      // Toast de sucesso
-      toast({
-        title: 'Impersonation Iniciada',
-        description: `Agora você está visualizando como: ${data.target_user.name}`,
-        duration: 5000,
-      });
-
-      console.log('🎉 [startImpersonation] Cache invalidado e toast exibido');
+    onSuccess: () => {
+      // Por enquanto, nada
     },
     onError: (error: Error) => {
       console.error('❌ [startImpersonation] Erro na mutation:', error);
@@ -145,46 +85,14 @@ export const useImpersonation = () => {
     },
   });
 
-  // Mutation para finalizar impersonation
+  // Mutation simplificada para finalizar impersonation (SEM RPC)
   const endImpersonationMutation = useMutation({
     mutationFn: async () => {
-      if (!currentUser || currentUser.role !== 'DEV_MASTER') {
-        throw new Error('Apenas DEV_MASTER pode finalizar impersonation');
-      }
-
-      console.log('🔄 [endImpersonation] Finalizando impersonation');
-
-      const { data, error } = await supabase.rpc('end_user_impersonation', {
-        admin_user_id: currentUser.id,
-      });
-
-      if (error) {
-        console.error('❌ [endImpersonation] Erro na função RPC:', error);
-        throw new Error(error.message || 'Erro ao finalizar impersonation');
-      }
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Erro desconhecido ao finalizar impersonation');
-      }
-
-      console.log('✅ [endImpersonation] Impersonation finalizada:', data);
-      return data;
+      // Por enquanto, retornar erro informativo
+      throw new Error('Funcionalidade temporariamente indisponível. Execute o arquivo sql_fixes/user_management_functions.sql no Supabase para habilitar.');
     },
     onSuccess: () => {
-      // Invalidar todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['impersonation'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['deals'] });
-      
-      // Toast de sucesso
-      toast({
-        title: 'Voltou ao Normal',
-        description: 'Impersonation finalizada. Você está de volta ao seu perfil de administrador.',
-      });
-
-      console.log('🎉 [endImpersonation] Cache invalidado e toast exibido');
+      // Por enquanto, nada
     },
     onError: (error: Error) => {
       console.error('❌ [endImpersonation] Erro na mutation:', error);
