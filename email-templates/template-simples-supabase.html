@@ -1,0 +1,90 @@
+<!-- Template Simplificado para Dashboard Supabase -->
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+  
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 600;">🏢 ImobiPRO</h1>
+    <p style="margin: 12px 0 0 0; opacity: 0.95; font-size: 16px;">Plataforma Completa para Gestão Imobiliária</p>
+  </div>
+
+  <!-- Conteúdo -->
+  <div style="padding: 40px 30px;">
+    <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Olá! Crie sua senha para acessar o ImobiPRO</h2>
+    
+    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">Você foi convidado para fazer parte da <strong>ImobiPRO</strong>, a plataforma mais avançada para gestão imobiliária do Brasil.</p>
+    
+    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">Para começar a usar todas as funcionalidades do sistema, você precisa criar sua senha de acesso pessoal.</p>
+
+    <!-- Benefícios -->
+    <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
+      <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 18px;">🚀 O que você terá acesso:</h3>
+      <ul style="margin: 12px 0; padding-left: 20px; color: #0c4a6e;">
+        <li>Dashboard inteligente com métricas em tempo real</li>
+        <li>Gestão completa de propriedades e clientes</li>
+        <li>Sistema de agendamentos automatizado</li>
+        <li>Pipeline de vendas visual e interativo</li>
+        <li>Relatórios automáticos via WhatsApp</li>
+        <li>Assistente jurídico com inteligência artificial</li>
+      </ul>
+    </div>
+
+    <!-- Aviso Importante -->
+    <div style="background-color: #fef3cd; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 0 6px 6px 0;">
+      <p style="margin: 0; color: #92400e; font-weight: 500; font-size: 14px;"><strong>⏰ Importante:</strong> Este link é válido por 24 horas. Após esse período, será necessário solicitar um novo convite.</p>
+    </div>
+
+    <!-- Botão Principal -->
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
+        🔐 Criar Minha Senha
+      </a>
+    </div>
+
+    <!-- Requisitos de Senha -->
+    <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
+      <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 18px;">📋 Requisitos para sua senha:</h3>
+      <ul style="margin: 12px 0; padding-left: 20px; color: #0c4a6e;">
+        <li>Mínimo de <strong>8 caracteres</strong></li>
+        <li>Pelo menos <strong>1 letra maiúscula</strong></li>
+        <li>Pelo menos <strong>1 letra minúscula</strong></li>
+        <li>Pelo menos <strong>1 número</strong></li>
+        <li>Pelo menos <strong>1 símbolo especial</strong> (!@#$%^&*)</li>
+      </ul>
+    </div>
+
+    <!-- Informações de Login -->
+    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">Após criar sua senha, você poderá fazer login usando:</p>
+    <div style="background-color: #f8fafc; padding: 16px; border-radius: 6px; margin: 16px 0;">
+      <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+        <li><strong>Email:</strong> {{ .Email }}</li>
+        <li><strong>Senha:</strong> A senha que você criar</li>
+        <li><strong>URL:</strong> <a href="{{ .SiteURL }}" style="color: #3b82f6; text-decoration: none;">{{ .SiteURL }}</a></li>
+      </ul>
+    </div>
+
+    <!-- Linha Divisória -->
+    <div style="height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 30px 0;"></div>
+
+    <!-- Nota de Segurança -->
+    <p style="font-size: 14px; color: #6b7280; font-style: italic; line-height: 1.5;">
+      🛡️ <strong>Segurança:</strong> Se você não solicitou este acesso, pode ignorar este email com segurança. O link será invalidado automaticamente em 24 horas.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+    <p style="margin: 8px 0;"><strong>© 2025 ImobiPRO</strong> - Todos os direitos reservados</p>
+    <p style="margin: 8px 0;">Este é um email automático, por favor não responda diretamente.</p>
+    <div style="margin-top: 16px;">
+      <p style="margin: 0;">
+        <a href="{{ .SiteURL }}" style="color: #3b82f6; text-decoration: none;">Acessar Plataforma</a> • 
+        <a href="{{ .SiteURL }}/suporte" style="color: #3b82f6; text-decoration: none;">Central de Ajuda</a> • 
+        <a href="{{ .SiteURL }}/contato" style="color: #3b82f6; text-decoration: none;">Contato</a>
+      </p>
+    </div>
+    <p style="margin-top: 16px; font-size: 12px; opacity: 0.8;">
+      🚀 Transformando o mercado imobiliário com tecnologia de ponta
+    </p>
+  </div>
+
+</div>

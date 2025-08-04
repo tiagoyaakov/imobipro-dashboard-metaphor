@@ -19,7 +19,12 @@ import {
 import type { User as UserType } from '@/hooks/useUsersReal';
 
 // Hooks
-import { useUpdateUserRoleReal as useUpdateUserRole, useToggleUserStatusReal as useToggleUserStatus, useUserPermissionsReal as useUserPermissions } from '@/hooks/useUsersReal';
+import { 
+  useUpdateUserRoleReal as useUpdateUserRole, 
+  useToggleUserStatusReal as useToggleUserStatus, 
+  useDeleteUserReal as useDeleteUser,
+  useUserPermissionsReal as useUserPermissions 
+} from '@/hooks/useUsersReal';
 
 // Components UI
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -65,7 +70,7 @@ interface UserListProps {
 
 interface UserActionDialogState {
   isOpen: boolean;
-  type: 'role' | 'status' | null;
+  type: 'role' | 'status' | 'delete' | null;
   user: UserType | null;
   newRole?: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
   newStatus?: boolean;
@@ -88,6 +93,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   const permissions = useUserPermissions();
   const updateRoleMutation = useUpdateUserRole();
   const toggleStatusMutation = useToggleUserStatus();
+  const deleteUserMutation = useDeleteUser();
 
   // Função para obter ícone da função
   const getRoleIcon = (role: string) => {
@@ -153,6 +159,16 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
     });
   };
 
+  // Abrir diálogo de exclusão
+  const openDeleteDialog = (user: UserType) => {
+    setDialogState({
+      isOpen: true,
+      type: 'delete',
+      user,
+      reason: '',
+    });
+  };
+
   // Fechar diálogo
   const closeDialog = () => {
     setDialogState({
@@ -181,6 +197,11 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
           newStatus,
           reason,
         });
+      } else if (type === 'delete') {
+        await deleteUserMutation.mutateAsync({
+          userId: user.id,
+          reason,
+        });
       }
       
       closeDialog();
@@ -203,7 +224,15 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
     return permissions.canManageUsers;
   };
 
-  const isLoading = updateRoleMutation.isPending || toggleStatusMutation.isPending;
+  // Verificar se usuário pode excluir
+  const canDeleteUser = (targetUser: UserType) => {
+    if (targetUser.id === currentUserId) return false;
+    // ADMIN não pode deletar DEV_MASTER
+    if (permissions.isAdmin && targetUser.role === 'DEV_MASTER') return false;
+    return permissions.canDeleteUsers;
+  };
+
+  const isLoading = updateRoleMutation.isPending || toggleStatusMutation.isPending || deleteUserMutation.isPending;
 
   return (
     <>
@@ -312,6 +341,17 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                         
                         <DropdownMenuSeparator />
                         
+                        <DropdownMenuItem 
+                          onClick={() => openDeleteDialog(user)}
+                          disabled={!canDeleteUser(user)}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir Usuário
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuSeparator />
+                        
                         <DropdownMenuItem disabled className="text-muted-foreground">
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Histórico
@@ -331,13 +371,19 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-              {dialogState.type === 'role' ? 'Alterar Função' : 'Alterar Status'}
+              <AlertTriangle className={`h-5 w-5 ${
+                dialogState.type === 'delete' ? 'text-red-600' : 'text-amber-600'
+              }`} />
+              {dialogState.type === 'role' ? 'Alterar Função' : 
+               dialogState.type === 'status' ? 'Alterar Status' : 
+               'Excluir Usuário'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {dialogState.type === 'role' 
                 ? `Você está prestes a alterar a função de ${dialogState.user?.name}.`
-                : `Você está prestes a ${dialogState.newStatus ? 'ativar' : 'desativar'} ${dialogState.user?.name}.`
+                : dialogState.type === 'status'
+                ? `Você está prestes a ${dialogState.newStatus ? 'ativar' : 'desativar'} ${dialogState.user?.name}.`
+                : `Você está prestes a excluir permanentemente ${dialogState.user?.name} do sistema.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -358,7 +404,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                   <SelectContent>
                     <SelectItem value="AGENT">Corretor</SelectItem>
                     <SelectItem value="ADMIN">Administrador</SelectItem>
-                    {permissions.isCurrentUserDevMaster && (
+                    {permissions.isDevMaster && (
                       <SelectItem value="DEV_MASTER">Dev Master</SelectItem>
                     )}
                   </SelectContent>
@@ -366,16 +412,58 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
               </div>
             )}
 
+            {dialogState.type === 'delete' && (
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2 text-sm">
+                      <p className="font-semibold text-red-800">
+                        ⚠️ ATENÇÃO: Esta ação é irreversível!
+                      </p>
+                      <ul className="text-red-700 space-y-1 ml-2">
+                        <li>• O usuário será removido permanentemente do sistema</li>
+                        <li>• Todos os dados associados serão perdidos</li>
+                        <li>• Não será possível recuperar as informações</li>
+                        <li>• O acesso será revogado imediatamente</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Usuário:</strong> {dialogState.user?.name} ({dialogState.user?.email})
+                    <br />
+                    <strong>Função:</strong> {getRoleText(dialogState.user?.role || '')}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label>Motivo (Opcional)</Label>
+              <Label>
+                {dialogState.type === 'delete' ? 'Motivo da Exclusão' : 'Motivo (Opcional)'}
+                {dialogState.type === 'delete' && <span className="text-red-500 ml-1">*</span>}
+              </Label>
               <Textarea
-                placeholder="Descreva o motivo desta alteração..."
+                placeholder={
+                  dialogState.type === 'delete' 
+                    ? "Descreva o motivo desta exclusão permanente..." 
+                    : "Descreva o motivo desta alteração..."
+                }
                 value={dialogState.reason || ''}
                 onChange={(e) => {
                   setDialogState(prev => ({ ...prev, reason: e.target.value }));
                 }}
                 className="min-h-[80px]"
+                required={dialogState.type === 'delete'}
               />
+              {dialogState.type === 'delete' && (
+                <p className="text-xs text-red-600">
+                  O motivo é obrigatório para exclusões permanentes (auditoria)
+                </p>
+              )}
             </div>
           </div>
 
@@ -385,10 +473,22 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmAction}
-              disabled={isLoading}
-              className="bg-primary hover:bg-primary/90"
+              disabled={
+                isLoading || 
+                (dialogState.type === 'delete' && (!dialogState.reason || dialogState.reason.trim().length === 0))
+              }
+              className={
+                dialogState.type === 'delete' 
+                  ? "bg-red-600 hover:bg-red-700 focus:ring-red-600" 
+                  : "bg-primary hover:bg-primary/90"
+              }
             >
-              {isLoading ? 'Processando...' : 'Confirmar'}
+              {isLoading 
+                ? 'Processando...' 
+                : dialogState.type === 'delete' 
+                  ? 'Excluir Permanentemente'
+                  : 'Confirmar'
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

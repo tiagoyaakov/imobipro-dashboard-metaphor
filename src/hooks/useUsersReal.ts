@@ -319,6 +319,53 @@ export const useUserStatsReal = () => {
 };
 
 // -----------------------------------------------------------
+// Hook para excluir usuário permanentemente (USA RPC)
+// -----------------------------------------------------------
+
+export const useDeleteUserReal = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+      console.log('🔄 [useDeleteUserReal] Excluindo usuário:', { userId, reason: reason ? '[PROVIDED]' : '[NONE]' });
+
+      const { data, error } = await supabase.rpc('delete_user', {
+        target_user_id: userId,
+        reason: reason || null,
+      });
+
+      if (error) {
+        console.error('❌ [useDeleteUserReal] Erro RPC:', error);
+        throw new Error(`Erro ao excluir usuário: ${error.message}`);
+      }
+
+      if (data && !data.success) {
+        console.error('❌ [useDeleteUserReal] Erro na função:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('✅ [useDeleteUserReal] Usuário excluído:', data);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: 'Usuário Excluído',
+        description: `${data.deleted_user?.name || 'Usuário'} foi excluído permanentemente do sistema.`,
+        variant: 'default',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao Excluir Usuário',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+// -----------------------------------------------------------
 // Hook para permissões
 // -----------------------------------------------------------
 
@@ -330,6 +377,7 @@ export const useUserPermissionsReal = () => {
     canManageUsers: currentUser?.role === 'DEV_MASTER' || currentUser?.role === 'ADMIN',
     canCreateUsers: currentUser?.role === 'DEV_MASTER' || currentUser?.role === 'ADMIN',
     canViewUsers: currentUser?.role === 'DEV_MASTER' || currentUser?.role === 'ADMIN',
+    canDeleteUsers: currentUser?.role === 'DEV_MASTER' || currentUser?.role === 'ADMIN',
     
     // Status do usuário atual
     isDevMaster: currentUser?.role === 'DEV_MASTER',
