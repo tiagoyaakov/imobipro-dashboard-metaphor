@@ -1644,6 +1644,7 @@ export type Database = {
         | "DEAL_UPDATED"
         | "DEAL_CLOSED"
         | "CHAT_MESSAGE_SENT"
+        | "USER_DELETED"
       AppointmentPriority: "LOW" | "NORMAL" | "HIGH" | "URGENT"
       AppointmentSource:
         | "MANUAL"
