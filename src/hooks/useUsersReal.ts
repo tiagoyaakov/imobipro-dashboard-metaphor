@@ -108,7 +108,7 @@ export const useCreateUserReal = () => {
       
       toast({
         title: 'Usuário Criado',
-        description: `Usuário criado com sucesso! ID: ${data.user_id}`,
+        description: data.message || `Usuário criado com sucesso! ID: ${data.user_id}`,
         variant: 'default',
       });
     },
