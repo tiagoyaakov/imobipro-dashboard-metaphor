@@ -30,10 +30,6 @@ export interface User {
   telefone?: string;
   createdAt: string;
   updatedAt: string;
-  company?: {
-    id: string;
-    name: string;
-  };
 }
 
 export interface UpdateUserRoleParams {
@@ -85,8 +81,7 @@ export const useUsers = () => {
           companyId,
           avatarUrl,
           createdAt,
-          updatedAt,
-          company:Company!companyId(id, name)
+          updatedAt
         `)
         .order('createdAt', { ascending: false });
 

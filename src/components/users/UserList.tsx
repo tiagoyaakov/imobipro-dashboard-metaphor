@@ -244,10 +244,10 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                       <span>
                         Cadastrado em {format(new Date(user.createdAt), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
-                      {user.company?.name && (
+                      {user.companyId && (
                         <>
                           <span>•</span>
-                          <span>{user.company.name}</span>
+                          <span>ID: {user.companyId.slice(0, 8)}...</span>
                         </>
                       )}
                     </div>
