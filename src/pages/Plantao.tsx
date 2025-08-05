@@ -5,16 +5,9 @@ import { View } from "react-big-calendar";
 import { PlantaoCalendar } from "@/components/plantao/PlantaoCalendar";
 import { PlantaoEventModal } from "@/components/plantao/PlantaoEventModal";
 import { PlantaoFilters } from "@/components/plantao/PlantaoFilters";
-import { GoogleCalendarConnectionModal } from "@/components/plantao/GoogleCalendarConnectionModal";
-import { SyncStatusIndicator } from "@/components/plantao/SyncStatusIndicator";
-import { SyncControls } from "@/components/plantao/SyncControls";
-import { ConflictResolutionModal } from "@/components/plantao/ConflictResolutionModal";
 import { usePlantao } from "@/hooks/usePlantao";
-import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
-import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { useToast } from "@/hooks/use-toast";
 import { PlantaoEvent, PlantaoEventFormData } from "@/types/plantao";
-import { SyncStatus } from "@/types/googleCalendar";
 import { Loader2, Calendar, AlertCircle, Settings } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,45 +43,12 @@ export default function Plantao() {
   const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("calendar");
 
-  // Hook do Google Calendar OAuth
-  const {
-    isConnected: isGoogleConnected,
-    connectionStatus: googleSyncStatus,
-    lastConnectedAt,
-    isConnecting,
-    refreshConnection
-  } = useGoogleOAuth();
+  // Estados para Google Calendar (temporariamente desabilitado para corrigir dependências circulares)
+  const isGoogleConnected = false;
+  const googleSyncStatus = 'disconnected';
+  const isConnecting = false;
+  const isSyncing = false;
 
-  // Hook de sincronização bidirecional
-  const {
-    syncStatus,
-    lastSyncReport,
-    isSyncing,
-    conflicts,
-    googleEvents,
-    importedEvents,
-    syncToGoogle,
-    syncFromGoogle,
-    syncBidirectional,
-    resolveConflict,
-    fetchGoogleEvents,
-    clearConflicts,
-    getLastSyncTime,
-    getSyncStats
-  } = useGoogleCalendarSync();
-
-  // Debug temporário para OAuth
-  useEffect(() => {
-    console.group('🔍 Debug Plantão - Google OAuth Status');
-    console.log('isGoogleConnected:', isGoogleConnected);
-    console.log('googleSyncStatus:', googleSyncStatus);
-    console.log('isConnecting:', isConnecting);
-    console.log('lastConnectedAt:', lastConnectedAt);
-    console.log('URL atual:', window.location.href);
-    console.log('Session storage auth_started:', sessionStorage.getItem('google_auth_started'));
-    console.log('localStorage tokens:', localStorage.getItem('google_calendar_tokens'));
-    console.groupEnd();
-  }, [isGoogleConnected, googleSyncStatus, isConnecting, lastConnectedAt]);
 
   // Handlers de navegação
   const handleNavigate = useCallback((action: "PREV" | "NEXT" | "TODAY") => {
@@ -182,107 +142,45 @@ export default function Plantao() {
   }, []);
 
   const handleGoogleSync = useCallback(async () => {
-    if (!isGoogleConnected) {
-      // Se não está conectado, abrir modal de conexão
-      handleGoogleModalOpen();
-      return;
-    }
-    
-    // Se está conectado, executar sincronização bidirecional
-    try {
-      await handleSyncBidirectional();
-      toast({
-        title: "✅ Sincronização Iniciada",
-        description: "Sincronizando eventos com Google Calendar...",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Erro na sincronização:', error);
-      toast({
-        title: "❌ Erro na Sincronização",
-        description: "Não foi possível sincronizar com Google Calendar",
-        variant: "destructive"
-      });
-    }
-  }, [isGoogleConnected, handleGoogleModalOpen, handleSyncBidirectional, toast]);
+    toast({
+      title: "🔧 Sincronização Temporariamente Indisponível",
+      description: "A sincronização com Google Calendar está sendo otimizada",
+      variant: "default"
+    });
+  }, [toast]);
 
-  // Handlers de sincronização
+  // Handlers de sincronização (temporariamente desabilitados)
   const handleSyncToGoogle = useCallback(async () => {
-    try {
-      await syncToGoogle(events);
-    } catch (error) {
-      console.error('Erro na sincronização para Google:', error);
-    }
-  }, [syncToGoogle, events]);
+    toast({
+      title: "🔧 Funcionalidade em Manutenção",
+      description: "A sincronização está sendo otimizada",
+      variant: "default"
+    });
+  }, [toast]);
 
   const handleSyncBidirectional = useCallback(async () => {
-    try {
-      await syncBidirectional(events);
-    } catch (error) {
-      console.error('Erro na sincronização bidirecional:', error);
-    }
-  }, [syncBidirectional, events]);
+    toast({
+      title: "🔧 Funcionalidade em Manutenção", 
+      description: "A sincronização está sendo otimizada",
+      variant: "default"
+    });
+  }, [toast]);
 
   const handleSyncFromGoogle = useCallback(async () => {
-    try {
-      console.log('🔄 Iniciando importação do Google Calendar...');
-      
-      await syncFromGoogle(async (event) => {
-        // Callback para processar cada evento importado
-        console.log('📅 Processando evento importado:', event.title);
-        
-        // Criar o evento no sistema local através do hook usePlantao
-        if (event.title && event.startDateTime && event.endDateTime) {
-          try {
-            await createEvent({
-              title: event.title,
-              description: event.description || '',
-              startDateTime: new Date(event.startDateTime),
-              endDateTime: new Date(event.endDateTime),
-              location: event.location || '',
-              corretorId: currentUser?.id || '',
-              clientName: '',
-              clientPhone: '',
-              propertyId: '',
-              tipo: 'VISITA',
-              status: 'AGENDADO',
-              observacoes: 'Importado do Google Calendar',
-              googleCalendarEventId: event.googleCalendarEventId
-            });
-            console.log('✅ Evento importado e criado localmente:', event.title);
-            return true;
-          } catch (error) {
-            console.error('❌ Erro ao criar evento localmente:', error);
-            return false;
-          }
-        }
-        return false;
-      });
-      
-      // Forçar recarregamento dos eventos após importação
-      console.log('🔄 Recarregando eventos após importação...');
-      await fetchEvents();
-      
-      // Toast de sucesso
-      toast({
-        title: "✅ Importação Concluída",
-        description: "Eventos do Google Calendar foram importados com sucesso",
-        variant: "default"
-      });
-      
-    } catch (error) {
-      console.error('❌ Erro na importação do Google:', error);
-      toast({
-        title: "❌ Erro na Importação",
-        description: "Não foi possível importar eventos do Google Calendar",
-        variant: "destructive"
-      });
-    }
-  }, [syncFromGoogle, createEvent, currentUser, fetchEvents, toast]);
+    toast({
+      title: "🔧 Funcionalidade em Manutenção",
+      description: "A importação está sendo otimizada",
+      variant: "default"
+    });
+  }, [toast]);
 
   const handleViewConflicts = useCallback(() => {
-    setIsConflictModalOpen(true);
-  }, []);
+    toast({
+      title: "🔧 Funcionalidade em Manutenção",
+      description: "A resolução de conflitos está sendo otimizada",
+      variant: "default"
+    });
+  }, [toast]);
 
   const handleCloseConflictModal = useCallback(() => {
     setIsConflictModalOpen(false);
@@ -292,8 +190,8 @@ export default function Plantao() {
     conflict: any, 
     strategy: 'KEEP_LOCAL' | 'KEEP_GOOGLE'
   ) => {
-    return await resolveConflict(conflict, strategy);
-  }, [resolveConflict]);
+    return false;
+  }, []);
 
   // Renderizar loading
   if (loading && events.length === 0) {
@@ -322,15 +220,9 @@ export default function Plantao() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <SyncStatusIndicator
-            syncStatus={isGoogleConnected ? syncStatus : SyncStatus.IDLE}
-            isConnected={isGoogleConnected}
-            lastSyncAt={getLastSyncTime()}
-            onSync={handleGoogleSync}
-            onOpenConnection={handleGoogleModalOpen}
-            isLoading={isConnecting || isSyncing}
-            compact
-          />
+          <div className="text-sm text-muted-foreground">
+            🔧 Sincronização Google Calendar em manutenção
+          </div>
         </div>
       </div>
       {/* Alertas de erro */}
@@ -464,66 +356,21 @@ export default function Plantao() {
 
         {/* Aba de Sincronização */}
         <TabsContent value="sync" className="space-y-6">
-          <SyncControls
-            isSyncing={isSyncing}
-            syncStatus={syncStatus}
-            lastSyncReport={lastSyncReport}
-            conflicts={conflicts.length}
-            onSyncToGoogle={handleSyncToGoogle}
-            onSyncFromGoogle={handleSyncFromGoogle}
-            onSyncBidirectional={handleSyncBidirectional}
-            onViewConflicts={conflicts.length > 0 ? handleViewConflicts : undefined}
-            isGoogleConnected={isGoogleConnected}
-            canSync={isGoogleConnected && !isSyncing && events.length > 0}
-          />
-
-          {/* Informações sobre eventos do Google Calendar */}
-          {(googleEvents.length > 0 || importedEvents.length > 0) && (
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                  Estatísticas de Sincronização
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Eventos do Google Calendar */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Google Calendar</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Eventos encontrados:</span>
-                        <span className="font-medium">{googleEvents.length}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Conflitos detectados:</span>
-                        <span className={`font-medium ${conflicts.length > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                          {conflicts.length}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Eventos Importados */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Importação</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Eventos importados:</span>
-                        <span className="font-medium text-green-600">{getSyncStats().importedCount}</span>
-                      </div>
-                      {getSyncStats().lastSuccess && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Última sincronização:</span>
-                          <span className="font-medium">
-                            {getSyncStats().lastSuccess?.toLocaleString('pt-BR')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-8">
+                <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Sincronização Google Calendar</h3>
+                <p className="text-muted-foreground mb-4">
+                  A sincronização com Google Calendar está temporariamente indisponível
+                  enquanto otimizamos as funcionalidades para melhor performance.
+                </p>
+                <div className="text-sm text-muted-foreground">
+                  🔧 Funcionalidade em manutenção - Voltará em breve
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -541,21 +388,6 @@ export default function Plantao() {
         />
       )}
 
-      {/* Modal de conexão Google Calendar */}
-      <GoogleCalendarConnectionModal
-        isOpen={isGoogleModalOpen}
-        onClose={handleGoogleModalClose}
-      />
-
-      {/* Modal de resolução de conflitos */}
-      <ConflictResolutionModal
-        isOpen={isConflictModalOpen}
-        onClose={handleCloseConflictModal}
-        conflicts={conflicts}
-        onResolveConflict={handleResolveConflict}
-        onClearConflicts={clearConflicts}
-        isResolving={isSyncing}
-      />
     </div>
   );
 }
