@@ -44,6 +44,7 @@ interface LocalPlantaoEvent {
   corretorColor: string;
   status: 'AGENDADO' | 'CONFIRMADO' | 'CONCLUIDO' | 'CANCELADO';
   location?: string;
+  source?: 'GOOGLE_CALENDAR' | 'IMOBIPRO' | 'IMPORTED';
 }
 
 interface LocalPlantaoUser {
@@ -54,77 +55,25 @@ interface LocalPlantaoUser {
   color: string;
 }
 
-// Dados mockados para demonstração
-const MOCK_CORRETORES: LocalPlantaoUser[] = [
-  {
-    id: "admin-1",
-    name: "Administrador Sistema",
-    email: "admin@imobipro.com",
-    role: "ADMIN",
-    color: "#000000",
-  },
-  {
-    id: "corretor-1",
-    name: "João Silva",
-    email: "joao@imobipro.com",
-    role: "AGENT",
-    color: "#8B5CF6",
-  },
-  {
-    id: "corretor-2",
-    name: "Maria Santos",  
-    email: "maria@imobipro.com",
-    role: "AGENT",
-    color: "#3B82F6",
-  },
-];
-
-const generateMockEvents = (): LocalPlantaoEvent[] => {
-  const events: LocalPlantaoEvent[] = [];
-  const today = new Date();
-
-  // Gerar eventos para os próximos 30 dias
-  for (let day = 0; day < 30; day++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + day);
-
-    // 2-4 eventos por dia
-    const eventsPerDay = Math.floor(Math.random() * 3) + 2;
-
-    for (let i = 0; i < eventsPerDay; i++) {
-      const corretor = MOCK_CORRETORES[Math.floor(Math.random() * MOCK_CORRETORES.length)];
-      const hour = 9 + Math.floor(Math.random() * 9); // 9h às 17h
-      const duration = [30, 60, 90, 120][Math.floor(Math.random() * 4)]; // 30min a 2h
-
-      const startDateTime = new Date(date);
-      startDateTime.setHours(hour, 0, 0, 0);
-
-      const endDateTime = new Date(startDateTime);
-      endDateTime.setMinutes(endDateTime.getMinutes() + duration);
-
-      events.push({
-        id: `event-${day}-${i}`,
-        title: [
-          "Visita ao imóvel - Apt. Centro",
-          "Reunião com cliente - Casa Jardins",
-          "Vistoria - Cobertura Zona Sul",
-          "Assinatura de contrato",
-          "Apresentação de proposta",
-          "Follow-up com interessado"
-        ][Math.floor(Math.random() * 6)],
-        description: "Detalhes do agendamento...",
-        startDateTime,
-        endDateTime,
-        corretorId: corretor.id,
-        corretorName: corretor.name,
-        corretorColor: corretor.color,
-        status: day < 0 ? 'CONCLUIDO' : 'AGENDADO',
-        location: "São Paulo, SP",
-      });
-    }
+// Import dinâmico seguro para services
+const getPlantaoService = async () => {
+  try {
+    const { PlantaoService } = await import("@/services/plantaoService");
+    return PlantaoService;
+  } catch (error) {
+    console.error("Erro ao carregar PlantaoService:", error);
+    return null;
   }
+};
 
-  return events;
+const getGoogleCalendarService = async () => {
+  try {
+    const { googleCalendarService } = await import("@/services/googleCalendarService");
+    return googleCalendarService;
+  } catch (error) {
+    console.error("Erro ao carregar GoogleCalendarService:", error);
+    return null;
+  }
 };
 
 // Componente de calendário local integrado
@@ -366,55 +315,180 @@ function LocalPlantaoCalendar({
 }
 
 export default function Plantao() {
-  // Estados locais completamente isolados
+  // Estados locais
   const [events, setEvents] = useState<LocalPlantaoEvent[]>([]);
-  const [corretores] = useState<LocalPlantaoUser[]>(MOCK_CORRETORES);
+  const [corretores, setCorretores] = useState<LocalPlantaoUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCorretorId, setSelectedCorretorId] = useState<string | undefined>();
-  const [currentUser] = useState<LocalPlantaoUser>(MOCK_CORRETORES[0]); // Simular admin
-  const isAdmin = currentUser.role === 'ADMIN';
+  const [currentUser, setCurrentUser] = useState<LocalPlantaoUser | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  
+  const isAdmin = currentUser?.role === 'ADMIN';
 
-  // Estados locais simplificados
+  // Estados do calendário
   const [currentView, setCurrentView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeTab, setActiveTab] = useState("calendar");
 
-  // Carregar dados mockados na inicialização
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Simular carregamento
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setEvents(generateMockEvents());
-        setError(null);
-      } catch (err) {
-        setError("Erro ao carregar dados");
-      } finally {
-        setLoading(false);
+  // Carregar corretores do banco de dados
+  const loadCorretores = useCallback(async () => {
+    try {
+      const service = await getPlantaoService();
+      if (service) {
+        const users = await service.getCorretores();
+        setCorretores(users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          color: user.color
+        })));
+        
+        // Definir usuário atual (simulando autenticação)
+        const adminUser = users.find(u => u.role === 'ADMIN') || users[0];
+        setCurrentUser({
+          id: adminUser.id,
+          name: adminUser.name,
+          email: adminUser.email,
+          role: adminUser.role,
+          color: adminUser.color
+        });
       }
-    };
-
-    loadData();
+    } catch (err) {
+      console.error("Erro ao carregar corretores:", err);
+    }
   }, []);
 
-  // Handlers simplificados
-  const handleSelectEvent = (event: LocalPlantaoEvent) => {
+  // Carregar eventos do banco de dados e Google Calendar
+  const loadEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Carregando eventos do banco de dados...');
+      
+      const service = await getPlantaoService();
+      if (service) {
+        const response = await service.getEvents({});
+        console.log(`📅 ${response.events.length} eventos carregados do banco`);
+        
+        // Converter eventos para formato local
+        const localEvents: LocalPlantaoEvent[] = response.events.map(evt => ({
+          id: evt.id,
+          title: evt.title,
+          description: evt.description,
+          startDateTime: new Date(evt.startDateTime),
+          endDateTime: new Date(evt.endDateTime),
+          corretorId: evt.corretorId,
+          corretorName: evt.corretorName,
+          corretorColor: evt.corretorColor,
+          status: evt.status as any,
+          location: evt.location,
+          source: evt.source === 'GOOGLE_CALENDAR' ? 'GOOGLE_CALENDAR' : 'IMOBIPRO'
+        }));
+        
+        setEvents(localEvents);
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar eventos:", err);
+      setError("Erro ao carregar eventos do calendário");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Sincronizar com Google Calendar
+  const syncWithGoogle = useCallback(async () => {
+    try {
+      setSyncStatus('syncing');
+      console.log('🔄 Iniciando sincronização com Google Calendar...');
+      
+      const googleService = await getGoogleCalendarService();
+      const plantaoService = await getPlantaoService();
+      
+      if (googleService && plantaoService) {
+        // Importar eventos do Google Calendar
+        const report = await googleService.syncFromGoogle("primary", async (googleEvent) => {
+          try {
+            // Converter evento do Google para formato local
+            const localEvent = {
+              title: googleEvent.title || 'Evento sem título',
+              description: googleEvent.description,
+              startDateTime: googleEvent.startDateTime,
+              endDateTime: googleEvent.endDateTime,
+              corretorId: currentUser?.id || 'unknown',
+              location: googleEvent.location,
+              source: 'GOOGLE_CALENDAR' as const
+            };
+            
+            // Adicionar ao cache local
+            await plantaoService.addEventToCache({
+              ...localEvent,
+              id: `google-${googleEvent.id}`,
+              corretorName: currentUser?.name || 'Usuário',
+              corretorColor: currentUser?.color || '#3B82F6',
+              status: 'AGENDADO'
+            });
+            
+            console.log(`✅ Evento importado: ${localEvent.title}`);
+            return true;
+          } catch (error) {
+            console.error("Erro ao processar evento:", error);
+            return false;
+          }
+        });
+        
+        if (report.success) {
+          console.log(`✅ Sincronização concluída: ${report.created} eventos importados`);
+          setSyncStatus('synced');
+          // Recarregar eventos após sincronização
+          await loadEvents();
+        } else {
+          setSyncStatus('error');
+          setError('Erro na sincronização com Google Calendar');
+        }
+      }
+    } catch (err) {
+      console.error("Erro na sincronização:", err);
+      setSyncStatus('error');
+      setError('Falha na sincronização com Google Calendar');
+    }
+  }, [currentUser, loadEvents]);
+
+  // Carregar dados na inicialização
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadCorretores();
+    };
+    initializeData();
+  }, [loadCorretores]);
+
+  // Carregar eventos quando o usuário atual estiver definido
+  useEffect(() => {
+    if (currentUser) {
+      loadEvents();
+    }
+  }, [currentUser, loadEvents]);
+
+  // Handlers
+  const handleSelectEvent = useCallback((event: LocalPlantaoEvent) => {
     console.log("Evento selecionado:", event.title);
-  };
+  }, []);
 
-  const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
+  const handleSelectSlot = useCallback((slotInfo: { start: Date; end: Date }) => {
     console.log("Slot selecionado:", slotInfo.start);
-  };
+  }, []);
 
-  const handleNewEvent = () => {
+  const handleNewEvent = useCallback(() => {
     console.log("Novo evento");
-  };
+  }, []);
 
-  const clearError = () => {
+  const handleSyncFromGoogle = useCallback(async () => {
+    await syncWithGoogle();
+  }, [syncWithGoogle]);
+
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   // Renderizar loading
   if (loading && events.length === 0) {
@@ -497,9 +571,29 @@ export default function Plantao() {
           </div>
         </div>
 
-        <Button onClick={handleNewEvent}>
-          + Novo Evento
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleSyncFromGoogle}
+            disabled={syncStatus === 'syncing'}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+          >
+            {syncStatus === 'syncing' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Sincronizando...
+              </>
+            ) : (
+              <>
+                📥 Importar do Google
+              </>
+            )}
+          </Button>
+          
+          <Button onClick={handleNewEvent}>
+            + Novo Evento
+          </Button>
+        </div>
       </div>
 
       {/* Calendário principal integrado */}
@@ -522,7 +616,7 @@ export default function Plantao() {
       </Card>
 
       {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-primary">{events.length}</div>
@@ -550,10 +644,19 @@ export default function Plantao() {
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {events.filter(e => e.status === "CANCELADO").length}
+            <div className="text-2xl font-bold text-blue-600">
+              {events.filter(e => e.source === "GOOGLE_CALENDAR").length}
             </div>
-            <div className="text-sm text-muted-foreground">Cancelados</div>
+            <div className="text-sm text-muted-foreground">Google Calendar</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {events.filter(e => e.source === "IMOBIPRO").length}
+            </div>
+            <div className="text-sm text-muted-foreground">ImobiPRO</div>
           </CardContent>
         </Card>
       </div>
