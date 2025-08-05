@@ -327,5 +327,8 @@ export class GoogleOAuthService {
 // Instância singleton
 export const googleOAuthService = new GoogleOAuthService();
 
+// Export da classe para métodos estáticos
+export { GoogleOAuthService };
+
 // Export para uso direto
 export default googleOAuthService;

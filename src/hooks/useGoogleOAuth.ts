@@ -1,7 +1,7 @@
 // Hook para gerenciar autenticação OAuth 2.0 com Google Calendar
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { googleOAuthService } from "@/services/googleOAuthService";
+import { googleOAuthService, GoogleOAuthService } from "@/services/googleOAuthService";
 import { GoogleTokens, SyncStatus } from "@/types/googleCalendar";
 
 interface UseGoogleOAuthReturn {
@@ -255,7 +255,7 @@ export function useGoogleOAuth(): UseGoogleOAuthReturn {
 
           // Verificar se está na URL de callback
           if (popupUrl.includes('/auth/google/callback') || popupUrl.includes('code=')) {
-            const result = googleOAuthService.parseAuthCallback(popupUrl);
+            const result = GoogleOAuthService.parseAuthCallback(popupUrl);
             popup.close();
             resolve(result);
           } else {
