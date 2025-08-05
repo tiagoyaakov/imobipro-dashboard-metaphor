@@ -259,7 +259,6 @@ export const PROTECTED_ROUTES = {
   DASHBOARD: '/',
   PROPERTIES: '/propriedades',
   CONTACTS: '/contatos',
-  SCHEDULE: '/agenda',
   CLIENTS: '/clientes',
   PIPELINE: '/pipeline',
   CRM: '/crm',

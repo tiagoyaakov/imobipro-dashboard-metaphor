@@ -13,7 +13,6 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
 const Contatos = lazy(() => import("./pages/Contatos"));
-const Agenda = lazy(() => import("./pages/Agenda"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Pipeline = lazy(() => import("./pages/Pipeline"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -73,14 +72,6 @@ const App = () => (
                 element={
                   <Suspense fallback={<PageLoadingFallback />}>
                     <Contatos />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="agenda" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Agenda />
                   </Suspense>
                 } 
               />

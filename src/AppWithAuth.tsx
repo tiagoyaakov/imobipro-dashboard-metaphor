@@ -29,7 +29,6 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
 const Contatos = lazy(() => import("./pages/Contatos"));
-const Agenda = lazy(() => import("./pages/Agenda"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Pipeline = lazy(() => import("./pages/Pipeline"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -54,7 +53,6 @@ const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
 // Páginas de Teste (apenas em desenvolvimento)
 const DashboardTest = lazy(() => import("./pages/DashboardTest"));
 const PropertiesTest = lazy(() => import("./pages/PropertiesTest"));
-const AgendaTest = lazy(() => import("./pages/AgendaTest"));
 
 // -----------------------------------------------------------
 // DEBUG: Verificar configuração na inicialização
@@ -236,15 +234,6 @@ const AppWithAuth = () => {
                 } 
               />
 
-              {/* Agenda - Acesso para todos */}
-              <Route 
-                path="agenda" 
-                element={
-                  <ProtectedRoute>
-                    <Agenda />
-                  </ProtectedRoute>
-                } 
-              />
 
               {/* Clientes - Acesso para todos */}
               <Route 
@@ -371,17 +360,6 @@ const AppWithAuth = () => {
                 />
               )}
 
-              {/* Agenda Test - DEV_MASTER apenas (desenvolvimento) */}
-              {import.meta.env.DEV && (
-                <Route 
-                  path="agenda-test" 
-                  element={
-                    <ProtectedRoute allowedRoles={['DEV_MASTER']}>
-                      <AgendaTest />
-                    </ProtectedRoute>
-                  } 
-                />
-              )}
             </Route>
 
             {/* Página 404 - Disponível para usuários autenticados */}

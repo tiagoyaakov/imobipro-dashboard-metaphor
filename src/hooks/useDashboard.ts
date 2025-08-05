@@ -9,7 +9,7 @@
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { useState, useEffect, useCallback } from 'react';
-import { propertyService, contactService, appointmentService, dealService } from '@/services';
+import { propertyService, contactService, dealService } from '@/services';
 import { EventBus, SystemEvents, useEventBus } from '@/lib/event-bus';
 import type { 
   DashboardStats, 
@@ -69,19 +69,16 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
     const [
       propertiesStats,
       contactsStats,
-      appointmentsStats,
       dealsStats
     ] = await Promise.allSettled([
       propertyService.getStats(),
       contactService.getStats(),
-      appointmentService.getStats(),
       dealService.getStats()
     ]);
 
     // Processar resultados com fallback
     const propertyData = propertiesStats.status === 'fulfilled' ? propertiesStats.value.data : null;
     const contactData = contactsStats.status === 'fulfilled' ? contactsStats.value.data : null;
-    const appointmentData = appointmentsStats.status === 'fulfilled' ? appointmentsStats.value.data : null;
     const dealData = dealsStats.status === 'fulfilled' ? dealsStats.value.data : null;
 
     // Calcular mudanças percentuais
@@ -240,13 +237,7 @@ async function fetchChartData(period: string = '6months'): Promise<DashboardChar
 async function fetchRecentActivities(limit: number = 10): Promise<RecentActivity[]> {
   try {
     // Por enquanto, vamos buscar atividades de múltiplas fontes e combiná-las
-    const [appointmentsResult, dealsResult, contactsResult] = await Promise.allSettled([
-      // Buscar agendamentos recentes
-      appointmentService.findAll({
-        orderBy: 'createdAt',
-        ascending: false,
-        limit: Math.floor(limit / 3)
-      }),
+    const [dealsResult, contactsResult] = await Promise.allSettled([
       
       // Buscar deals recentes
       dealService.findAll({
@@ -264,19 +255,6 @@ async function fetchRecentActivities(limit: number = 10): Promise<RecentActivity
     ]);
 
     const activities: RecentActivity[] = [];
-
-    // Processar agendamentos
-    if (appointmentsResult.status === 'fulfilled' && appointmentsResult.value.data) {
-      appointmentsResult.value.data.forEach(apt => {
-        activities.push({
-          id: `apt-${apt.id}`,
-          action: `Agendamento ${apt.type === 'VISIT' ? 'de visita' : 'de reunião'} marcado`,
-          time: formatRelativeTime(apt.createdAt),
-          type: 'appointment',
-          user: apt.agent?.name || 'Sistema'
-        });
-      });
-    }
 
     // Processar deals
     if (dealsResult.status === 'fulfilled' && dealsResult.value.data) {

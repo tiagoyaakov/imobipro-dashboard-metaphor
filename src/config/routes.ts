@@ -67,16 +67,6 @@ export const routeConfigs: RouteConfig[] = [
     category: 'management'
   },
 
-  // Agenda
-  {
-    path: '/agenda',
-    name: 'schedule',
-    title: 'Agenda',
-    description: 'Agendamentos e compromissos',
-    showInSidebar: true,
-    icon: 'Calendar',
-    category: 'management'
-  },
 
   // Clientes
   {
