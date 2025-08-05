@@ -1,7 +1,7 @@
 // Página do módulo Plantão - Migração para FullCalendar v6+ com Google Calendar
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import FullCalendar from '@fullcalendar/react';
-import { CalendarApi, EventContentArg, EventApi, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import { CalendarApi, EventContentArg, EventApi, DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -57,6 +57,7 @@ interface PlantaoCalendarProps {
   googleCalendarId?: string;
   onEventClick: (eventInfo: EventClickArg) => void;
   onDateSelect: (selectInfo: DateSelectArg) => void;
+  onEventDrop?: (dropInfo: EventDropArg) => void;
   loading?: boolean;
 }
 
@@ -66,6 +67,7 @@ function PlantaoCalendar({
   googleCalendarId = '',
   onEventClick,
   onDateSelect,
+  onEventDrop,
   loading = false,
 }: PlantaoCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
@@ -96,10 +98,16 @@ function PlantaoCalendar({
     // Configurações visuais
     nowIndicator: true,
     navLinks: true,
-    editable: false, // Desabilitar edição direta no calendário
+    editable: true, // Habilitar drag and drop
     selectable: true,
     selectMirror: true,
     dayMaxEvents: 3,
+    
+    // Configurações de drag and drop
+    eventStartEditable: true, // Permite mover eventos
+    eventDurationEditable: true, // Permite redimensionar eventos
+    eventOverlap: true, // Permite sobreposição de eventos
+    selectOverlap: true,
     
     // Configurações de horário
     slotMinTime: '07:00:00',
@@ -171,6 +179,7 @@ function PlantaoCalendar({
     // Event handlers
     eventClick: onEventClick,
     select: onDateSelect,
+    eventDrop: onEventDrop,
     
     // Loading state
     loading: (isLoading: boolean) => {
@@ -227,7 +236,7 @@ function PlantaoCalendar({
     expandRows: true,
     handleWindowResize: true,
     
-  }), [events, googleApiKey, googleCalendarId, onEventClick, onDateSelect]);
+  }), [events, googleApiKey, googleCalendarId, onEventClick, onDateSelect, onEventDrop]);
 
   // Métodos da API do calendário
   const getCalendarApi = useCallback((): CalendarApi | null => {
@@ -461,7 +470,15 @@ function PlantaoCalendar({
         transition: all 0.2s ease !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         min-height: 20px !important;
-        cursor: pointer !important;
+        cursor: grab !important;
+      }
+      
+      .fc-event:active,
+      .fc-event.fc-event-dragging {
+        cursor: grabbing !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        z-index: 999 !important;
       }
       
       .fc-event:hover {
@@ -955,6 +972,161 @@ export default function Plantao() {
     selectInfo.view.calendar.unselect();
   }, [toast]);
 
+  // Handler para drag and drop de eventos
+  const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
+    const { event, delta, revert } = dropInfo;
+    
+    // Verificar se é um evento do Google Calendar
+    const isGoogleEvent = event.classNames.includes('google-calendar-event') || 
+                          event.extendedProps?.source === 'GOOGLE_CALENDAR';
+    
+    if (!isGoogleEvent || !googleConnected) {
+      toast({
+        title: "Evento movido localmente",
+        description: "Evento foi movido apenas no calendário local. Para sincronizar com Google Calendar, conecte sua conta.",
+        variant: "default",
+      });
+      return;
+    }
+
+    const googleEventId = event.extendedProps?.googleEventId || event.id;
+    
+    if (!googleEventId) {
+      toast({
+        title: "Erro ao mover evento",
+        description: "Não foi possível identificar o evento no Google Calendar",
+        variant: "destructive",
+      });
+      revert();
+      return;
+    }
+
+    try {
+      // Mostrar loading
+      toast({
+        title: "Sincronizando...",
+        description: "Atualizando evento no Google Calendar",
+      });
+
+      // Calcular novas datas
+      const newStart = event.start;
+      const newEnd = event.end;
+      
+      if (!newStart) {
+        throw new Error('Data de início inválida');
+      }
+
+      // Atualizar evento no Google Calendar via API
+      const success = await updateGoogleCalendarEvent({
+        eventId: googleEventId,
+        calendarId: googleCalendarId || 'primary',
+        startDateTime: newStart.toISOString(),
+        endDateTime: newEnd ? newEnd.toISOString() : new Date(newStart.getTime() + 60 * 60 * 1000).toISOString(), // 1 hora se não tiver end
+        title: event.title,
+        description: event.extendedProps?.description,
+        location: event.extendedProps?.location,
+      });
+
+      if (success) {
+        toast({
+          title: "Evento atualizado!",
+          description: `"${event.title}" foi movido no Google Calendar com sucesso`,
+        });
+        
+        // Atualizar eventos locais
+        setAllEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === event.id || e.googleEventId === googleEventId
+              ? {
+                  ...e,
+                  start: newStart,
+                  end: newEnd || new Date(newStart.getTime() + 60 * 60 * 1000),
+                }
+              : e
+          )
+        );
+      } else {
+        throw new Error('Falha na atualização');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar evento no Google Calendar:', error);
+      toast({
+        title: "Erro na sincronização",
+        description: "Não foi possível atualizar o evento no Google Calendar. As alterações foram revertidas.",
+        variant: "destructive",
+      });
+      // Reverter mudanças no calendário
+      revert();
+    }
+  }, [googleConnected, googleCalendarId, toast]);
+
+  // Função para atualizar evento no Google Calendar
+  const updateGoogleCalendarEvent = async ({
+    eventId,
+    calendarId,
+    startDateTime,
+    endDateTime,
+    title,
+    description,
+    location,
+  }: {
+    eventId: string;
+    calendarId: string;
+    startDateTime: string;
+    endDateTime: string;
+    title: string;
+    description?: string;
+    location?: string;
+  }): Promise<boolean> => {
+    try {
+      // Verificar se temos tokens válidos
+      if (!googleTokens?.accessToken) {
+        throw new Error('Token de acesso não disponível');
+      }
+
+      // Preparar dados do evento
+      const eventData = {
+        summary: title,
+        description: description || '',
+        location: location || '',
+        start: {
+          dateTime: startDateTime,
+          timeZone: 'America/Sao_Paulo',
+        },
+        end: {
+          dateTime: endDateTime,
+          timeZone: 'America/Sao_Paulo',
+        },
+      };
+
+      // Fazer chamada para Google Calendar API
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${googleTokens.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Google Calendar API Error:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData.error?.message || 'Failed to update event'}`);
+      }
+
+      const updatedEvent = await response.json();
+      console.log('Evento atualizado no Google Calendar:', updatedEvent);
+      return true;
+    } catch (error) {
+      console.error('Erro na atualização do Google Calendar:', error);
+      return false;
+    }
+  };
+
   const handleGoogleConnection = useCallback(async () => {
     if (googleConnected) {
       await disconnectFromGoogle();
@@ -1252,6 +1424,7 @@ export default function Plantao() {
                 googleCalendarId={googleCalendarId}
                 onEventClick={handleEventClick}
                 onDateSelect={handleDateSelect}
+                onEventDrop={handleEventDrop}
                 loading={syncing}
               />
             </div>
