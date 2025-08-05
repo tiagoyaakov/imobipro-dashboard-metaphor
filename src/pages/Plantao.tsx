@@ -63,7 +63,9 @@ export default function Plantao() {
     isSyncing,
     conflicts,
     googleEvents,
+    importedEvents,
     syncToGoogle,
+    syncFromGoogle,
     syncBidirectional,
     resolveConflict,
     fetchGoogleEvents,
@@ -197,6 +199,19 @@ export default function Plantao() {
       console.error('Erro na sincronização bidirecional:', error);
     }
   }, [syncBidirectional, events]);
+
+  const handleSyncFromGoogle = useCallback(async () => {
+    try {
+      await syncFromGoogle(async (event) => {
+        // Callback para processar cada evento importado
+        console.log('Processando evento importado:', event);
+        // Aqui você pode adicionar lógica adicional se necessário
+        return true; // Retorna true para confirmar a importação
+      });
+    } catch (error) {
+      console.error('Erro na importação do Google:', error);
+    }
+  }, [syncFromGoogle]);
 
   const handleViewConflicts = useCallback(() => {
     setIsConflictModalOpen(true);
@@ -388,6 +403,7 @@ export default function Plantao() {
             lastSyncReport={lastSyncReport}
             conflicts={conflicts.length}
             onSyncToGoogle={handleSyncToGoogle}
+            onSyncFromGoogle={handleSyncFromGoogle}
             onSyncBidirectional={handleSyncBidirectional}
             onViewConflicts={conflicts.length > 0 ? handleViewConflicts : undefined}
             isGoogleConnected={isGoogleConnected}

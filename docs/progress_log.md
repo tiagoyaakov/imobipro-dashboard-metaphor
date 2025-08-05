@@ -5,6 +5,29 @@
 
 ---
 
+## 🔄 **Última Atualização: 06/01/2025**
+
+### **Correção Crítica - Erro de Inicialização Módulo Plantão RESOLVIDO**
+
+**✅ CONCLUÍDO:**
+- **ERRO CRÍTICO CORRIGIDO**: "Cannot access 'E' before initialization" resolvido
+- **DEPENDÊNCIA CIRCULAR ELIMINADA**: Hook `useGoogleCalendarSync.ts` refatorado
+- **CORREÇÃO NO HOOK**: Removida dependência circular de `fetchGoogleEvents` no callback `syncFromGoogle`
+- **PÁGINA PLANTÃO ATUALIZADA**: Adicionados imports e handlers faltantes (`importedEvents`, `syncFromGoogle`, `handleSyncFromGoogle`)
+- **BUILD FUNCIONANDO**: Compilação limpa sem erros, módulo Plantão totalmente operacional ✅
+
+**🔧 MELHORIAS TÉCNICAS:**
+- Lógica de re-fetch de eventos do Google internalizada no callback para evitar dependências circulares
+- Handler `handleSyncFromGoogle` implementado com callback de processamento
+- Componente `SyncControls` atualizado com nova prop `onSyncFromGoogle`
+- Arquitetura mais robusta e sem dependências problemáticas
+
+**🎯 RESULTADO:**
+- Módulo Plantão carregando corretamente no navegador
+- Build de produção sem erros (46.05s)
+- Servidor de desenvolvimento rodando na porta 8080
+- Sistema pronto para uso e testes
+
 ## 🔄 **Última Atualização: 05/08/2025**
 
 ### **Módulo Plantão - Sincronização Bidirecional Completa IMPLEMENTADA**

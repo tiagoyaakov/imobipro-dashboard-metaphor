@@ -147,7 +147,13 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
       if (report.success && report.created > 0) {
         // Re-fetch eventos do Google para atualizar a lista
         try {
-          await fetchGoogleEvents();
+          const service = await getGoogleCalendarService();
+          const events = await service.listEvents("primary", {
+            timeMin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // 7 dias atrás
+            timeMax: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)  // 30 dias à frente
+          });
+          setGoogleEvents(events);
+          console.log(`📅 ${events.length} eventos carregados do Google Calendar`);
         } catch (error) {
           console.warn("Erro ao atualizar eventos do Google:", error);
         }
@@ -196,7 +202,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
     } finally {
       setIsSyncing(false);
     }
-  }, [isGoogleConnected, toast, fetchGoogleEvents]);
+  }, [isGoogleConnected, toast]);
 
   /**
    * Sincronização bidirecional avançada
