@@ -996,14 +996,11 @@ export default function Plantao() {
     console.log('GoogleEventId from extendedProps:', event.extendedProps?.googleEventId);
     console.log('Original googleEventId being used:', googleEventId);
     
-    // Se o ID tem prefixo 'google-', remover o prefixo
+    // Se o ID tem prefixo 'google-', remover o prefixo (SEMPRE)
     if (typeof googleEventId === 'string' && googleEventId.startsWith('google-')) {
       const originalId = googleEventId;
-      // Se não temos o ID real nas extendedProps, tentar extrair do ID
-      if (!event.extendedProps?.googleEventId) {
-        googleEventId = googleEventId.replace('google-', '');
-        console.log(`✅ CORREÇÃO APLICADA: ${originalId} → ${googleEventId}`);
-      }
+      googleEventId = googleEventId.replace('google-', '');
+      console.log(`✅ CORREÇÃO APLICADA: ${originalId} → ${googleEventId}`);
     } else {
       console.log('✅ ID já limpo ou sem prefixo google-');
     }
@@ -1033,6 +1030,10 @@ export default function Plantao() {
       if (!newStart) {
         throw new Error('Data de início inválida');
       }
+
+      // Log final do ID que será enviado para a API
+      console.log(`🚀 ENVIANDO PARA API - ID Final: ${googleEventId}`);
+      console.log(`🚀 URL será: https://www.googleapis.com/calendar/v3/calendars/${googleCalendarId || 'primary'}/events/${googleEventId}`);
 
       // Atualizar evento no Google Calendar via API
       const success = await updateGoogleCalendarEvent({
