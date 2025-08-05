@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { PlantaoService } from "@/services/plantaoService";
+// Import dinâmico para evitar dependências circulares
 import {
   PlantaoEvent,
   PlantaoEventFormData,
@@ -39,6 +39,12 @@ interface UsePlantaoReturn {
 export function usePlantao(): UsePlantaoReturn {
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Import dinâmico para evitar dependências circulares
+  const getPlantaoService = async () => {
+    const { PlantaoService } = await import("@/services/plantaoService");
+    return new PlantaoService();
+  };
 
   // Estados
   const [events, setEvents] = useState<PlantaoEvent[]>([]);
@@ -64,7 +70,8 @@ export function usePlantao(): UsePlantaoReturn {
         ? { ...filters, corretorIds: [currentUser.id] }
         : filters;
 
-      const response = await PlantaoService.getEvents(effectiveFilters);
+      const service = await getPlantaoService();
+      const response = await service.getEvents(effectiveFilters);
       setEvents(response.events);
 
       // Mostrar estatísticas de sincronização
@@ -99,7 +106,8 @@ export function usePlantao(): UsePlantaoReturn {
   // Buscar corretores
   const fetchCorretores = useCallback(async () => {
     try {
-      const users = await PlantaoService.getCorretores();
+      const service = await getPlantaoService();
+      const users = await service.getCorretores();
       setCorretores(users);
     } catch (err) {
       console.error("Erro ao buscar corretores:", err);
@@ -110,7 +118,8 @@ export function usePlantao(): UsePlantaoReturn {
   const fetchAnalytics = useCallback(async (corretorId?: string) => {
     try {
       setLoading(true);
-      const data = await PlantaoService.getAnalytics(corretorId);
+      const service = await getPlantaoService();
+      const data = await service.getAnalytics(corretorId);
       setAnalytics(data);
     } catch (err) {
       console.error("Erro ao buscar analytics:", err);
@@ -130,7 +139,8 @@ export function usePlantao(): UsePlantaoReturn {
         ? { ...data, corretorId: currentUser.id }
         : data;
 
-      const newEvent = await PlantaoService.createEvent(eventData);
+      const service = await getPlantaoService();
+      const newEvent = await service.createEvent(eventData);
       
       toast({
         title: "Evento criado",
@@ -160,7 +170,8 @@ export function usePlantao(): UsePlantaoReturn {
       setLoading(true);
       setError(null);
 
-      await PlantaoService.updateEvent(eventId, data);
+      const service = await getPlantaoService();
+      await service.updateEvent(eventId, data);
       
       toast({
         title: "Evento atualizado",
@@ -190,7 +201,8 @@ export function usePlantao(): UsePlantaoReturn {
       setLoading(true);
       setError(null);
 
-      await PlantaoService.cancelEvent(eventId);
+      const service = await getPlantaoService();
+      await service.cancelEvent(eventId);
       
       toast({
         title: "Evento cancelado",
@@ -228,7 +240,8 @@ export function usePlantao(): UsePlantaoReturn {
   useEffect(() => {
     const setupCurrentUser = async () => {
       if (user) {
-        const users = await PlantaoService.getCorretores();
+        const service = await getPlantaoService();
+        const users = await service.getCorretores();
         const currentUserData = users.find(u => u.id === user.id) || {
           id: user.id,
           name: user.email || "Usuário",
