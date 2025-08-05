@@ -1,10 +1,14 @@
-// Página do módulo Plantão - Sincronização com Google Calendar
-import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { Calendar, momentLocalizer, View, Messages } from "react-big-calendar";
-import moment from "moment";
-import "moment/locale/pt-br";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Loader2, AlertCircle, Globe, CheckCircle, LogOut, RefreshCw } from "lucide-react";
+// Página do módulo Plantão - Migração para FullCalendar v6+ com Google Calendar
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import FullCalendar from '@fullcalendar/react';
+import { CalendarApi, EventContentArg, EventApi, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import googleCalendarPlugin from '@fullcalendar/google-calendar';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import { Loader2, AlertCircle, Globe, CheckCircle, LogOut, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,260 +18,405 @@ import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { useToast } from "@/hooks/use-toast";
 
-// Configurar moment para português brasileiro
-moment.locale("pt-br");
-
-// Criar localizer
-const localizer = momentLocalizer(moment);
-
-// Mensagens em português
-const messages: Messages = {
-  allDay: "Dia inteiro",
-  previous: "Anterior",
-  next: "Próximo",
-  today: "Hoje",
-  month: "Mês",
-  week: "Semana",
-  day: "Dia",
-  agenda: "Agenda",
-  date: "Data",
-  time: "Hora",
-  event: "Evento",
-  noEventsInRange: "Não há eventos neste período",
-  showMore: (total) => `+${total} mais`,
-};
-
-// Types locais
+// Types locais compatíveis com FullCalendar
 interface PlantaoEvent {
   id: string;
   title: string;
   description?: string;
-  startDateTime: Date;
-  endDateTime: Date;
+  start: Date;
+  end: Date;
   location?: string;
-  source: 'GOOGLE_CALENDAR';
+  source: 'GOOGLE_CALENDAR' | 'IMOBIPRO';
   googleEventId?: string;
   color?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  extendedProps?: {
+    [key: string]: any;
+  };
 }
 
-// Componente de calendário
+// Componente de calendário FullCalendar
 interface PlantaoCalendarProps {
   events: PlantaoEvent[];
-  currentView: View;
-  onViewChange: (view: View) => void;
-  onNavigate: (date: Date) => void;
-  onSelectEvent: (event: PlantaoEvent) => void;
-  onSelectSlot: (slotInfo: { start: Date; end: Date }) => void;
+  googleApiKey?: string;
+  googleCalendarId?: string;
+  onEventClick: (eventInfo: EventClickArg) => void;
+  onDateSelect: (selectInfo: DateSelectArg) => void;
+  loading?: boolean;
 }
 
 function PlantaoCalendar({
   events,
-  currentView,
-  onViewChange,
-  onNavigate,
-  onSelectEvent,
-  onSelectSlot,
+  googleApiKey = '',
+  googleCalendarId = '',
+  onEventClick,
+  onDateSelect,
+  loading = false,
 }: PlantaoCalendarProps) {
-  // Converter eventos para formato do react-big-calendar
-  const calendarEvents = useMemo(() => {
-    return events.map(event => ({
-      id: event.id,
-      title: event.title,
-      start: new Date(event.startDateTime),
-      end: new Date(event.endDateTime),
-      resource: event,
-    }));
-  }, [events]);
+  const calendarRef = useRef<FullCalendar>(null);
 
-  // Estilizar eventos
-  const eventStyleGetter = useCallback((event: any) => {
-    const plantaoEvent = event.resource as PlantaoEvent;
-    const backgroundColor = plantaoEvent.color || "#3B82F6";
+  // Configurações do FullCalendar
+  const calendarOptions = useMemo(() => ({
+    plugins: [
+      dayGridPlugin,
+      timeGridPlugin,
+      interactionPlugin,
+      listPlugin,
+      googleCalendarPlugin
+    ],
     
-    return {
-      style: {
-        backgroundColor,
-        borderRadius: "4px",
-        opacity: 1,
-        color: "white",
-        border: "0px",
-        display: "block",
-        fontSize: "13px",
-        cursor: "pointer",
+    // Configurações básicas
+    initialView: 'dayGridMonth',
+    locale: ptBrLocale,
+    timeZone: 'America/Sao_Paulo',
+    height: 'auto',
+    
+    // Header personalizado
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    
+    // Configurações visuais
+    nowIndicator: true,
+    navLinks: true,
+    editable: false, // Desabilitar edição direta no calendário
+    selectable: true,
+    selectMirror: true,
+    dayMaxEvents: 3,
+    
+    // Configurações de horário
+    slotMinTime: '07:00:00',
+    slotMaxTime: '21:00:00',
+    slotDuration: '00:30:00',
+    scrollTime: '09:00:00',
+    
+    // Configurações específicas de views
+    views: {
+      dayGridMonth: {
+        dayMaxEvents: 3,
+        moreLinkClick: 'popover'
       },
+      timeGridWeek: {
+        allDaySlot: true,
+        slotLabelFormat: {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }
+      },
+      timeGridDay: {
+        allDaySlot: true
+      },
+      listWeek: {
+        listDayFormat: {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'short'
+        }
+      }
+    },
+    
+    // Textos personalizados
+    buttonText: {
+      today: 'Hoje',
+      month: 'Mês',
+      week: 'Semana',
+      day: 'Dia',
+      list: 'Lista'
+    },
+    
+    // Formatação de datas
+    titleFormat: {
+      year: 'numeric',
+      month: 'long'
+    },
+    
+    // Google Calendar integração
+    googleCalendarApiKey: googleApiKey,
+    
+    // Event Sources - Separar eventos locais do Google Calendar
+    eventSources: [
+      // Eventos locais do ImobiPRO
+      {
+        events: events,
+        color: '#3B82F6',
+        textColor: '#ffffff'
+      },
+      // Google Calendar (se configurado)
+      ...(googleApiKey && googleCalendarId ? [{
+        googleCalendarId: googleCalendarId,
+        color: '#10B981',
+        textColor: '#ffffff',
+        className: 'google-calendar-event'
+      }] : [])
+    ],
+    
+    // Event handlers
+    eventClick: onEventClick,
+    select: onDateSelect,
+    
+    // Loading state
+    loading: (isLoading: boolean) => {
+      console.log('FullCalendar loading state:', isLoading);
+    },
+    
+    // Customização de eventos
+    eventContent: (eventInfo: EventContentArg) => {
+      const { event } = eventInfo;
+      const isGoogle = event.classNames.includes('google-calendar-event');
+      const startTime = eventInfo.timeText;
+      
+      return {
+        html: `
+          <div class="fc-event-content-custom">
+            <div class="fc-event-time-custom">${startTime}</div>
+            <div class="fc-event-title-custom">
+              ${isGoogle ? '📅 ' : '🏢 '}${event.title}
+            </div>
+            ${event.extendedProps?.location ? `<div class="fc-event-location-custom">📍 ${event.extendedProps.location}</div>` : ''}
+          </div>
+        `
+      };
+    },
+    
+    // Configurações de estilo
+    eventClassNames: (eventInfo: any) => {
+      const classes = ['custom-event'];
+      if (eventInfo.event.classNames?.includes('google-calendar-event')) {
+        classes.push('google-event');
+      } else {
+        classes.push('imobipro-event');
+      }
+      return classes;
+    },
+    
+    // Configurações avançadas
+    eventDisplay: 'block',
+    displayEventTime: true,
+    displayEventEnd: false,
+    
+    // Business Hours (horário comercial)
+    businessHours: {
+      daysOfWeek: [1, 2, 3, 4, 5], // Segunda a Sexta
+      startTime: '09:00',
+      endTime: '18:00',
+    },
+    
+    // Configurações de seleção
+    selectConstraint: 'businessHours',
+    
+    // Configurações adicionais
+    aspectRatio: 1.8,
+    expandRows: true,
+    handleWindowResize: true,
+    
+  }), [events, googleApiKey, googleCalendarId, onEventClick, onDateSelect]);
+
+  // Métodos da API do calendário
+  const getCalendarApi = useCallback((): CalendarApi | null => {
+    return calendarRef.current?.getApi() || null;
+  }, []);
+
+  const refreshEvents = useCallback(() => {
+    const api = getCalendarApi();
+    if (api) {
+      api.refetchEvents();
+    }
+  }, [getCalendarApi]);
+
+  const changeView = useCallback((viewName: string) => {
+    const api = getCalendarApi();
+    if (api) {
+      api.changeView(viewName);
+    }
+  }, [getCalendarApi]);
+
+  const goToDate = useCallback((date: Date) => {
+    const api = getCalendarApi();
+    if (api) {
+      api.gotoDate(date);
+    }
+  }, [getCalendarApi]);
+
+  // Estilos customizados para FullCalendar
+  useEffect(() => {
+    // Adicionar estilos CSS customizados
+    const style = document.createElement('style');
+    style.textContent = `
+      /* FullCalendar Custom Styles para ImobiPRO */
+      .fc {
+        font-family: inherit;
+      }
+      
+      .fc-theme-standard .fc-scrollgrid {
+        border: 1px solid hsl(var(--border));
+        border-radius: 8px;
+      }
+      
+      .fc-theme-standard th,
+      .fc-theme-standard td {
+        border-color: hsl(var(--border));
+      }
+      
+      .fc-theme-standard .fc-scrollgrid thead th {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 8px;
+      }
+      
+      .fc-button-primary:not(:disabled) {
+        background: hsl(var(--primary));
+        border-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        border-radius: 6px;
+      }
+      
+      .fc-button-primary:hover:not(:disabled) {
+        background: hsl(var(--primary) / 0.9);
+        border-color: hsl(var(--primary) / 0.9);
+      }
+      
+      .fc-today-button:disabled {
+        background: hsl(var(--muted));
+        border-color: hsl(var(--border));
+        color: hsl(var(--muted-foreground));
+      }
+      
+      .fc-daygrid-day.fc-day-today {
+        background: hsl(var(--accent) / 0.1);
+      }
+      
+      .fc-daygrid-day:hover {
+        background: hsl(var(--accent) / 0.05);
+      }
+      
+      .fc-event-content-custom {
+        padding: 2px 4px;
+        font-size: 12px;
+        line-height: 1.2;
+      }
+      
+      .fc-event-time-custom {
+        font-weight: 500;
+        margin-bottom: 1px;
+      }
+      
+      .fc-event-title-custom {
+        font-weight: 600;
+        margin-bottom: 1px;
+      }
+      
+      .fc-event-location-custom {
+        font-size: 10px;
+        opacity: 0.8;
+      }
+      
+      .custom-event.google-event {
+        background: #10B981 !important;
+        border-color: #059669 !important;
+      }
+      
+      .custom-event.imobipro-event {
+        background: #3B82F6 !important;
+        border-color: #2563EB !important;
+      }
+      
+      .fc-event:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+      }
+      
+      .fc-more-link {
+        background: hsl(var(--accent));
+        color: hsl(var(--accent-foreground));
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      
+      .fc-popover {
+        border: 1px solid hsl(var(--border));
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        background: hsl(var(--background));
+      }
+      
+      .fc-popover-header {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
+        border-bottom: 1px solid hsl(var(--border));
+        font-weight: 600;
+      }
+      
+      .fc-list {
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      
+      .fc-list-day {
+        background: hsl(var(--muted) / 0.5);
+      }
+      
+      .fc-list-day-text {
+        color: hsl(var(--foreground));
+        font-weight: 600;
+      }
+      
+      .fc-list-event:hover {
+        background: hsl(var(--accent) / 0.1);
+      }
+      
+      /* Loading state */
+      .fc-loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      
+      /* Dark mode adjustments */
+      .dark .fc-event {
+        color: white;
+      }
+      
+      .dark .fc-list-event-title a {
+        color: hsl(var(--foreground));
+      }
+      
+      .dark .fc-list-event-time {
+        color: hsl(var(--muted-foreground));
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
     };
   }, []);
 
-  // Componente customizado para eventos
-  const EventComponent = ({ event }: { event: any }) => {
-    const plantaoEvent = event.resource as PlantaoEvent;
-    
-    return (
-      <div className="p-1">
-        <div className="font-medium text-xs">{event.title}</div>
-        {plantaoEvent.location && (
-          <div className="text-xs opacity-70">{plantaoEvent.location}</div>
-        )}
-      </div>
-    );
-  };
-
-  // Formatar título da toolbar
-  const formats = {
-    monthHeaderFormat: "MMMM YYYY",
-    weekHeaderFormat: "DD MMMM",
-    dayHeaderFormat: "dddd, DD MMMM",
-    agendaDateFormat: "DD/MM",
-    agendaTimeFormat: "HH:mm",
-    agendaHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
-      `${moment(start).format("DD/MM")} - ${moment(end).format("DD/MM")}`,
-  };
-
   return (
-    <div className="h-full bg-background rounded-lg shadow-sm">
-      <style jsx="true" global="true">{`
-        .rbc-calendar {
-          font-family: inherit;
-          background: transparent;
-        }
-        
-        .rbc-header {
-          background: hsl(var(--muted));
-          border-bottom: 1px solid hsl(var(--border));
-          padding: 10px 3px;
-          font-weight: 600;
-          font-size: 14px;
-          color: hsl(var(--foreground));
-        }
-        
-        .rbc-today {
-          background-color: hsl(var(--accent) / 0.1);
-        }
-        
-        .rbc-off-range-bg {
-          background: hsl(var(--muted) / 0.5);
-        }
-        
-        .rbc-date-cell {
-          padding: 4px;
-          font-size: 13px;
-        }
-        
-        .rbc-event {
-          padding: 2px 5px;
-          font-size: 12px;
-        }
-        
-        .rbc-event-label {
-          display: none;
-        }
-        
-        .rbc-toolbar {
-          background: hsl(var(--muted));
-          border-radius: 8px 8px 0 0;
-          padding: 12px;
-          margin-bottom: 0;
-          border-bottom: 1px solid hsl(var(--border));
-        }
-        
-        .rbc-toolbar button {
-          background: hsl(var(--background));
-          border: 1px solid hsl(var(--border));
-          color: hsl(var(--foreground));
-          padding: 6px 12px;
-          margin: 0 2px;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-        
-        .rbc-toolbar button:hover {
-          background: hsl(var(--accent));
-          border-color: hsl(var(--accent));
-        }
-        
-        .rbc-toolbar button.rbc-active {
-          background: hsl(var(--primary));
-          color: hsl(var(--primary-foreground));
-          border-color: hsl(var(--primary));
-        }
-        
-        .rbc-toolbar-label {
-          font-weight: 600;
-          font-size: 16px;
-          color: hsl(var(--foreground));
-        }
-        
-        .rbc-month-view {
-          border: 1px solid hsl(var(--border));
-          border-top: none;
-          border-radius: 0 0 8px 8px;
-        }
-        
-        .rbc-day-bg + .rbc-day-bg {
-          border-left: 1px solid hsl(var(--border));
-        }
-        
-        .rbc-month-row + .rbc-month-row {
-          border-top: 1px solid hsl(var(--border));
-        }
-        
-        .rbc-agenda-view {
-          border: 1px solid hsl(var(--border));
-          border-top: none;
-          border-radius: 0 0 8px 8px;
-        }
-        
-        .rbc-agenda-table {
-          background: hsl(var(--background));
-        }
-        
-        .rbc-agenda-date-cell,
-        .rbc-agenda-time-cell {
-          padding: 8px;
-          font-size: 13px;
-        }
-        
-        .rbc-agenda-event-cell {
-          padding: 8px;
-        }
-        
-        .rbc-show-more {
-          background: hsl(var(--accent));
-          color: hsl(var(--accent-foreground));
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 11px;
-          margin: 2px;
-        }
-      `}</style>
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-lg">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+            <p className="text-sm text-muted-foreground">Carregando eventos...</p>
+          </div>
+        </div>
+      )}
       
-      <Calendar
-        localizer={localizer}
-        events={calendarEvents}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: "100%" }}
-        messages={messages}
-        formats={formats}
-        view={currentView}
-        onView={onViewChange}
-        onNavigate={onNavigate}
-        onSelectEvent={(event) => onSelectEvent(event.resource)}
-        onSelectSlot={onSelectSlot}
-        selectable={true}
-        eventPropGetter={eventStyleGetter}
-        components={{
-          event: EventComponent,
-        }}
-        views={["month", "week", "day", "agenda"]}
-        defaultView="month"
-        step={30}
-        showMultiDayTimes
-        min={new Date(0, 0, 0, 7, 0, 0)}
-        max={new Date(0, 0, 0, 21, 0, 0)}
-      />
+      <div className={`transition-opacity duration-200 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+        <FullCalendar
+          ref={calendarRef}
+          {...calendarOptions}
+        />
+      </div>
     </div>
   );
 }
@@ -276,7 +425,7 @@ export default function Plantao() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  // Google OAuth hooks
+  // Google OAuth hooks (mantidos do código original)
   const { 
     isConnected: googleConnected, 
     isConnecting: googleConnecting,
@@ -285,7 +434,7 @@ export default function Plantao() {
     disconnectFromGoogle 
   } = useGoogleOAuth();
   
-  // Google Calendar Sync
+  // Google Calendar Sync (mantido do código original)
   const { 
     syncFromGoogle, 
     syncStatus,
@@ -297,15 +446,15 @@ export default function Plantao() {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Estados do calendário
-  const [currentView, setCurrentView] = useState<View>("month");
-  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Email da conta Google conectada
+  // Email da conta Google conectada (mantido do código original)
   const googleAccountEmail = googleTokens?.email || user?.email;
 
-  // Carregar eventos do Google Calendar
+  // Configurações do Google Calendar
+  const googleApiKey = process.env.VITE_GOOGLE_CALENDAR_API_KEY || '';
+  const googleCalendarId = googleTokens?.calendarId || 'primary';
+
+  // Carregar eventos do Google Calendar (adaptado para FullCalendar)
   const loadGoogleCalendarEvents = useCallback(async () => {
     if (!googleConnected) return;
     
@@ -318,15 +467,23 @@ export default function Plantao() {
       // Sincronizar com Google Calendar
       const result = await syncFromGoogle(async (googleEvent) => {
         const plantaoEvent: PlantaoEvent = {
-          id: googleEvent.id,
+          id: googleEvent.id || `google_${Date.now()}`,
           title: googleEvent.title || 'Evento sem título',
           description: googleEvent.description,
-          startDateTime: googleEvent.startDateTime,
-          endDateTime: googleEvent.endDateTime,
+          start: new Date(googleEvent.startDateTime),
+          end: new Date(googleEvent.endDateTime),
           location: googleEvent.location,
           source: 'GOOGLE_CALENDAR',
           googleEventId: googleEvent.id,
-          color: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#3B82F6'
+          color: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#10B981',
+          backgroundColor: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#10B981',
+          borderColor: '#059669',
+          textColor: '#ffffff',
+          extendedProps: {
+            description: googleEvent.description,
+            location: googleEvent.location,
+            source: 'GOOGLE_CALENDAR'
+          }
         };
         
         syncedEvents.push(plantaoEvent);
@@ -355,7 +512,7 @@ export default function Plantao() {
     }
   }, [googleConnected, syncFromGoogle, toast]);
 
-  // Função auxiliar para mapear cores do Google Calendar
+  // Função auxiliar para mapear cores do Google Calendar (mantida)
   const getColorFromGoogleColorId = (colorId: string): string => {
     const colorMap: { [key: string]: string } = {
       '1': '#7986CB', // Lavender
@@ -370,10 +527,10 @@ export default function Plantao() {
       '10': '#0B8043', // Basil
       '11': '#D50000', // Tomato
     };
-    return colorMap[colorId] || '#3B82F6';
+    return colorMap[colorId] || '#10B981';
   };
 
-  // Verificar autenticação
+  // Verificar autenticação (mantido)
   if (!isAuthenticated || authLoading) {
     return (
       <div className="flex items-center justify-center h-[600px]">
@@ -385,7 +542,7 @@ export default function Plantao() {
     );
   }
 
-  // Carregar eventos quando conectar ao Google
+  // Carregar eventos quando conectar ao Google (mantido)
   useEffect(() => {
     if (googleConnected) {
       loadGoogleCalendarEvents();
@@ -394,21 +551,27 @@ export default function Plantao() {
     }
   }, [googleConnected, loadGoogleCalendarEvents]);
 
-  // Handlers
-  const handleSelectEvent = useCallback((event: PlantaoEvent) => {
-    console.log("Evento selecionado:", event.title);
+  // Handlers para FullCalendar
+  const handleEventClick = useCallback((eventInfo: EventClickArg) => {
+    const event = eventInfo.event;
+    const isGoogle = event.classNames.includes('google-calendar-event');
+    
+    console.log("Evento clicado:", event.title);
     toast({
       title: event.title,
-      description: `${moment(event.startDateTime).format('DD/MM/YYYY HH:mm')} - ${moment(event.endDateTime).format('HH:mm')}`,
+      description: `${event.start?.toLocaleString('pt-BR')} - ${event.end?.toLocaleString('pt-BR')}${isGoogle ? ' (Google Calendar)' : ' (ImobiPRO)'}`,
     });
   }, [toast]);
 
-  const handleSelectSlot = useCallback((slotInfo: { start: Date; end: Date }) => {
-    console.log("Slot selecionado:", slotInfo.start);
+  const handleDateSelect = useCallback((selectInfo: DateSelectArg) => {
+    console.log("Data selecionada:", selectInfo.startStr, "-", selectInfo.endStr);
     toast({
       title: "Criar evento",
-      description: "Para criar eventos, use o Google Calendar",
+      description: "Para criar eventos, use o Google Calendar ou a interface do ImobiPRO",
     });
+    
+    // Limpar seleção
+    selectInfo.view.calendar.unselect();
   }, [toast]);
 
   const handleGoogleConnection = useCallback(async () => {
@@ -430,16 +593,16 @@ export default function Plantao() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header com conexão Google */}
+      {/* Header com conexão Google (mantido) */}
       <div className="space-y-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Plantão</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Sincronização com Google Calendar
+            Sincronização com Google Calendar - FullCalendar v6+
           </p>
         </div>
         
-        {/* Google Account Status */}
+        {/* Google Account Status (mantido com pequenos ajustes) */}
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -449,11 +612,11 @@ export default function Plantao() {
                     ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' 
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                 }`}>
-                  <Globe className="h-4 w-4" />
+                  <CalendarIcon className="h-4 w-4" />
                 </div>
                 <div>
                   <div className="font-medium text-sm">
-                    Google Calendar
+                    Google Calendar (FullCalendar v6+)
                     {googleConnected && (
                       <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-500" />
                     )}
@@ -522,7 +685,7 @@ export default function Plantao() {
         </Card>
       </div>
 
-      {/* Alertas */}
+      {/* Alertas (mantidos) */}
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
@@ -538,79 +701,37 @@ export default function Plantao() {
         </Alert>
       )}
 
-      {/* Aviso quando não conectado */}
+      {/* Aviso quando não conectado (mantido) */}
       {!googleConnected && (
         <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
           <Globe className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800 dark:text-blue-200">
-            Conecte sua conta Google para visualizar e sincronizar seus eventos do calendário.
+            Conecte sua conta Google para visualizar e sincronizar seus eventos do calendário com FullCalendar v6+.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Controles do calendário */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant={currentView === 'month' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setCurrentView('month')}
-          >
-            Mês
-          </Button>
-          <Button
-            variant={currentView === 'week' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setCurrentView('week')}
-          >
-            Semana
-          </Button>
-          <Button
-            variant={currentView === 'day' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setCurrentView('day')}
-          >
-            Dia
-          </Button>
-          <Button
-            variant={currentView === 'agenda' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setCurrentView('agenda')}
-          >
-            Agenda
-          </Button>
-        </div>
-
-        <div className="text-sm text-muted-foreground">
-          {googleConnected && events.length > 0 && (
-            <span>{events.length} eventos sincronizados</span>
-          )}
-        </div>
-      </div>
-
-      {/* Calendário principal */}
+      {/* Calendário principal com FullCalendar */}
       {googleConnected ? (
         <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="h-[700px]">
-              <PlantaoCalendar
-                events={events}
-                currentView={currentView}
-                onViewChange={setCurrentView}
-                onNavigate={setCurrentDate}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-              />
-            </div>
+          <CardContent className="p-6">
+            <PlantaoCalendar
+              events={events}
+              googleApiKey={googleApiKey}
+              googleCalendarId={googleCalendarId}
+              onEventClick={handleEventClick}
+              onDateSelect={handleDateSelect}
+              loading={syncing}
+            />
           </CardContent>
         </Card>
       ) : (
         <Card className="h-[700px] flex items-center justify-center">
           <CardContent className="text-center">
-            <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Calendário não conectado</h3>
             <p className="text-muted-foreground mb-4">
-              Conecte sua conta Google para visualizar seus eventos
+              Conecte sua conta Google para visualizar seus eventos com FullCalendar v6+
             </p>
             <Button onClick={handleGoogleConnection} disabled={googleConnecting}>
               {googleConnecting ? (
@@ -629,7 +750,7 @@ export default function Plantao() {
         </Card>
       )}
 
-      {/* Estatísticas quando conectado */}
+      {/* Estatísticas quando conectado (mantidas com ajustes) */}
       {googleConnected && events.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -647,7 +768,7 @@ export default function Plantao() {
                   today.setHours(0, 0, 0, 0);
                   const tomorrow = new Date(today);
                   tomorrow.setDate(tomorrow.getDate() + 1);
-                  return e.startDateTime >= today && e.startDateTime < tomorrow;
+                  return e.start >= today && e.start < tomorrow;
                 }).length}
               </div>
               <div className="text-sm text-muted-foreground">Eventos Hoje</div>
@@ -661,7 +782,7 @@ export default function Plantao() {
                   const today = new Date();
                   const nextWeek = new Date(today);
                   nextWeek.setDate(nextWeek.getDate() + 7);
-                  return e.startDateTime >= today && e.startDateTime < nextWeek;
+                  return e.start >= today && e.start < nextWeek;
                 }).length}
               </div>
               <div className="text-sm text-muted-foreground">Próximos 7 dias</div>
@@ -671,16 +792,31 @@ export default function Plantao() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {events.filter(e => {
-                  const today = new Date();
-                  const thisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                  return e.startDateTime >= today && e.startDateTime <= thisMonth;
-                }).length}
+                {events.filter(e => e.source === 'GOOGLE_CALENDAR').length}
               </div>
-              <div className="text-sm text-muted-foreground">Este mês</div>
+              <div className="text-sm text-muted-foreground">Google Calendar</div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Indicadores de fonte de eventos */}
+      {googleConnected && events.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="font-semibold mb-3">Legenda dos Eventos</h3>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span className="text-sm">📅 Google Calendar</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                <span className="text-sm">🏢 ImobiPRO</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

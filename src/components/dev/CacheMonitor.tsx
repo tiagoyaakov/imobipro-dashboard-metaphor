@@ -119,7 +119,7 @@ export function CacheMonitor() {
                   <Progress 
                     value={stalePercent} 
                     className="h-2"
-                    // @ts-ignore - custom color
+                    // @ts-expect-error - custom color
                     indicatorClassName="bg-yellow-500"
                   />
                 </div>
