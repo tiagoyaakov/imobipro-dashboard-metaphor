@@ -70,6 +70,7 @@ function PlantaoCalendar({
   onEventDrop,
   loading = false,
 }: PlantaoCalendarProps) {
+  console.log('PlantaoCalendar rendering with events:', events.length);
   const calendarRef = useRef<FullCalendar>(null);
 
   // Configurações do FullCalendar
@@ -159,22 +160,11 @@ function PlantaoCalendar({
     // Google Calendar integração
     googleCalendarApiKey: googleApiKey,
     
-    // Event Sources - Separar eventos locais do Google Calendar
-    eventSources: [
-      // Eventos locais do ImobiPRO
-      {
-        events: events,
-        color: '#3B82F6',
-        textColor: '#ffffff'
-      },
-      // Google Calendar (se configurado)
-      ...(googleApiKey && googleCalendarId ? [{
-        googleCalendarId: googleCalendarId,
-        color: '#10B981',
-        textColor: '#ffffff',
-        className: 'google-calendar-event'
-      }] : [])
-    ],
+    // Event Sources - Usar apenas eventos sincronizados manualmente
+    events: events, // Usar apenas eventos que já passaram pela nossa sincronização
+    
+    // Remover eventSources duplos para evitar conflitos de ID
+    // Todos os eventos (ImobiPRO + Google) vêm através do array 'events'
     
     // Event handlers
     eventClick: onEventClick,
@@ -236,7 +226,7 @@ function PlantaoCalendar({
     expandRows: true,
     handleWindowResize: true,
     
-  }), [events, googleApiKey, googleCalendarId, onEventClick, onDateSelect, onEventDrop]);
+  }), [events, onEventClick, onDateSelect, onEventDrop]);
 
   // Métodos da API do calendário
   const getCalendarApi = useCallback((): CalendarApi | null => {
@@ -880,7 +870,8 @@ export default function Plantao() {
             location: googleEvent.location,
             source: 'GOOGLE_CALENDAR',
             userId: user?.id,
-            userEmail: googleAccountEmail
+            userEmail: googleAccountEmail,
+            googleEventId: googleEvent.id // Armazenar ID real do Google
           }
         };
         
@@ -977,8 +968,16 @@ export default function Plantao() {
     const { event, delta, revert } = dropInfo;
     
     // Verificar se é um evento do Google Calendar
-    const isGoogleEvent = event.classNames.includes('google-calendar-event') || 
-                          event.extendedProps?.source === 'GOOGLE_CALENDAR';
+    const isGoogleEvent = event.extendedProps?.source === 'GOOGLE_CALENDAR';
+    
+    console.log('Event details:', {
+      id: event.id,
+      title: event.title,
+      classNames: event.classNames,
+      source: event.extendedProps?.source,
+      googleEventId: event.extendedProps?.googleEventId,
+      isGoogleEvent
+    });
     
     if (!isGoogleEvent || !googleConnected) {
       toast({
@@ -989,12 +988,27 @@ export default function Plantao() {
       return;
     }
 
-    const googleEventId = event.extendedProps?.googleEventId || event.id;
+    // Extrair ID real do Google Calendar
+    let googleEventId = event.extendedProps?.googleEventId || event.id;
     
-    if (!googleEventId) {
+    // Debug - verificar qual ID estamos usando
+    console.log('Event ID:', event.id);
+    console.log('GoogleEventId from extendedProps:', event.extendedProps?.googleEventId);
+    console.log('Final googleEventId being used:', googleEventId);
+    
+    // Se o ID tem prefixo 'google_', remover o prefixo
+    if (typeof googleEventId === 'string' && googleEventId.startsWith('google_')) {
+      // Se não temos o ID real nas extendedProps, tentar extrair do ID
+      if (!event.extendedProps?.googleEventId) {
+        googleEventId = googleEventId.replace('google_', '');
+      }
+    }
+    
+    if (!googleEventId || googleEventId.toString().length < 10) {
+      console.error('GoogleEventId inválido:', googleEventId);
       toast({
         title: "Erro ao mover evento",
-        description: "Não foi possível identificar o evento no Google Calendar",
+        description: `Não foi possível identificar o evento no Google Calendar. ID: ${googleEventId}`,
         variant: "destructive",
       });
       revert();
