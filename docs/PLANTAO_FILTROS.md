@@ -316,3 +316,40 @@ const response = await fetch(
 - **Acessível**: Mantém padrões WCAG AA
 
 **🚀 O módulo Plantão agora possui funcionalidade completa de drag and drop com sincronização bidirecional Google Calendar, atendendo 100% ao requisito solicitado!**
+
+---
+
+## 🐛 **CORREÇÃO CRÍTICA - Erro 404 Drag and Drop RESOLVIDO**
+
+### ❌ **Problema Identificado**
+- **Erro**: 404 Not Found ao mover eventos via drag and drop
+- **Causa Raiz**: Prefixo incorreto nos IDs dos eventos Google Calendar
+- **Detalhes**: Código verificava `google_` (underscore) mas IDs reais têm `google-` (hífen)
+
+### ✅ **Solução Implementada**
+```typescript
+// ANTES (causando erro 404)
+if (googleEventId.startsWith('google_')) {
+  googleEventId = googleEventId.replace('google_', '');
+}
+
+// DEPOIS (correção aplicada)  
+if (googleEventId.startsWith('google-')) {
+  googleEventId = googleEventId.replace('google-', '');
+}
+```
+
+### 🔍 **Diagnóstico via Sequential Thinking MCP**
+- **Ferramenta**: `mcp__smithery-ai-server-sequential-thinking__sequentialthinking`
+- **Método**: Análise sistemática do fluxo de drag and drop
+- **Descoberta**: Incompatibilidade de formato de prefixo (hífen vs underscore)
+- **Confirmação**: Logs detalhados adicionados para validação
+
+### 🎯 **Resultado Final**
+- ✅ **Drag and Drop 100% Funcional**: Eventos movem corretamente
+- ✅ **API Google Calendar**: IDs enviados no formato correto
+- ✅ **Sincronização Bidirecional**: Funcionando sem erros 404
+- ✅ **Logs Melhorados**: Debugging mais eficiente
+- ✅ **Produção Vercel**: Correção deployada e testada
+
+**🎉 O problema de drag and drop está DEFINITIVAMENTE RESOLVIDO!**
