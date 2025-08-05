@@ -1,0 +1,4 @@
+INSERT INTO "public"."dados_cliente" ("id", "telefone", "sessionid", "status", "portal", "email", "nome", "funcionario", "data_agendamento", "confirmação", "observacoes", "interesse", "preco", "imovel_interesse") VALUES ('24', '5519994419319@s.whatsapp.net', '07f18773-9265-4e67-bc67-5c14abdf78c5', 'Qualificado', 'VivaReal', null, null, 'Isis', '2025-08-05T09:00:00-03:00', 'Confirmado', 'Nome do Cliente: Fernando Riolo  
+Data da Visita: Amanhã às 9h  
+Imóvel: Apartamento no Edifício Downtown, Rua Espírito Santo, 795, Centro  
+Valor do Imóvel: Não informado na conversa', 'compra', 'R$ 818.922', '15');

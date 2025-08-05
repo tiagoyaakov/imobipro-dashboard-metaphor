@@ -1,0 +1,1 @@
+INSERT INTO "public"."chats" ("id", "telefone", "app", "updated_at", "created_at", "conversation_id", "instancia") VALUES ('28', '5519994419319@s.whatsapp.net', 'imobipro', '2025-08-04T17:37:37.925-03:00', '2025-08-04', '07f18773-9265-4e67-bc67-5c14abdf78c5', 'isis');

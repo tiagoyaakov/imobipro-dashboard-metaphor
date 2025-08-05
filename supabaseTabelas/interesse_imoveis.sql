@@ -1,0 +1,1 @@
+INSERT INTO "public"."interesse_imoveis" ("id", "telefone", "quartos", "banheiro", "bairro", "tamanho", "suite", "cidade", "nome", "preco") VALUES ('37', '5519994419319@s.whatsapp.net', '3', '2', 'Jardim Veraneio', '75', '1', 'Campo Grande', null, '818922');
