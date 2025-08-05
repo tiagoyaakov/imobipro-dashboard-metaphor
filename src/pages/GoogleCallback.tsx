@@ -9,13 +9,19 @@ export default function GoogleCallback() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Log imediato da renderização
+  console.log('🚀 GoogleCallback component rendering...');
+
   useEffect(() => {
     const processOAuthCallback = async () => {
       try {
         // Debug: Log da URL atual
+        console.log('🔥 GoogleCallback Component Loaded!');
         console.log('Callback URL:', window.location.href);
         console.log('URL Search Params:', window.location.search);
         console.log('Session Storage auth_started:', sessionStorage.getItem('google_auth_started'));
+        console.log('Pathname:', window.location.pathname);
+        console.log('React Router working:', true);
 
         // Verificar se realmente foi um callback OAuth
         const authStarted = sessionStorage.getItem('google_auth_started');

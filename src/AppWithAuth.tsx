@@ -191,11 +191,9 @@ const AppWithAuth = () => {
             <Route 
               path="/auth/google/callback" 
               element={
-                <PublicRoute>
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <GoogleCallback />
-                  </Suspense>
-                </PublicRoute>
+                <Suspense fallback={<PageLoadingFallback />}>
+                  <GoogleCallback />
+                </Suspense>
               } 
             />
 
