@@ -13,6 +13,20 @@
 
 ---
 
+## 🧪 **AMBIENTE DE TESTES - PRODUÇÃO VERCEL**
+
+**⚠️ IMPORTANTE: TODOS OS TESTES SÃO REALIZADOS EM AMBIENTE DE PRODUÇÃO**
+
+- **Local de Teste**: Diretamente na URL de produção após deploy no Vercel
+- **URL de Produção**: Dashboard da ImobiPRO (https://imobipro-brown.vercel.app)
+- **Processo**: Commit → Push → Deploy automático Vercel → Teste em produção
+- **Configurações**: Todas as integrações devem funcionar em ambiente de produção
+- **Variáveis de Ambiente**: Configuradas para URLs de produção (não localhost)
+- **OAuth URLs**: Configuradas no Google Cloud Console para domínio de produção
+- **Debugging**: Logs e erros devem ser monitorados em ambiente de produção
+
+---
+
 ## 2. 🎨 Padrões de Interface
 
 - **Tailwind CSS obrigatório** - zero CSS inline

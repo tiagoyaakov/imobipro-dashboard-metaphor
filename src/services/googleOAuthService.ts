@@ -67,7 +67,7 @@ export class GoogleOAuthService {
   }
 
   /**
-   * Trocar código de autorização por tokens
+   * Trocar código de autorização por tokens (usando fluxo público sem client_secret)
    */
   public async exchangeCodeForTokens(code: string): Promise<GoogleTokens> {
     if (!this.isConfigured()) {
@@ -82,7 +82,7 @@ export class GoogleOAuthService {
         },
         body: new URLSearchParams({
           client_id: this.config.clientId,
-          client_secret: "", // Será configurado no backend
+          // Removido client_secret para aplicação pública (SPA)
           code: code,
           grant_type: "authorization_code",
           redirect_uri: this.config.redirectUri
@@ -115,7 +115,7 @@ export class GoogleOAuthService {
   }
 
   /**
-   * Renovar access token usando refresh token
+   * Renovar access token usando refresh token (sem client_secret)
    */
   public async refreshAccessToken(refreshToken: string): Promise<GoogleTokens> {
     if (!this.isConfigured()) {
@@ -130,7 +130,7 @@ export class GoogleOAuthService {
         },
         body: new URLSearchParams({
           client_id: this.config.clientId,
-          client_secret: "", // Será configurado no backend  
+          // Removido client_secret para aplicação pública (SPA)
           refresh_token: refreshToken,
           grant_type: "refresh_token"
         })
