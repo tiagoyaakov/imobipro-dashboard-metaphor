@@ -55,6 +55,8 @@ export function PlantaoCalendar({
 }: PlantaoCalendarProps) {
   // Converter eventos para formato do react-big-calendar
   const calendarEvents = useMemo(() => {
+    console.log(`📅 PlantaoCalendar recebeu ${events.length} eventos para renderizar`);
+    
     return events.map(event => ({
       ...event,
       id: event.id,
@@ -265,5 +267,3 @@ export function PlantaoCalendar({
   );
 }
 
-// Importar useCallback no topo do arquivo
-import { useCallback } from "react";

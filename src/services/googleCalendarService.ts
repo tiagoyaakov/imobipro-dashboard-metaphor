@@ -222,18 +222,18 @@ export class GoogleCalendarService {
    */
   public plantaoEventToGoogleEvent(plantaoEvent: PlantaoEvent): Partial<GoogleCalendarEvent> {
     const startDateTime: GoogleDateTime = {
-      dateTime: plantaoEvent.startDate.toISOString(),
+      dateTime: plantaoEvent.startDateTime.toISOString(),
       timeZone: "America/Sao_Paulo"
     };
 
     const endDateTime: GoogleDateTime = {
-      dateTime: plantaoEvent.endDate.toISOString(),
+      dateTime: plantaoEvent.endDateTime.toISOString(),
       timeZone: "America/Sao_Paulo"
     };
 
     return {
       summary: plantaoEvent.title,
-      description: plantaoEvent.description || `Plantão - ${plantaoEvent.corretor.name}`,
+      description: plantaoEvent.description || `Plantão - ${plantaoEvent.corretorName}`,
       start: startDateTime,
       end: endDateTime,
       location: plantaoEvent.location || "",
@@ -242,8 +242,8 @@ export class GoogleCalendarService {
         private: {
           imobiproId: plantaoEvent.id,
           imobiproType: "plantao",
-          corretorId: plantaoEvent.corretor.id,
-          corretorName: plantaoEvent.corretor.name
+          corretorId: plantaoEvent.corretorId,
+          corretorName: plantaoEvent.corretorName
         }
       },
       reminders: {
@@ -260,32 +260,29 @@ export class GoogleCalendarService {
    * Converter GoogleCalendarEvent para PlantaoEvent
    */
   public googleEventToPlantaoEvent(googleEvent: GoogleCalendarEvent): Partial<PlantaoEvent> {
-    const startDate = new Date(
+    const startDateTime = new Date(
       googleEvent.start.dateTime || googleEvent.start.date || ""
     );
-    const endDate = new Date(
+    const endDateTime = new Date(
       googleEvent.end.dateTime || googleEvent.end.date || ""
     );
 
     // Extrair dados do ImobiPRO das propriedades estendidas
     const imobiproId = googleEvent.extendedProperties?.private?.imobiproId;
-    const corretorId = googleEvent.extendedProperties?.private?.corretorId;
-    const corretorName = googleEvent.extendedProperties?.private?.corretorName;
+    const corretorId = googleEvent.extendedProperties?.private?.corretorId || "google-import";
+    const corretorName = googleEvent.extendedProperties?.private?.corretorName || googleEvent.creator?.displayName || "Google Calendar";
 
     return {
       id: imobiproId || `google-${googleEvent.id}`,
       title: googleEvent.summary || "Evento do Google Calendar",
       description: googleEvent.description || "",
-      startDate,
-      endDate,
+      startDateTime,
+      endDateTime,
       location: googleEvent.location || "",
       status: googleEvent.status === "cancelled" ? "CANCELADO" : "CONFIRMADO",
-      googleCalendarId: googleEvent.id,
-      corretor: corretorId && corretorName ? {
-        id: corretorId,
-        name: corretorName,
-        email: googleEvent.creator.email
-      } : undefined
+      googleCalendarEventId: googleEvent.id,
+      corretorId,
+      corretorName
     };
   }
 
@@ -476,8 +473,8 @@ export class GoogleCalendarService {
 
     plantaoEvents.forEach(plantaoEvent => {
       googleEvents.forEach(googleEvent => {
-        const plantaoStart = plantaoEvent.startDate.getTime();
-        const plantaoEnd = plantaoEvent.endDate.getTime();
+        const plantaoStart = plantaoEvent.startDateTime.getTime();
+        const plantaoEnd = plantaoEvent.endDateTime.getTime();
         
         const googleStart = new Date(
           googleEvent.start.dateTime || googleEvent.start.date || ""
@@ -701,8 +698,8 @@ export class GoogleCalendarService {
     if ((localEvent.description || '') !== (googleEvent.description || '')) return true;
     
     // Comparar horários
-    const localStart = localEvent.startDate;
-    const localEnd = localEvent.endDate;
+    const localStart = localEvent.startDateTime;
+    const localEnd = localEvent.endDateTime;
     const googleStart = new Date(googleEvent.start?.dateTime || googleEvent.start?.date || '');
     const googleEnd = new Date(googleEvent.end?.dateTime || googleEvent.end?.date || '');
     
@@ -720,8 +717,8 @@ export class GoogleCalendarService {
    * Verificar se dois eventos se sobrepõem temporalmente
    */
   private eventsTimeOverlap(localEvent: PlantaoEvent, googleEvent: GoogleCalendarEvent): boolean {
-    const localStart = localEvent.startDate;
-    const localEnd = localEvent.endDate;
+    const localStart = localEvent.startDateTime;
+    const localEnd = localEvent.endDateTime;
     const googleStart = new Date(googleEvent.start?.dateTime || googleEvent.start?.date || '');
     const googleEnd = new Date(googleEvent.end?.dateTime || googleEvent.end?.date || '');
     

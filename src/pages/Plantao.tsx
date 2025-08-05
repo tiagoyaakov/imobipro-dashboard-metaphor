@@ -12,6 +12,7 @@ import { ConflictResolutionModal } from "@/components/plantao/ConflictResolution
 import { usePlantao } from "@/hooks/usePlantao";
 import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
+import { useToast } from "@/hooks/use-toast";
 import { PlantaoEvent, PlantaoEventFormData } from "@/types/plantao";
 import { SyncStatus } from "@/types/googleCalendar";
 import { Loader2, Calendar, AlertCircle, Settings } from "lucide-react";
@@ -20,6 +21,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Plantao() {
+  const { toast } = useToast();
+  
   const {
     events,
     corretores,
@@ -179,9 +182,29 @@ export default function Plantao() {
   }, []);
 
   const handleGoogleSync = useCallback(async () => {
-    await refreshConnection();
-    // TODO: Implementar sincronização de eventos
-  }, [refreshConnection]);
+    if (!isGoogleConnected) {
+      // Se não está conectado, abrir modal de conexão
+      handleGoogleModalOpen();
+      return;
+    }
+    
+    // Se está conectado, executar sincronização bidirecional
+    try {
+      await handleSyncBidirectional();
+      toast({
+        title: "✅ Sincronização Iniciada",
+        description: "Sincronizando eventos com Google Calendar...",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Erro na sincronização:', error);
+      toast({
+        title: "❌ Erro na Sincronização",
+        description: "Não foi possível sincronizar com Google Calendar",
+        variant: "destructive"
+      });
+    }
+  }, [isGoogleConnected, handleGoogleModalOpen, handleSyncBidirectional, toast]);
 
   // Handlers de sincronização
   const handleSyncToGoogle = useCallback(async () => {
@@ -202,9 +225,11 @@ export default function Plantao() {
 
   const handleSyncFromGoogle = useCallback(async () => {
     try {
+      console.log('🔄 Iniciando importação do Google Calendar...');
+      
       await syncFromGoogle(async (event) => {
         // Callback para processar cada evento importado
-        console.log('Processando evento importado:', event);
+        console.log('📅 Processando evento importado:', event.title);
         
         // Criar o evento no sistema local através do hook usePlantao
         if (event.title && event.startDateTime && event.endDateTime) {
@@ -234,12 +259,26 @@ export default function Plantao() {
         return false;
       });
       
-      // Recarregar eventos após importação
+      // Forçar recarregamento dos eventos após importação
+      console.log('🔄 Recarregando eventos após importação...');
       await fetchEvents();
+      
+      // Toast de sucesso
+      toast({
+        title: "✅ Importação Concluída",
+        description: "Eventos do Google Calendar foram importados com sucesso",
+        variant: "default"
+      });
+      
     } catch (error) {
-      console.error('Erro na importação do Google:', error);
+      console.error('❌ Erro na importação do Google:', error);
+      toast({
+        title: "❌ Erro na Importação",
+        description: "Não foi possível importar eventos do Google Calendar",
+        variant: "destructive"
+      });
     }
-  }, [syncFromGoogle, createEvent, currentUser, fetchEvents]);
+  }, [syncFromGoogle, createEvent, currentUser, fetchEvents, toast]);
 
   const handleViewConflicts = useCallback(() => {
     setIsConflictModalOpen(true);

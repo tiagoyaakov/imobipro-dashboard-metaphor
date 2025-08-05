@@ -64,18 +64,25 @@ export function usePlantao(): UsePlantaoReturn {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🔄 usePlantao.fetchEvents() - Iniciando busca de eventos...');
 
       // Se não for admin, filtrar apenas eventos do próprio corretor
       const effectiveFilters = !isAdmin && currentUser
         ? { ...filters, corretorIds: [currentUser.id] }
         : filters;
+      
+      console.log('🔍 Filtros efetivos:', effectiveFilters);
 
       const service = await getPlantaoService();
       const response = await service.getEvents(effectiveFilters);
+      
+      console.log(`✅ ${response.events.length} eventos carregados (${response.syncedCount} sincronizados, ${response.pendingCount} pendentes)`);
+      
       setEvents(response.events);
 
-      // Mostrar estatísticas de sincronização
-      if (response.pendingCount > 0) {
+      // Mostrar estatísticas de sincronização apenas se houver dados relevantes
+      if (response.pendingCount > 0 && response.pendingCount < response.totalCount) {
         toast({
           title: "Sincronização em andamento",
           description: `${response.pendingCount} eventos aguardando sincronização com Google Calendar`,
@@ -92,6 +99,7 @@ export function usePlantao(): UsePlantaoReturn {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao buscar eventos";
+      console.error('❌ Erro ao buscar eventos:', err);
       setError(message);
       toast({
         title: "Erro",
