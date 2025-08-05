@@ -30,7 +30,7 @@ import {
   Upload
 } from 'lucide-react';
 import { useAgenda } from '@/hooks/useAgenda';
-import { useAgendaV2 } from '@/hooks/useAgendaV2';
+import useAgendaV2 from '@/hooks/useAgendaV2';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
