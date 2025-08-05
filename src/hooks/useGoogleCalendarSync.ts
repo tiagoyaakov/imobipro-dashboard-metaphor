@@ -1,7 +1,6 @@
 // Hook para gerenciar sincronização bidirecional com Google Calendar
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { googleCalendarService } from "@/services/googleCalendarService";
 import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { PlantaoEvent } from "@/types/plantao";
 import { 
@@ -42,6 +41,12 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
   const { toast } = useToast();
   const { isConnected: isGoogleConnected } = useGoogleOAuth();
   
+  // Import dinâmico para evitar dependências circulares
+  const getGoogleCalendarService = async () => {
+    const { googleCalendarService } = await import("@/services/googleCalendarService");
+    return googleCalendarService;
+  };
+  
   // Estados
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(SyncStatus.IDLE);
   const [lastSyncReport, setLastSyncReport] = useState<SyncReport | null>(null);
@@ -64,7 +69,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
 
       console.log(`🔄 Iniciando sincronização de ${events.length} eventos para Google Calendar...`);
 
-      const report = await googleCalendarService.syncToGoogle(events);
+      const service = await getGoogleCalendarService();
+      const report = await service.syncToGoogle(events);
       
       setLastSyncReport(report);
       setConflicts(report.conflicts || []);
@@ -131,7 +137,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
 
       console.log("🔄 Iniciando importação de eventos do Google Calendar...");
 
-      const report = await googleCalendarService.syncFromGoogle("primary", onEventImported);
+      const service = await getGoogleCalendarService();
+      const report = await service.syncFromGoogle("primary", onEventImported);
       
       setLastSyncReport(report);
       setSyncStatus(report.success ? SyncStatus.SYNCED : SyncStatus.ERROR);
@@ -205,7 +212,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
 
       console.log(`🔄 Iniciando sincronização bidirecional de ${events.length} eventos...`);
 
-      const report = await googleCalendarService.syncBidirectional(events);
+      const service = await getGoogleCalendarService();
+      const report = await service.syncBidirectional(events);
       
       setLastSyncReport(report);
       setConflicts(report.conflicts || []);
@@ -270,7 +278,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
     strategy: 'KEEP_LOCAL' | 'KEEP_GOOGLE' = 'KEEP_LOCAL'
   ): Promise<boolean> => {
     try {
-      const result = await googleCalendarService.resolveConflict(conflict, strategy);
+      const service = await getGoogleCalendarService();
+      const result = await service.resolveConflict(conflict, strategy);
       
       if (result.success) {
         // Remover conflito resolvido da lista
@@ -311,7 +320,8 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
     }
 
     try {
-      const events = await googleCalendarService.listEvents("primary", {
+      const service = await getGoogleCalendarService();
+      const events = await service.listEvents("primary", {
         timeMin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // 7 dias atrás
         timeMax: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)  // 30 dias à frente
       });

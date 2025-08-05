@@ -37,6 +37,27 @@
 - Interface unificada para controle de todos os tipos de sincronização
 - Sistema robusto para importação de eventos externos do Google Calendar
 
+### **Correção Crítica - Dependência Circular RESOLVIDA**
+
+**✅ CONCLUÍDO:**
+- **ERRO CRÍTICO CORRIGIDO**: "Cannot access 'M' before initialization" resolvido
+- **DEPENDÊNCIA CIRCULAR ELIMINADA**: Hook `useGoogleCalendarSync.ts` refatorado
+- **IMPORT DINÂMICO IMPLEMENTADO**: `getGoogleCalendarService()` com async/await
+- **ARQUITETURA OTIMIZADA**: Eliminada dependência circular entre hooks e services
+- **BUILD FUNCIONANDO**: Compilação limpa sem erros, módulo Plantão totalmente operacional ✅
+
+**🔧 MELHORIAS TÉCNICAS:**
+- Import dinâmico do `googleCalendarService` para evitar dependências circulares
+- Função helper `getGoogleCalendarService()` assíncrona para carregamento sob demanda
+- Todos os métodos do hook agora usam import dinâmico para o service
+- Arquitetura mais robusta e sem dependências problemáticas
+
+**🎯 RESULTADO:**
+- Módulo Plantão carregando corretamente no navegador
+- Sincronização bidirecional 100% funcional
+- Sem erros de console ou dependências circulares
+- Sistema pronto para testes em produção
+
 ### **Implementação Google Calendar - Sincronização do Módulo Plantão - ETAPA 3**
 
 **✅ CONCLUÍDO:**
