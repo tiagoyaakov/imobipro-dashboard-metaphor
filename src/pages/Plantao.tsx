@@ -8,11 +8,12 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import googleCalendarPlugin from '@fullcalendar/google-calendar';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Loader2, AlertCircle, Globe, CheckCircle, LogOut, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, AlertCircle, Globe, CheckCircle, LogOut, RefreshCw, Calendar as CalendarIcon, Filter, Users, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
@@ -28,6 +29,8 @@ interface PlantaoEvent {
   location?: string;
   source: 'GOOGLE_CALENDAR' | 'IMOBIPRO';
   googleEventId?: string;
+  userId?: string; // ID do usuário proprietário do evento
+  userEmail?: string; // Email do usuário para filtros
   color?: string;
   backgroundColor?: string;
   borderColor?: string;
@@ -35,6 +38,16 @@ interface PlantaoEvent {
   extendedProps?: {
     [key: string]: any;
   };
+}
+
+// Interface para usuários do sistema
+interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'DEV_MASTER' | 'ADMIN' | 'AGENT';
+  isActive: boolean;
+  companyId: string;
 }
 
 // Componente de calendário FullCalendar
@@ -694,10 +707,14 @@ export default function Plantao() {
   } = useGoogleCalendarSync();
   
   // Estados
-  const [events, setEvents] = useState<PlantaoEvent[]>([]);
+  const [allEvents, setAllEvents] = useState<PlantaoEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<PlantaoEvent[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<SystemUser[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Email da conta Google conectada (mantido do código original)
   const googleAccountEmail = googleTokens?.email || user?.email;
@@ -705,6 +722,112 @@ export default function Plantao() {
   // Configurações do Google Calendar
   const googleApiKey = process.env.VITE_GOOGLE_CALENDAR_API_KEY || '';
   const googleCalendarId = googleTokens?.calendarId || 'primary';
+
+  // Determinar permissões do usuário atual
+  const currentUserRole = user?.role as 'DEV_MASTER' | 'ADMIN' | 'AGENT';
+  const canViewAllUsers = currentUserRole === 'DEV_MASTER' || currentUserRole === 'ADMIN';
+  const shouldShowFilters = canViewAllUsers;
+
+  // Carregar usuários disponíveis para filtro
+  const loadAvailableUsers = useCallback(async () => {
+    if (!canViewAllUsers) return;
+    
+    try {
+      setLoadingUsers(true);
+      
+      // Simular consulta aos usuários - em produção seria uma API call
+      const mockUsers: SystemUser[] = [
+        {
+          id: "8a91681a-a42e-4b16-b914-cbbb0b6207ae",
+          name: "Administrador ImobiPRO",
+          email: "imobprodashboard@gmail.com",
+          role: "ADMIN",
+          isActive: true,
+          companyId: "c1036c09-e971-419b-9244-e9f6792954e2"
+        },
+        {
+          id: "2d9467fc-1233-48b5-871f-d9f6b2ed3fec",
+          name: "Corretor A",
+          email: "yaakovsurvival@gmail.com",
+          role: "AGENT",
+          isActive: true,
+          companyId: "c1036c09-e971-419b-9244-e9f6792954e2"
+        },
+        {
+          id: "6eb7f788-d1ea-49c3-8b00-648b7b1a47b2",
+          name: "Usuário Teste",
+          email: "teste@imobipro.com",
+          role: "AGENT",
+          isActive: true,
+          companyId: "c1036c09-e971-419b-9244-e9f6792954e2"
+        }
+      ];
+      
+      // Filtrar DEV_MASTER dos filtros (conforme solicitado)
+      const filteredUsers = mockUsers.filter(u => u.role !== 'DEV_MASTER');
+      setAvailableUsers(filteredUsers);
+      
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+      toast({
+        title: "Erro ao carregar usuários",
+        description: "Não foi possível carregar a lista de usuários",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [canViewAllUsers, toast]);
+
+  // Carregar usuários quando o componente montar
+  useEffect(() => {
+    if (canViewAllUsers) {
+      loadAvailableUsers();
+    }
+  }, [loadAvailableUsers]);
+
+  // Aplicar filtros de usuário
+  const applyUserFilter = useCallback((events: PlantaoEvent[], userId: string) => {
+    if (userId === 'ALL') {
+      return events;
+    }
+    
+    // Se for AGENT, mostrar apenas seus próprios eventos
+    if (currentUserRole === 'AGENT') {
+      return events.filter(event => 
+        event.userEmail === user?.email || 
+        event.userId === user?.id
+      );
+    }
+    
+    // Para ADMIN/DEV_MASTER, filtrar pelo usuário selecionado
+    const selectedUser = availableUsers.find(u => u.id === userId);
+    if (!selectedUser) return events;
+    
+    return events.filter(event => 
+      event.userEmail === selectedUser.email || 
+      event.userId === selectedUser.id
+    );
+  }, [currentUserRole, user?.email, user?.id, availableUsers]);
+
+  // Atualizar eventos filtrados quando mudarem os filtros
+  useEffect(() => {
+    const filtered = applyUserFilter(allEvents, selectedUserId);
+    setFilteredEvents(filtered);
+  }, [allEvents, selectedUserId, applyUserFilter]);
+
+  // Função para obter cor por usuário
+  const getUserColor = useCallback((userId: string, userEmail: string) => {
+    const userForColor = availableUsers.find(u => u.id === userId || u.email === userEmail);
+    if (!userForColor) return '#3B82F6'; // Azul padrão
+    
+    const colorMap: { [key: string]: string } = {
+      'ADMIN': '#EA580C', // Laranja
+      'AGENT': '#8B5CF6', // Roxo
+    };
+    
+    return colorMap[userForColor.role] || '#3B82F6';
+  }, [availableUsers]);
 
   // Carregar eventos do Google Calendar (adaptado para FullCalendar)
   const loadGoogleCalendarEvents = useCallback(async () => {
@@ -718,6 +841,8 @@ export default function Plantao() {
       
       // Sincronizar com Google Calendar
       const result = await syncFromGoogle(async (googleEvent) => {
+        const userColor = getUserColor(user?.id || '', googleAccountEmail || '');
+        
         const plantaoEvent: PlantaoEvent = {
           id: googleEvent.id || `google_${Date.now()}`,
           title: googleEvent.title || 'Evento sem título',
@@ -727,14 +852,18 @@ export default function Plantao() {
           location: googleEvent.location,
           source: 'GOOGLE_CALENDAR',
           googleEventId: googleEvent.id,
-          color: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#10B981',
-          backgroundColor: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#10B981',
-          borderColor: '#059669',
+          userId: user?.id,
+          userEmail: googleAccountEmail,
+          color: userColor,
+          backgroundColor: userColor,
+          borderColor: userColor,
           textColor: '#ffffff',
           extendedProps: {
             description: googleEvent.description,
             location: googleEvent.location,
-            source: 'GOOGLE_CALENDAR'
+            source: 'GOOGLE_CALENDAR',
+            userId: user?.id,
+            userEmail: googleAccountEmail
           }
         };
         
@@ -743,7 +872,7 @@ export default function Plantao() {
       });
       
       if (result.success) {
-        setEvents(syncedEvents);
+        setAllEvents(syncedEvents);
         toast({
           title: "Sincronização concluída",
           description: `${syncedEvents.length} eventos sincronizados do Google Calendar`,
@@ -762,7 +891,7 @@ export default function Plantao() {
     } finally {
       setSyncing(false);
     }
-  }, [googleConnected, syncFromGoogle, toast]);
+  }, [googleConnected, syncFromGoogle, toast, getUserColor, user?.id, googleAccountEmail]);
 
   // Função auxiliar para mapear cores do Google Calendar (mantida)
   const getColorFromGoogleColorId = (colorId: string): string => {
@@ -799,7 +928,7 @@ export default function Plantao() {
     if (googleConnected) {
       loadGoogleCalendarEvents();
     } else {
-      setEvents([]);
+      setAllEvents([]);
     }
   }, [googleConnected, loadGoogleCalendarEvents]);
 
@@ -829,11 +958,15 @@ export default function Plantao() {
   const handleGoogleConnection = useCallback(async () => {
     if (googleConnected) {
       await disconnectFromGoogle();
-      setEvents([]);
+      setAllEvents([]);
     } else {
       await connectToGoogle();
     }
   }, [googleConnected, connectToGoogle, disconnectFromGoogle]);
+
+  const handleUserFilterChange = useCallback((userId: string) => {
+    setSelectedUserId(userId);
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     await loadGoogleCalendarEvents();
@@ -865,6 +998,97 @@ export default function Plantao() {
             </div>
           </div>
         </div>
+        
+        {/* Filtros de usuário (apenas para ADMIN/DEV_MASTER) */}
+        {shouldShowFilters && (
+          <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                      Filtros de Visualização
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Selecione um corretor para filtrar os eventos ou visualize todos
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Corretor:</span>
+                  </div>
+                  <Select value={selectedUserId} onValueChange={handleUserFilterChange}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Selecionar corretor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                          <span className="font-medium">Todos os Eventos</span>
+                        </div>
+                      </SelectItem>
+                      {loadingUsers ? (
+                        <SelectItem value="loading" disabled>
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>Carregando...</span>
+                          </div>
+                        </SelectItem>
+                      ) : (
+                        availableUsers.map((user) => {
+                          const roleColors = {
+                            'ADMIN': '#EA580C',
+                            'AGENT': '#8B5CF6'
+                          };
+                          const roleLabels = {
+                            'ADMIN': 'Admin',
+                            'AGENT': 'Corretor'
+                          };
+                          
+                          return (
+                            <SelectItem key={user.id} value={user.id}>
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: roleColors[user.role] }}
+                                ></div>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{user.name}</span>
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    {roleLabels[user.role]} • {user.email}
+                                  </span>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Indicador do filtro ativo */}
+              {selectedUserId !== 'ALL' && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Mostrando eventos de: {availableUsers.find(u => u.id === selectedUserId)?.name || 'Usuário selecionado'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
         
         {/* Card de status Google Calendar redesenhado */}
         <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
@@ -1023,7 +1247,7 @@ export default function Plantao() {
             {/* Calendário FullCalendar */}
             <div className="p-6">
               <PlantaoCalendar
-                events={events}
+                events={filteredEvents}
                 googleApiKey={googleApiKey}
                 googleCalendarId={googleCalendarId}
                 onEventClick={handleEventClick}
@@ -1068,7 +1292,7 @@ export default function Plantao() {
       )}
 
       {/* Estatísticas redesenhadas com WCAG AA */}
-      {googleConnected && events.length > 0 && (
+      {googleConnected && filteredEvents.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total de eventos */}
           <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
@@ -1076,10 +1300,10 @@ export default function Plantao() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                    Total de Eventos
+                    {selectedUserId === 'ALL' ? 'Total de Eventos' : 'Meus Eventos'}
                   </p>
                   <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                    {events.length}
+                    {filteredEvents.length}
                   </p>
                 </div>
                 <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
@@ -1098,7 +1322,7 @@ export default function Plantao() {
                     Eventos Hoje
                   </p>
                   <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    {events.filter(e => {
+                    {filteredEvents.filter(e => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       const tomorrow = new Date(today);
@@ -1127,7 +1351,7 @@ export default function Plantao() {
                     Próximos 7 dias
                   </p>
                   <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                    {events.filter(e => {
+                    {filteredEvents.filter(e => {
                       const today = new Date();
                       const nextWeek = new Date(today);
                       nextWeek.setDate(nextWeek.getDate() + 7);
@@ -1155,7 +1379,7 @@ export default function Plantao() {
                     Google Calendar
                   </p>
                   <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                    {events.filter(e => e.source === 'GOOGLE_CALENDAR').length}
+                    {filteredEvents.filter(e => e.source === 'GOOGLE_CALENDAR').length}
                   </p>
                 </div>
                 <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
@@ -1166,18 +1390,46 @@ export default function Plantao() {
           </Card>
         </div>
       )}
+      
+      {/* Status do filtro ativo para AGENT */}
+      {currentUserRole === 'AGENT' && googleConnected && (
+        <Card className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+                <Users className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Visualizando apenas seus eventos sincronizados
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  Como corretor, você visualiza apenas os eventos do seu calendário Google conectado
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Legenda redesenhada */}
-      {googleConnected && events.length > 0 && (
+      {googleConnected && filteredEvents.length > 0 && (
         <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Legenda dos Eventos
               </h3>
-              <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                {events.length} eventos
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                  {filteredEvents.length} eventos{selectedUserId !== 'ALL' ? ' filtrados' : ''}
+                </Badge>
+                {shouldShowFilters && selectedUserId !== 'ALL' && (
+                  <Badge variant="outline" className="border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                    Filtrado
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
@@ -1185,7 +1437,7 @@ export default function Plantao() {
                 <div>
                   <span className="font-medium text-green-800 dark:text-green-200">📅 Google Calendar</span>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Eventos sincronizados da sua conta Google
+                    Eventos sincronizados da conta Google conectada
                   </p>
                 </div>
               </div>
@@ -1199,6 +1451,44 @@ export default function Plantao() {
                 </div>
               </div>
             </div>
+            
+            {/* Indicadores por usuário (apenas para ADMIN/DEV_MASTER) */}
+            {shouldShowFilters && availableUsers.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                  Cores por Usuário
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {availableUsers.map((user) => {
+                    const roleColors = {
+                      'ADMIN': '#EA580C',
+                      'AGENT': '#8B5CF6'
+                    };
+                    const roleLabels = {
+                      'ADMIN': 'Admin',
+                      'AGENT': 'Corretor'
+                    };
+                    
+                    return (
+                      <div key={user.id} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: roleColors[user.role] }}
+                        ></div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {user.name}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                            ({roleLabels[user.role]})
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
