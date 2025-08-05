@@ -47,6 +47,9 @@ const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
 const UnauthorizedPage = lazy(() => import("./pages/auth/UnauthorizedPage"));
 const AuthCallbackPage = lazy(() => import("./pages/auth/AuthCallbackPage"));
 
+// Callback do Google OAuth
+const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
+
 // Páginas de Perfil e Configurações Avançadas
 const ProfilePage = lazy(() => import("./pages/auth/ProfilePage"));
 const SettingsPage = lazy(() => import("./pages/auth/SettingsPage"));
@@ -181,6 +184,16 @@ const AppWithAuth = () => {
                 <PublicRoute>
                   <Suspense fallback={<PageLoadingFallback />}>
                     <AuthCallbackPage />
+                  </Suspense>
+                </PublicRoute>
+              } 
+            />
+            <Route 
+              path="/auth/google/callback" 
+              element={
+                <PublicRoute>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <GoogleCallback />
                   </Suspense>
                 </PublicRoute>
               } 

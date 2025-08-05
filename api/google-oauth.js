@@ -29,7 +29,19 @@ export default async function handler(req, res) {
     const REDIRECT_URI = process.env.VITE_GOOGLE_REDIRECT_URI;
 
     if (!CLIENT_ID || !CLIENT_SECRET) {
-      return res.status(500).json({ error: 'Google OAuth not configured' });
+      console.error('OAuth Config Error:', {
+        hasClientId: !!CLIENT_ID,
+        hasClientSecret: !!CLIENT_SECRET,
+        hasRedirectUri: !!REDIRECT_URI
+      });
+      return res.status(500).json({ 
+        error: 'Google OAuth not configured',
+        details: {
+          clientId: CLIENT_ID ? 'configured' : 'missing',
+          clientSecret: CLIENT_SECRET ? 'configured' : 'missing',
+          redirectUri: REDIRECT_URI ? 'configured' : 'missing'
+        }
+      });
     }
 
     let tokenResponse;

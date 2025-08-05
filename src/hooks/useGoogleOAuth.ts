@@ -52,44 +52,17 @@ export function useGoogleOAuth(): UseGoogleOAuthReturn {
         throw new Error("Google Calendar não está configurado. Verifique as variáveis de ambiente.");
       }
 
-      // Gerar URL de autorização e redirecionar
+      // Gerar URL de autorização
       const authUrl = googleOAuthService.generateAuthUrl();
       
-      // Abrir nova janela para autorização
-      const popup = window.open(
-        authUrl,
-        "google-auth",
-        "width=500,height=600,scrollbars=yes,resizable=yes"
-      );
-
-      if (!popup) {
-        throw new Error("Não foi possível abrir a janela de autorização. Verifique se pop-ups estão habilitados.");
-      }
-
-      // Aguardar callback de autorização
-      const authResult = await waitForAuthCallback(popup);
+      // Salvar estado antes do redirect
+      sessionStorage.setItem('google_auth_started', 'true');
       
-      if (authResult.error) {
-        throw new Error(`Erro na autorização: ${authResult.error}`);
-      }
-
-      if (!authResult.code) {
-        throw new Error("Código de autorização não recebido");
-      }
-
-      // Trocar código por tokens
-      const newTokens = await googleOAuthService.exchangeCodeForTokens(authResult.code);
+      // Redirecionar diretamente (mais compatível com COOP)
+      window.location.href = authUrl;
       
-      setTokens(newTokens);
-      setIsConnected(true);
-      setLastConnectedAt(new Date());
-      setConnectionStatus(SyncStatus.SYNCED);
-
-      toast({
-        title: "Google Calendar Conectado",
-        description: "Sincronização configurada com sucesso!",
-        variant: "default"
-      });
+      // O resto será processado no callback
+      return;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao conectar com Google Calendar";
