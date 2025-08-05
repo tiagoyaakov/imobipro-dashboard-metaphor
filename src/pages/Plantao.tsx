@@ -994,14 +994,18 @@ export default function Plantao() {
     // Debug - verificar qual ID estamos usando
     console.log('Event ID:', event.id);
     console.log('GoogleEventId from extendedProps:', event.extendedProps?.googleEventId);
-    console.log('Final googleEventId being used:', googleEventId);
+    console.log('Original googleEventId being used:', googleEventId);
     
-    // Se o ID tem prefixo 'google_', remover o prefixo
-    if (typeof googleEventId === 'string' && googleEventId.startsWith('google_')) {
+    // Se o ID tem prefixo 'google-', remover o prefixo
+    if (typeof googleEventId === 'string' && googleEventId.startsWith('google-')) {
+      const originalId = googleEventId;
       // Se não temos o ID real nas extendedProps, tentar extrair do ID
       if (!event.extendedProps?.googleEventId) {
-        googleEventId = googleEventId.replace('google_', '');
+        googleEventId = googleEventId.replace('google-', '');
+        console.log(`✅ CORREÇÃO APLICADA: ${originalId} → ${googleEventId}`);
       }
+    } else {
+      console.log('✅ ID já limpo ou sem prefixo google-');
     }
     
     if (!googleEventId || googleEventId.toString().length < 10) {
