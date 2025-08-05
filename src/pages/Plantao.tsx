@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { useToast } from "@/hooks/use-toast";
+import { googleOAuthService } from "@/services/googleOAuthService";
 
 // Types locais compatíveis com FullCalendar
 interface PlantaoEvent {
@@ -1098,9 +1099,10 @@ export default function Plantao() {
     location?: string;
   }): Promise<boolean> => {
     try {
-      // Verificar se temos tokens válidos
-      if (!googleTokens?.accessToken) {
-        throw new Error('Token de acesso não disponível');
+      // Obter token válido (renovando automaticamente se necessário)
+      const validToken = await googleOAuthService.getValidAccessToken();
+      if (!validToken) {
+        throw new Error('Token de acesso não disponível ou expirado');
       }
 
       // Preparar dados do evento
@@ -1124,7 +1126,7 @@ export default function Plantao() {
         {
           method: 'PATCH',
           headers: {
-            'Authorization': `Bearer ${googleTokens.accessToken}`,
+            'Authorization': `Bearer ${validToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(eventData),
