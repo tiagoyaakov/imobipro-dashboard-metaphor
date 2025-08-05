@@ -174,7 +174,9 @@ export enum ConflictType {
   CONTENT_MISMATCH = "CONTENT_MISMATCH",
   DELETION_CONFLICT = "DELETION_CONFLICT",
   CREATION_CONFLICT = "CREATION_CONFLICT",
-  UPDATE_CONFLICT = "UPDATE_CONFLICT"
+  UPDATE_CONFLICT = "UPDATE_CONFLICT",
+  ORPHANED_EVENT = "ORPHANED_EVENT",
+  EXTERNAL_CONFLICT = "EXTERNAL_CONFLICT"
 }
 
 export enum ConflictStrategy {
@@ -185,15 +187,16 @@ export enum ConflictStrategy {
 }
 
 export interface SyncConflict {
-  id: string;
+  id?: string;
   type: ConflictType;
-  localEvent: any; // PlantaoEvent
-  googleEvent: GoogleCalendarEvent;
-  detectedAt: Date;
+  localEvent?: any; // PlantaoEvent
+  googleEvent?: GoogleCalendarEvent;
+  detectedAt?: Date;
   resolvedAt?: Date;
   resolution?: ConflictStrategy;
   resolvedBy?: string;
   description: string;
+  suggestedResolution?: string;
 }
 
 export interface SyncResult {
@@ -206,15 +209,22 @@ export interface SyncResult {
 }
 
 export interface SyncReport {
-  startedAt: Date;
-  completedAt?: Date;
-  totalEvents: number;
-  syncedCount: number;
-  conflictCount: number;
-  errorCount: number;
-  results: SyncResult[];
+  success: boolean;
+  timestamp: Date;
   conflicts: SyncConflict[];
+  created: number;
+  updated: number;
+  deleted: number;
   errors: string[];
+  
+  // Campos legados para compatibilidade
+  startedAt?: Date;
+  completedAt?: Date;
+  totalEvents?: number;
+  syncedCount?: number;
+  conflictCount?: number;
+  errorCount?: number;
+  results?: SyncResult[];
 }
 
 // ===================================================

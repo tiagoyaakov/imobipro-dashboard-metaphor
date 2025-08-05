@@ -297,14 +297,20 @@ export class GoogleCalendarService {
     calendarId: string = "primary"
   ): Promise<SyncReport> {
     const report: SyncReport = {
+      success: true,
+      timestamp: new Date(),
+      conflicts: [],
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      errors: [],
+      // Campos legados
       startedAt: new Date(),
       totalEvents: plantaoEvents.length,
       syncedCount: 0,
       conflictCount: 0,
       errorCount: 0,
-      results: [],
-      conflicts: [],
-      errors: []
+      results: []
     };
 
     try {
@@ -345,6 +351,7 @@ export class GoogleCalendarService {
               localId: plantaoEvent.id,
               googleId: updatedEvent.id
             };
+            report.updated++;
           } else {
             // Criar novo evento
             const createdEvent = await this.createEvent(calendarId, googleEventData);
@@ -355,15 +362,16 @@ export class GoogleCalendarService {
               localId: plantaoEvent.id,
               googleId: createdEvent.id
             };
+            report.created++;
           }
 
-          report.results.push(result);
-          report.syncedCount++;
+          report.results?.push(result);
+          report.syncedCount! += 1;
 
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
           
-          report.results.push({
+          report.results?.push({
             success: false,
             action: "SKIP",
             localId: plantaoEvent.id,
@@ -371,14 +379,15 @@ export class GoogleCalendarService {
           });
           
           report.errors.push(`${plantaoEvent.title}: ${errorMessage}`);
-          report.errorCount++;
+          report.errorCount! += 1;
         }
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erro na sincronização";
       report.errors.push(errorMessage);
-      report.errorCount++;
+      report.errorCount! += 1;
+      report.success = false;
     }
 
     report.completedAt = new Date();
@@ -488,6 +497,241 @@ export class GoogleCalendarService {
       console.error("Erro ao configurar webhook:", error);
       throw error;
     }
+  }
+
+  /**
+   * Sincronização bidirecional avançada
+   */
+  public async syncBidirectional(
+    localEvents: PlantaoEvent[], 
+    calendarId: string = "primary"
+  ): Promise<SyncReport> {
+    const report: SyncReport = {
+      success: true,
+      timestamp: new Date(),
+      conflicts: [],
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      errors: []
+    };
+
+    try {
+      console.log("🔄 Iniciando sincronização bidirecional avançada...");
+      
+      // 1. Obter eventos do Google Calendar
+      const googleEvents = await this.listEvents(calendarId, {
+        timeMin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // 7 dias atrás
+        timeMax: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)  // 30 dias à frente
+      });
+      
+      console.log(`📅 Google Calendar: ${googleEvents.length} eventos encontrados`);
+      console.log(`📋 Local (Plantão): ${localEvents.length} eventos encontrados`);
+
+      // 2. Mapear eventos existentes
+      const googleEventsByImobiproId = new Map<string, GoogleCalendarEvent>();
+      const imobiproEventsInGoogle = new Set<string>();
+      
+      googleEvents.forEach(event => {
+        const imobiproId = event.extendedProperties?.private?.imobiproId;
+        if (imobiproId) {
+          googleEventsByImobiproId.set(imobiproId, event);
+          imobiproEventsInGoogle.add(imobiproId);
+        }
+      });
+
+      // 3. Sincronizar eventos locais → Google Calendar
+      for (const localEvent of localEvents) {
+        try {
+          const existingGoogleEvent = googleEventsByImobiproId.get(localEvent.id);
+
+          if (existingGoogleEvent) {
+            // Verificar se precisa atualizar
+            if (this.needsEventUpdate(localEvent, existingGoogleEvent)) {
+              const updatedEvent = await this.updateEvent(
+                calendarId,
+                existingGoogleEvent.id!,
+                this.plantaoEventToGoogleEvent(localEvent)
+              );
+              
+              if (updatedEvent) {
+                report.updated++;
+                console.log(`📝 Atualizado no Google: ${localEvent.title}`);
+              }
+            }
+          } else {
+            // Criar novo evento no Google Calendar
+            const createdEvent = await this.createEvent(
+              calendarId,
+              this.plantaoEventToGoogleEvent(localEvent)
+            );
+            
+            if (createdEvent) {
+              report.created++;
+              console.log(`➕ Criado no Google: ${localEvent.title}`);
+            }
+          }
+
+        } catch (error) {
+          const message = `Erro ao sincronizar evento "${localEvent.title}": ${error instanceof Error ? error.message : String(error)}`;
+          report.errors.push(message);
+          console.error("❌", message);
+        }
+      }
+
+      // 4. Detectar conflitos com eventos externos do Google
+      const externalGoogleEvents = googleEvents.filter(event => 
+        !event.extendedProperties?.private?.imobiproId
+      );
+
+      for (const googleEvent of externalGoogleEvents) {
+        const conflictingLocal = localEvents.find(localEvent => 
+          this.eventsTimeOverlap(localEvent, googleEvent)
+        );
+
+        if (conflictingLocal) {
+          const conflict: SyncConflict = {
+            type: ConflictType.TIME_OVERLAP,
+            localEvent: conflictingLocal,
+            googleEvent: googleEvent,
+            description: `Evento do Google "${googleEvent.summary}" conflita com "${conflictingLocal.title}"`,
+            suggestedResolution: "Revisar horários ou mesclar eventos"
+          };
+          
+          report.conflicts.push(conflict);
+          console.log(`⚠️ Conflito detectado: ${conflict.description}`);
+        }
+      }
+
+      // 5. Identificar eventos órfãos no Google (foram deletados localmente)
+      const localEventIds = new Set(localEvents.map(e => e.id));
+      const orphanedGoogleEvents = Array.from(imobiproEventsInGoogle).filter(
+        id => !localEventIds.has(id)
+      );
+
+      if (orphanedGoogleEvents.length > 0) {
+        console.log(`🗑️ ${orphanedGoogleEvents.length} eventos órfãos encontrados no Google Calendar`);
+        
+        for (const orphanedId of orphanedGoogleEvents) {
+          const googleEvent = googleEventsByImobiproId.get(orphanedId);
+          if (googleEvent) {
+            const conflict: SyncConflict = {
+              type: ConflictType.ORPHANED_EVENT,
+              googleEvent: googleEvent,
+              description: `Evento "${googleEvent.summary}" existe no Google mas foi deletado localmente`,
+              suggestedResolution: "Manter no Google ou deletar também"
+            };
+            
+            report.conflicts.push(conflict);
+          }
+        }
+      }
+
+      console.log(`✅ Sincronização bidirecional concluída:`, {
+        created: report.created,
+        updated: report.updated,
+        conflicts: report.conflicts.length,
+        errors: report.errors.length
+      });
+
+    } catch (error) {
+      report.success = false;
+      const message = error instanceof Error ? error.message : "Erro na sincronização bidirecional";
+      report.errors.push(message);
+      console.error("❌ Erro na sincronização bidirecional:", error);
+    }
+
+    return report;
+  }
+
+  /**
+   * Verificar se evento local precisa ser atualizado no Google
+   */
+  private needsEventUpdate(localEvent: PlantaoEvent, googleEvent: GoogleCalendarEvent): boolean {
+    // Comparar campos principais
+    if (localEvent.title !== googleEvent.summary) return true;
+    if ((localEvent.description || '') !== (googleEvent.description || '')) return true;
+    
+    // Comparar horários
+    const localStart = localEvent.startDate;
+    const localEnd = localEvent.endDate;
+    const googleStart = new Date(googleEvent.start?.dateTime || googleEvent.start?.date || '');
+    const googleEnd = new Date(googleEvent.end?.dateTime || googleEvent.end?.date || '');
+    
+    if (Math.abs(localStart.getTime() - googleStart.getTime()) > 60000) return true; // diferença > 1 minuto
+    if (Math.abs(localEnd.getTime() - googleEnd.getTime()) > 60000) return true;
+    
+    // Comparar status
+    const localStatus = localEvent.status === "CANCELADO" ? "cancelled" : "confirmed";
+    if (localStatus !== (googleEvent.status || "confirmed")) return true;
+    
+    return false;
+  }
+
+  /**
+   * Verificar se dois eventos se sobrepõem temporalmente
+   */
+  private eventsTimeOverlap(localEvent: PlantaoEvent, googleEvent: GoogleCalendarEvent): boolean {
+    const localStart = localEvent.startDate;
+    const localEnd = localEvent.endDate;
+    const googleStart = new Date(googleEvent.start?.dateTime || googleEvent.start?.date || '');
+    const googleEnd = new Date(googleEvent.end?.dateTime || googleEvent.end?.date || '');
+    
+    return (localStart < googleEnd && localEnd > googleStart);
+  }
+
+  /**
+   * Resolver conflito automaticamente (estratégias simples)
+   */
+  public async resolveConflict(
+    conflict: SyncConflict, 
+    strategy: 'KEEP_LOCAL' | 'KEEP_GOOGLE' | 'MERGE' = 'KEEP_LOCAL'
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      switch (strategy) {
+        case 'KEEP_LOCAL':
+          if (conflict.localEvent && conflict.googleEvent) {
+            // Atualizar evento do Google com dados locais
+            const updated = await this.updateEvent(
+              'primary',
+              conflict.googleEvent.id!,
+              this.plantaoEventToGoogleEvent(conflict.localEvent)
+            );
+            return { 
+              success: !!updated, 
+              message: `Conflito resolvido: evento do Google atualizado com dados locais` 
+            };
+          }
+          break;
+          
+        case 'KEEP_GOOGLE':
+          // TODO: Implementar atualização do evento local com dados do Google
+          return { 
+            success: false, 
+            message: `Estratégia KEEP_GOOGLE não implementada ainda` 
+          };
+          
+        case 'MERGE':
+          // TODO: Implementar merge inteligente
+          return { 
+            success: false, 
+            message: `Estratégia MERGE não implementada ainda` 
+          };
+          
+        default:
+          return { 
+            success: false, 
+            message: `Estratégia de resolução desconhecida: ${strategy}` 
+          };
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        message: `Erro ao resolver conflito: ${error instanceof Error ? error.message : String(error)}` 
+      };
+    }
+    
+    return { success: false, message: 'Conflito não pôde ser resolvido' };
   }
 }
 

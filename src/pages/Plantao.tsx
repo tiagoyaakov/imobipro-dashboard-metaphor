@@ -7,13 +7,17 @@ import { PlantaoEventModal } from "@/components/plantao/PlantaoEventModal";
 import { PlantaoFilters } from "@/components/plantao/PlantaoFilters";
 import { GoogleCalendarConnectionModal } from "@/components/plantao/GoogleCalendarConnectionModal";
 import { SyncStatusIndicator } from "@/components/plantao/SyncStatusIndicator";
+import { SyncControls } from "@/components/plantao/SyncControls";
+import { ConflictResolutionModal } from "@/components/plantao/ConflictResolutionModal";
 import { usePlantao } from "@/hooks/usePlantao";
 import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
+import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
 import { PlantaoEvent, PlantaoEventFormData } from "@/types/plantao";
 import { SyncStatus } from "@/types/googleCalendar";
-import { Loader2, Calendar, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, AlertCircle, Settings } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Plantao() {
   const {
@@ -40,8 +44,10 @@ export default function Plantao() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>();
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("calendar");
 
-  // Hook do Google Calendar
+  // Hook do Google Calendar OAuth
   const {
     isConnected: isGoogleConnected,
     connectionStatus: googleSyncStatus,
@@ -49,6 +55,22 @@ export default function Plantao() {
     isConnecting,
     refreshConnection
   } = useGoogleOAuth();
+
+  // Hook de sincronização bidirecional
+  const {
+    syncStatus,
+    lastSyncReport,
+    isSyncing,
+    conflicts,
+    googleEvents,
+    syncToGoogle,
+    syncBidirectional,
+    resolveConflict,
+    fetchGoogleEvents,
+    clearConflicts,
+    getLastSyncTime,
+    getSyncStats
+  } = useGoogleCalendarSync();
 
   // Debug temporário para OAuth
   useEffect(() => {
@@ -159,20 +181,49 @@ export default function Plantao() {
     // TODO: Implementar sincronização de eventos
   }, [refreshConnection]);
 
+  // Handlers de sincronização
+  const handleSyncToGoogle = useCallback(async () => {
+    try {
+      await syncToGoogle(events);
+    } catch (error) {
+      console.error('Erro na sincronização para Google:', error);
+    }
+  }, [syncToGoogle, events]);
+
+  const handleSyncBidirectional = useCallback(async () => {
+    try {
+      await syncBidirectional(events);
+    } catch (error) {
+      console.error('Erro na sincronização bidirecional:', error);
+    }
+  }, [syncBidirectional, events]);
+
+  const handleViewConflicts = useCallback(() => {
+    setIsConflictModalOpen(true);
+  }, []);
+
+  const handleCloseConflictModal = useCallback(() => {
+    setIsConflictModalOpen(false);
+  }, []);
+
+  const handleResolveConflict = useCallback(async (
+    conflict: any, 
+    strategy: 'KEEP_LOCAL' | 'KEEP_GOOGLE'
+  ) => {
+    return await resolveConflict(conflict, strategy);
+  }, [resolveConflict]);
+
   // Renderizar loading
   if (loading && events.length === 0) {
     return (
-      <PageTemplate 
-        title="Plantão" 
-        description="Sistema de agendamento e gestão de plantões"
-      >
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-center h-[600px]">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-muted-foreground">Carregando calendário...</p>
           </div>
         </div>
-      </PageTemplate>
+      </div>
     );
   }
 
@@ -190,12 +241,12 @@ export default function Plantao() {
         </div>
         <div className="flex items-center gap-3">
           <SyncStatusIndicator
-            syncStatus={isGoogleConnected ? googleSyncStatus : SyncStatus.IDLE}
+            syncStatus={isGoogleConnected ? syncStatus : SyncStatus.IDLE}
             isConnected={isGoogleConnected}
-            lastSyncAt={lastConnectedAt}
+            lastSyncAt={getLastSyncTime()}
             onSync={handleGoogleSync}
             onOpenConnection={handleGoogleModalOpen}
-            isLoading={isConnecting}
+            isLoading={isConnecting || isSyncing}
             compact
           />
         </div>
@@ -216,37 +267,165 @@ export default function Plantao() {
         </Alert>
       )}
 
-      {/* Filtros e controles */}
-      <PlantaoFilters
-        currentDate={currentDate}
-        currentView={currentView}
-        corretores={corretores}
-        selectedCorretorId={filters.corretorIds?.[0]}
-        isAdmin={isAdmin}
-        onNavigate={handleNavigate}
-        onViewChange={handleViewChange}
-        onCorretorChange={handleCorretorChange}
-        onNewEvent={handleNewEvent}
-      />
+      {/* Abas principais */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Calendário
+          </TabsTrigger>
+          <TabsTrigger value="sync" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Sincronização
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Card do calendário */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="h-[700px]">
-            <PlantaoCalendar
-              events={events}
-              corretores={corretores}
-              currentView={currentView}
-              onViewChange={handleViewChange}
-              onNavigate={setCurrentDate}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              isAdmin={isAdmin}
-              selectedCorretorId={filters.corretorIds?.[0]}
-            />
+        {/* Aba do Calendário */}
+        <TabsContent value="calendar" className="space-y-6">
+          {/* Filtros e controles */}
+          <PlantaoFilters
+            currentDate={currentDate}
+            currentView={currentView}
+            corretores={corretores}
+            selectedCorretorId={filters.corretorIds?.[0]}
+            isAdmin={isAdmin}
+            onNavigate={handleNavigate}
+            onViewChange={handleViewChange}
+            onCorretorChange={handleCorretorChange}
+            onNewEvent={handleNewEvent}
+          />
+
+          {/* Card do calendário */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="h-[700px]">
+                <PlantaoCalendar
+                  events={events}
+                  corretores={corretores}
+                  currentView={currentView}
+                  onViewChange={handleViewChange}
+                  onNavigate={setCurrentDate}
+                  onSelectEvent={handleSelectEvent}
+                  onSelectSlot={handleSelectSlot}
+                  isAdmin={isAdmin}
+                  selectedCorretorId={filters.corretorIds?.[0]}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Estatísticas rápidas */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total de Eventos</p>
+                    <p className="text-2xl font-bold">{events.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Confirmados</p>
+                    <p className="text-2xl font-bold">
+                      {events.filter(e => e.status === "CONFIRMADO").length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pendentes</p>
+                    <p className="text-2xl font-bold">
+                      {events.filter(e => e.status === "AGENDADO").length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-500/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cancelados</p>
+                    <p className="text-2xl font-bold">
+                      {events.filter(e => e.status === "CANCELADO").length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        {/* Aba de Sincronização */}
+        <TabsContent value="sync" className="space-y-6">
+          <SyncControls
+            isSyncing={isSyncing}
+            syncStatus={syncStatus}
+            lastSyncReport={lastSyncReport}
+            conflicts={conflicts.length}
+            onSyncToGoogle={handleSyncToGoogle}
+            onSyncBidirectional={handleSyncBidirectional}
+            onViewConflicts={conflicts.length > 0 ? handleViewConflicts : undefined}
+            isGoogleConnected={isGoogleConnected}
+            canSync={isGoogleConnected && !isSyncing && events.length > 0}
+          />
+
+          {/* Informações sobre eventos do Google Calendar */}
+          {googleEvents.length > 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+                  Eventos do Google Calendar
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Eventos encontrados:</span>
+                    <span className="font-medium">{googleEvents.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Conflitos detectados:</span>
+                    <span className={`font-medium ${conflicts.length > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                      {conflicts.length}
+                    </span>
+                  </div>
+                  {getSyncStats().lastSuccess && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Última sincronização:</span>
+                      <span className="font-medium">
+                        {getSyncStats().lastSuccess?.toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de criação/edição */}
       {currentUser && (
@@ -268,70 +447,15 @@ export default function Plantao() {
         onClose={handleGoogleModalClose}
       />
 
-      {/* Estatísticas rápidas */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Eventos</p>
-                <p className="text-2xl font-bold">{events.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Confirmados</p>
-                <p className="text-2xl font-bold">
-                  {events.filter(e => e.status === "CONFIRMADO").length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold">
-                  {events.filter(e => e.status === "AGENDADO").length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelados</p>
-                <p className="text-2xl font-bold">
-                  {events.filter(e => e.status === "CANCELADO").length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Modal de resolução de conflitos */}
+      <ConflictResolutionModal
+        isOpen={isConflictModalOpen}
+        onClose={handleCloseConflictModal}
+        conflicts={conflicts}
+        onResolveConflict={handleResolveConflict}
+        onClearConflicts={clearConflicts}
+        isResolving={isSyncing}
+      />
     </div>
   );
 }
