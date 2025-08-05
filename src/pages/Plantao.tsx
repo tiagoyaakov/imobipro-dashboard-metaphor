@@ -1,5 +1,5 @@
 // Página principal do módulo Plantão (Agendamento)
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View } from "react-big-calendar";
 // Removendo PageTemplate - usaremos layout customizado
 import { PlantaoCalendar } from "@/components/plantao/PlantaoCalendar";
@@ -49,6 +49,19 @@ export default function Plantao() {
     isConnecting,
     refreshConnection
   } = useGoogleOAuth();
+
+  // Debug temporário para OAuth
+  useEffect(() => {
+    console.group('🔍 Debug Plantão - Google OAuth Status');
+    console.log('isGoogleConnected:', isGoogleConnected);
+    console.log('googleSyncStatus:', googleSyncStatus);
+    console.log('isConnecting:', isConnecting);
+    console.log('lastConnectedAt:', lastConnectedAt);
+    console.log('URL atual:', window.location.href);
+    console.log('Session storage auth_started:', sessionStorage.getItem('google_auth_started'));
+    console.log('localStorage tokens:', localStorage.getItem('google_calendar_tokens'));
+    console.groupEnd();
+  }, [isGoogleConnected, googleSyncStatus, isConnecting, lastConnectedAt]);
 
   // Handlers de navegação
   const handleNavigate = useCallback((action: "PREV" | "NEXT" | "TODAY") => {

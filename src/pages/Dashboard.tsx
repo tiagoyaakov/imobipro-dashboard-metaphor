@@ -51,6 +51,8 @@ const Dashboard = () => {
       console.log('🔄 OAuth callback detectado na home, redirecionando para callback correto...');
       console.log('URL atual:', window.location.href);
       console.log('Search params:', window.location.search);
+      console.log('Code presente:', urlParams.has('code'));
+      console.log('Error presente:', urlParams.has('error'));
       
       // Redirecionar para o callback correto mantendo os parâmetros
       navigate(`/auth/google/callback${window.location.search}`, { replace: true });

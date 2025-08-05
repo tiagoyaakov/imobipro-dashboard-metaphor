@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste OAuth Google Calendar</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .debug { 
+            background: #f5f5f5; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+        }
+        button { 
+            background: #4285f4; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        button:hover { background: #3367d6; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste OAuth Google Calendar</h1>
+    
+    <div class="debug">
+        <h3>URL Atual:</h3>
+        <p id="current-url"></p>
+        
+        <h3>Parâmetros da URL:</h3>
+        <div id="url-params"></div>
+    </div>
+
+    <h3>Teste Manual OAuth:</h3>
+    <button onclick="testOAuth()">🔗 Testar OAuth Google</button>
+    <button onclick="debugCurrentUrl()">🔍 Debug URL Atual</button>
+
+    <div id="results" class="debug" style="display:none;">
+        <h3>Resultados:</h3>
+        <pre id="debug-output"></pre>
+    </div>
+
+    <script>
+        const CLIENT_ID = '645763156855-r6q2cdomvct2fnnm2l3dussq04bfcnbh.apps.googleusercontent.com';
+        const REDIRECT_URI = 'https://imobpro-brown.vercel.app/auth/google/callback';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events openid email profile';
+
+        function debugCurrentUrl() {
+            const url = window.location.href;
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            document.getElementById('current-url').textContent = url;
+            
+            let paramsHtml = '';
+            for (const [key, value] of urlParams.entries()) {
+                paramsHtml += `<strong>${key}:</strong> ${value}<br>`;
+            }
+            document.getElementById('url-params').innerHTML = paramsHtml || 'Nenhum parâmetro encontrado';
+
+            if (urlParams.has('code') || urlParams.has('error')) {
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('debug-output').textContent = JSON.stringify({
+                    code: urlParams.get('code'),
+                    error: urlParams.get('error'),
+                    state: urlParams.get('state'),
+                    scope: urlParams.get('scope')
+                }, null, 2);
+            }
+        }
+
+        function testOAuth() {
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+                `&scope=${encodeURIComponent(SCOPES)}` +
+                `&response_type=code` +
+                `&access_type=offline` +
+                `&prompt=consent` +
+                `&include_granted_scopes=true` +
+                `&state=test-${Date.now()}`;
+
+            console.log('🔗 Redirecionando para:', authUrl);
+            window.location.href = authUrl;
+        }
+
+        // Auto-executar debug ao carregar
+        window.onload = debugCurrentUrl;
+    </script>
+</body>
+</html>
