@@ -1,12 +1,16 @@
 // Página principal do módulo Plantão (Agendamento)
 import React, { useState, useCallback } from "react";
 import { View } from "react-big-calendar";
-import { PageTemplate } from "@/components/PageTemplate";
+// Removendo PageTemplate - usaremos layout customizado
 import { PlantaoCalendar } from "@/components/plantao/PlantaoCalendar";
 import { PlantaoEventModal } from "@/components/plantao/PlantaoEventModal";
 import { PlantaoFilters } from "@/components/plantao/PlantaoFilters";
+import { GoogleCalendarConnectionModal } from "@/components/plantao/GoogleCalendarConnectionModal";
+import { SyncStatusIndicator } from "@/components/plantao/SyncStatusIndicator";
 import { usePlantao } from "@/hooks/usePlantao";
+import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
 import { PlantaoEvent, PlantaoEventFormData } from "@/types/plantao";
+import { SyncStatus } from "@/types/googleCalendar";
 import { Loader2, Calendar, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +39,16 @@ export default function Plantao() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>();
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  // Hook do Google Calendar
+  const {
+    isConnected: isGoogleConnected,
+    connectionStatus: googleSyncStatus,
+    lastConnectedAt,
+    isConnecting,
+    refreshConnection
+  } = useGoogleOAuth();
 
   // Handlers de navegação
   const handleNavigate = useCallback((action: "PREV" | "NEXT" | "TODAY") => {
@@ -118,6 +132,20 @@ export default function Plantao() {
     setModalInitialDate(undefined);
   }, [selectEvent]);
 
+  // Handlers do Google Calendar
+  const handleGoogleModalOpen = useCallback(() => {
+    setIsGoogleModalOpen(true);
+  }, []);
+
+  const handleGoogleModalClose = useCallback(() => {
+    setIsGoogleModalOpen(false);
+  }, []);
+
+  const handleGoogleSync = useCallback(async () => {
+    await refreshConnection();
+    // TODO: Implementar sincronização de eventos
+  }, [refreshConnection]);
+
   // Renderizar loading
   if (loading && events.length === 0) {
     return (
@@ -136,14 +164,29 @@ export default function Plantao() {
   }
 
   return (
-    <PageTemplate 
-      title="Plantão" 
-      description={
-        isAdmin 
-          ? "Gerencie os plantões de todos os corretores"
-          : "Visualize e gerencie seus plantões"
-      }
-    >
+    <div className="space-y-6 animate-fade-in">
+      {/* Header customizado com indicador de sincronização */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Plantão</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {isAdmin 
+              ? "Gerencie os plantões de todos os corretores"
+              : "Visualize e gerencie seus plantões"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <SyncStatusIndicator
+            syncStatus={isGoogleConnected ? googleSyncStatus : SyncStatus.IDLE}
+            isConnected={isGoogleConnected}
+            lastSyncAt={lastConnectedAt}
+            onSync={handleGoogleSync}
+            onOpenConnection={handleGoogleModalOpen}
+            isLoading={isConnecting}
+            compact
+          />
+        </div>
+      </div>
       {/* Alertas de erro */}
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -205,6 +248,12 @@ export default function Plantao() {
           initialDate={modalInitialDate}
         />
       )}
+
+      {/* Modal de conexão Google Calendar */}
+      <GoogleCalendarConnectionModal
+        isOpen={isGoogleModalOpen}
+        onClose={handleGoogleModalClose}
+      />
 
       {/* Estatísticas rápidas */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -270,6 +319,6 @@ export default function Plantao() {
           </CardContent>
         </Card>
       </div>
-    </PageTemplate>
+    </div>
   );
 }
