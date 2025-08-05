@@ -12,10 +12,20 @@ export default function GoogleCallback() {
   useEffect(() => {
     const processOAuthCallback = async () => {
       try {
+        // Debug: Log da URL atual
+        console.log('Callback URL:', window.location.href);
+        console.log('URL Search Params:', window.location.search);
+        console.log('Session Storage auth_started:', sessionStorage.getItem('google_auth_started'));
+
         // Verificar se realmente foi um callback OAuth
         const authStarted = sessionStorage.getItem('google_auth_started');
         if (!authStarted) {
-          throw new Error("Callback OAuth inválido");
+          console.warn("Callback OAuth inválido - não foi iniciado via módulo Plantão");
+          // Não bloquear o processamento se há parâmetros OAuth na URL
+          const urlParams = new URLSearchParams(window.location.search);
+          if (!urlParams.has('code') && !urlParams.has('error')) {
+            throw new Error("Callback OAuth inválido");
+          }
         }
 
         // Limpar flag do sessionStorage

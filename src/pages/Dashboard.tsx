@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,22 @@ interface DealsResponse {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Detector de callback OAuth redirecionado incorretamente
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('error');
+    
+    if (hasOAuthParams) {
+      console.log('🔄 OAuth callback detectado na home, redirecionando para callback correto...');
+      console.log('URL atual:', window.location.href);
+      console.log('Search params:', window.location.search);
+      
+      // Redirecionar para o callback correto mantendo os parâmetros
+      navigate(`/auth/google/callback${window.location.search}`, { replace: true });
+    }
+  }, [navigate]);
   
   // Hooks do CRM - usando a estrutura correta
   const { 
