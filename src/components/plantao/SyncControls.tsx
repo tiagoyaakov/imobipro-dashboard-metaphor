@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, AlertTriangle, CheckCircle, Zap } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle, CheckCircle, Zap, Download } from "lucide-react";
 import { SyncStatus, SyncReport } from "@/types/googleCalendar";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +16,7 @@ interface SyncControlsProps {
   
   // Ações
   onSyncToGoogle: () => Promise<void>;
+  onSyncFromGoogle?: () => Promise<void>;
   onSyncBidirectional: () => Promise<void>;
   onViewConflicts?: () => void;
   
@@ -30,6 +31,7 @@ export function SyncControls({
   lastSyncReport,
   conflicts,
   onSyncToGoogle,
+  onSyncFromGoogle,
   onSyncBidirectional,
   onViewConflicts,
   isGoogleConnected,
@@ -152,13 +154,12 @@ export function SyncControls({
       </div>
 
       {/* Controles de sincronização */}
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Button
           onClick={onSyncToGoogle}
           disabled={!canSync || isSyncing}
           size="sm"
           variant="outline"
-          className="flex-1 min-w-[140px]"
         >
           {isSyncing ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -168,11 +169,27 @@ export function SyncControls({
           Enviar para Google
         </Button>
 
+        {onSyncFromGoogle && (
+          <Button
+            onClick={onSyncFromGoogle}
+            disabled={!isGoogleConnected || isSyncing}
+            size="sm"
+            variant="outline"
+            className="text-green-600 border-green-200 hover:bg-green-50"
+          >
+            {isSyncing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Importar do Google
+          </Button>
+        )}
+
         <Button
           onClick={onSyncBidirectional}
           disabled={!canSync || isSyncing}
           size="sm"
-          className="flex-1 min-w-[140px]"
         >
           {isSyncing ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -190,6 +207,7 @@ export function SyncControls({
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-3">
         <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
           <p><strong>Enviar para Google:</strong> Sincroniza apenas eventos do ImobiPRO → Google Calendar</p>
+          <p><strong>Importar do Google:</strong> Importa eventos externos do Google Calendar → ImobiPRO</p>
           <p><strong>Sincronização Completa:</strong> Sincronização bidirecional + detecção de conflitos</p>
         </div>
       </div>

@@ -18,9 +18,11 @@ interface UseGoogleCalendarSyncReturn {
   isSyncing: boolean;
   conflicts: SyncConflict[];
   googleEvents: GoogleCalendarEvent[];
+  importedEvents: PlantaoEvent[];
   
   // Ações
   syncToGoogle: (events: PlantaoEvent[]) => Promise<SyncReport>;
+  syncFromGoogle: (onEventImported?: (event: Partial<PlantaoEvent>) => Promise<boolean>) => Promise<SyncReport>;
   syncBidirectional: (events: PlantaoEvent[]) => Promise<SyncReport>;
   resolveConflict: (conflict: SyncConflict, strategy?: 'KEEP_LOCAL' | 'KEEP_GOOGLE') => Promise<boolean>;
   fetchGoogleEvents: () => Promise<GoogleCalendarEvent[]>;
@@ -32,6 +34,7 @@ interface UseGoogleCalendarSyncReturn {
     totalSyncs: number;
     successRate: number;
     lastSuccess: Date | null;
+    importedCount: number;
   };
 }
 
@@ -45,6 +48,7 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
   const [isSyncing, setIsSyncing] = useState(false);
   const [conflicts, setConflicts] = useState<SyncConflict[]>([]);
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+  const [importedEvents, setImportedEvents] = useState<PlantaoEvent[]>([]);
 
   /**
    * Sincronizar eventos locais para Google Calendar
@@ -110,6 +114,82 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
       setIsSyncing(false);
     }
   }, [isGoogleConnected, toast]);
+
+  /**
+   * Sincronizar eventos do Google Calendar para ImobiPRO
+   */
+  const syncFromGoogle = useCallback(async (
+    onEventImported?: (event: Partial<PlantaoEvent>) => Promise<boolean>
+  ): Promise<SyncReport> => {
+    if (!isGoogleConnected) {
+      throw new Error("Google Calendar não está conectado");
+    }
+
+    try {
+      setIsSyncing(true);
+      setSyncStatus(SyncStatus.SYNCING);
+
+      console.log("🔄 Iniciando importação de eventos do Google Calendar...");
+
+      const report = await googleCalendarService.syncFromGoogle("primary", onEventImported);
+      
+      setLastSyncReport(report);
+      setSyncStatus(report.success ? SyncStatus.SYNCED : SyncStatus.ERROR);
+
+      // Atualizar lista de eventos importados
+      if (report.success && report.created > 0) {
+        // Re-fetch eventos do Google para atualizar a lista
+        try {
+          await fetchGoogleEvents();
+        } catch (error) {
+          console.warn("Erro ao atualizar eventos do Google:", error);
+        }
+      }
+
+      // Notificação de resultado
+      if (report.success) {
+        toast({
+          title: "📥 Importação Concluída",
+          description: `${report.created} eventos importados do Google Calendar`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "❌ Erro na Importação",
+          description: report.errors?.[0] || "Erro desconhecido na importação",
+          variant: "destructive"
+        });
+      }
+
+      return report;
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro na importação";
+      setSyncStatus(SyncStatus.ERROR);
+      
+      toast({
+        title: "❌ Falha na Importação",
+        description: message,
+        variant: "destructive"
+      });
+
+      const errorReport: SyncReport = {
+        success: false,
+        timestamp: new Date(),
+        conflicts: [],
+        created: 0,
+        updated: 0,
+        deleted: 0,
+        errors: [message]
+      };
+
+      setLastSyncReport(errorReport);
+      return errorReport;
+
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isGoogleConnected, toast, fetchGoogleEvents]);
 
   /**
    * Sincronização bidirecional avançada
@@ -269,9 +349,10 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
     return {
       totalSyncs: lastSyncReport ? 1 : 0,
       successRate: lastSyncReport?.success ? 100 : 0,
-      lastSuccess: lastSyncReport?.success ? lastSyncReport.timestamp : null
+      lastSuccess: lastSyncReport?.success ? lastSyncReport.timestamp : null,
+      importedCount: importedEvents.length
     };
-  }, [lastSyncReport]);
+  }, [lastSyncReport, importedEvents.length]);
 
   return {
     // Estados
@@ -280,9 +361,11 @@ export function useGoogleCalendarSync(): UseGoogleCalendarSyncReturn {
     isSyncing,
     conflicts,
     googleEvents,
+    importedEvents,
     
     // Ações
     syncToGoogle,
+    syncFromGoogle,
     syncBidirectional,
     resolveConflict,
     fetchGoogleEvents,

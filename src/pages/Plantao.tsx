@@ -395,31 +395,48 @@ export default function Plantao() {
           />
 
           {/* Informações sobre eventos do Google Calendar */}
-          {googleEvents.length > 0 && (
+          {(googleEvents.length > 0 || importedEvents.length > 0) && (
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                  Eventos do Google Calendar
+                  Estatísticas de Sincronização
                 </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Eventos encontrados:</span>
-                    <span className="font-medium">{googleEvents.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Conflitos detectados:</span>
-                    <span className={`font-medium ${conflicts.length > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                      {conflicts.length}
-                    </span>
-                  </div>
-                  {getSyncStats().lastSuccess && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Última sincronização:</span>
-                      <span className="font-medium">
-                        {getSyncStats().lastSuccess?.toLocaleString('pt-BR')}
-                      </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Eventos do Google Calendar */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Google Calendar</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Eventos encontrados:</span>
+                        <span className="font-medium">{googleEvents.length}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Conflitos detectados:</span>
+                        <span className={`font-medium ${conflicts.length > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                          {conflicts.length}
+                        </span>
+                      </div>
                     </div>
-                  )}
+                  </div>
+                  
+                  {/* Eventos Importados */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Importação</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Eventos importados:</span>
+                        <span className="font-medium text-green-600">{getSyncStats().importedCount}</span>
+                      </div>
+                      {getSyncStats().lastSuccess && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Última sincronização:</span>
+                          <span className="font-medium">
+                            {getSyncStats().lastSuccess?.toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

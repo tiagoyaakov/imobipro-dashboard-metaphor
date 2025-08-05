@@ -398,23 +398,71 @@ export class GoogleCalendarService {
    * Sincronizar eventos do Google Calendar para ImobiPRO
    */
   public async syncFromGoogle(
-    calendarId: string = "primary"
-  ): Promise<GoogleCalendarEvent[]> {
+    calendarId: string = "primary",
+    onEventImported?: (event: Partial<PlantaoEvent>) => Promise<boolean>
+  ): Promise<SyncReport> {
+    const report: SyncReport = {
+      success: true,
+      timestamp: new Date(),
+      conflicts: [],
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      errors: []
+    };
+
     try {
+      console.log("🔄 Iniciando importação de eventos do Google Calendar...");
+
       const events = await this.listEvents(calendarId, {
-        timeMin: new Date(), // Apenas eventos futuros
+        timeMin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 dias atrás
         timeMax: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 dias à frente
       });
 
-      // Filtrar apenas eventos que não são do ImobiPRO
-      return events.filter(event => 
+      console.log(`📅 ${events.length} eventos encontrados no Google Calendar`);
+
+      // Filtrar apenas eventos que não são do ImobiPRO (eventos externos)
+      const externalEvents = events.filter(event => 
         !event.extendedProperties?.private?.imobiproType
       );
-      
+
+      console.log(`🔍 ${externalEvents.length} eventos externos identificados`);
+
+      // Importar cada evento externo
+      for (const googleEvent of externalEvents) {
+        try {
+          const plantaoEvent = this.googleEventToPlantaoEvent(googleEvent);
+          
+          if (onEventImported) {
+            const imported = await onEventImported(plantaoEvent);
+            if (imported) {
+              report.created++;
+              console.log(`✅ Evento importado: ${googleEvent.summary}`);
+            } else {
+              console.log(`⏭️ Evento ignorado: ${googleEvent.summary}`);
+            }
+          } else {
+            // Se não há callback, apenas conta como "encontrado"
+            report.created++;
+          }
+
+        } catch (error) {
+          const errorMessage = `Erro ao importar evento "${googleEvent.summary}": ${error instanceof Error ? error.message : String(error)}`;
+          report.errors.push(errorMessage);
+          console.error("❌", errorMessage);
+        }
+      }
+
+      console.log(`✅ Importação concluída: ${report.created} eventos importados, ${report.errors.length} erros`);
+
     } catch (error) {
-      console.error("Erro ao sincronizar do Google Calendar:", error);
-      throw error;
+      report.success = false;
+      const message = error instanceof Error ? error.message : "Erro na importação do Google Calendar";
+      report.errors.push(message);
+      console.error("❌ Erro na importação:", error);
     }
+
+    return report;
   }
 
   /**
