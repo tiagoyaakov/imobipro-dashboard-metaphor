@@ -43,7 +43,7 @@ export function usePlantao(): UsePlantaoReturn {
   // Import dinâmico para evitar dependências circulares
   const getPlantaoService = async () => {
     const { PlantaoService } = await import("@/services/plantaoService");
-    return new PlantaoService();
+    return PlantaoService;
   };
 
   // Estados

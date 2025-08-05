@@ -1,5 +1,5 @@
 // Componente de calendário para o módulo Plantão
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { Calendar, momentLocalizer, View, Messages } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/pt-br";
@@ -118,7 +118,7 @@ export function PlantaoCalendar({
 
   return (
     <div className="h-full bg-background rounded-lg shadow-sm">
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .rbc-calendar {
           font-family: inherit;
           background: transparent;

@@ -36,7 +36,8 @@ export class PlantaoService {
       // Por enquanto, vamos simular dados até a integração com Supabase
       const mockEvents = this.generateMockEvents();
       
-      let filteredEvents = [...mockEvents];
+      // Combinar eventos mockados com eventos do cache (incluindo importados do Google)
+      let filteredEvents = [...mockEvents, ...this.eventsCache];
 
       // Aplicar filtros
       if (filters) {
@@ -120,11 +121,12 @@ export class PlantaoService {
         corretorId: data.corretorId || user.id,
         corretorName: "Corretor Exemplo", // Será obtido do banco real
         corretorColor: CORRETOR_COLORS[Math.floor(Math.random() * CORRETOR_COLORS.length)],
-        status: PlantaoEventStatus.AGENDADO,
+        status: data.status || PlantaoEventStatus.AGENDADO,
         location: data.location,
         attendees: data.attendees,
         recurrenceRule: data.recurrenceRule,
-        syncStatus: PlantaoSyncStatus.PENDING,
+        syncStatus: (data as any).googleCalendarEventId ? PlantaoSyncStatus.SYNCED : PlantaoSyncStatus.PENDING,
+        googleCalendarEventId: (data as any).googleCalendarEventId,
         createdBy: user.id,
         createdAt: new Date(),
         updatedAt: new Date(),

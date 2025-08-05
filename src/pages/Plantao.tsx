@@ -205,13 +205,41 @@ export default function Plantao() {
       await syncFromGoogle(async (event) => {
         // Callback para processar cada evento importado
         console.log('Processando evento importado:', event);
-        // Aqui você pode adicionar lógica adicional se necessário
-        return true; // Retorna true para confirmar a importação
+        
+        // Criar o evento no sistema local através do hook usePlantao
+        if (event.title && event.startDateTime && event.endDateTime) {
+          try {
+            await createEvent({
+              title: event.title,
+              description: event.description || '',
+              startDateTime: new Date(event.startDateTime),
+              endDateTime: new Date(event.endDateTime),
+              location: event.location || '',
+              corretorId: currentUser?.id || '',
+              clientName: '',
+              clientPhone: '',
+              propertyId: '',
+              tipo: 'VISITA',
+              status: 'AGENDADO',
+              observacoes: 'Importado do Google Calendar',
+              googleCalendarEventId: event.googleCalendarEventId
+            });
+            console.log('✅ Evento importado e criado localmente:', event.title);
+            return true;
+          } catch (error) {
+            console.error('❌ Erro ao criar evento localmente:', error);
+            return false;
+          }
+        }
+        return false;
       });
+      
+      // Recarregar eventos após importação
+      await fetchEvents();
     } catch (error) {
       console.error('Erro na importação do Google:', error);
     }
-  }, [syncFromGoogle]);
+  }, [syncFromGoogle, createEvent, currentUser, fetchEvents]);
 
   const handleViewConflicts = useCallback(() => {
     setIsConflictModalOpen(true);
