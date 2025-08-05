@@ -1,13 +1,18 @@
-// Página principal do módulo Plantão - Versão 100% autocontida e isolada
+// Página do módulo Plantão - Sincronização com Google Calendar
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Calendar, momentLocalizer, View, Messages } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/pt-br";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Globe, CheckCircle, LogOut, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useGoogleOAuth } from "@/hooks/useGoogleOAuth";
+import { useGoogleCalendarSync } from "@/hooks/useGoogleCalendarSync";
+import { useToast } from "@/hooks/use-toast";
 
 // Configurar moment para português brasileiro
 moment.locale("pt-br");
@@ -32,131 +37,40 @@ const messages: Messages = {
   showMore: (total) => `+${total} mais`,
 };
 
-// Types locais para evitar dependências externas
-interface LocalPlantaoEvent {
+// Types locais
+interface PlantaoEvent {
   id: string;
   title: string;
   description?: string;
   startDateTime: Date;
   endDateTime: Date;
-  corretorId: string;
-  corretorName: string;
-  corretorColor: string;
-  status: 'AGENDADO' | 'CONFIRMADO' | 'CONCLUIDO' | 'CANCELADO';
   location?: string;
+  source: 'GOOGLE_CALENDAR';
+  googleEventId?: string;
+  color?: string;
 }
 
-interface LocalPlantaoUser {
-  id: string;
-  name: string;
-  email: string;
-  role: 'ADMIN' | 'AGENT';
-  color: string;
-}
-
-// Dados mockados para demonstração
-const MOCK_CORRETORES: LocalPlantaoUser[] = [
-  {
-    id: "admin-1",
-    name: "Administrador Sistema",
-    email: "admin@imobipro.com",
-    role: "ADMIN",
-    color: "#000000",
-  },
-  {
-    id: "corretor-1",
-    name: "João Silva",
-    email: "joao@imobipro.com",
-    role: "AGENT",
-    color: "#8B5CF6",
-  },
-  {
-    id: "corretor-2",
-    name: "Maria Santos",  
-    email: "maria@imobipro.com",
-    role: "AGENT",
-    color: "#3B82F6",
-  },
-];
-
-const generateMockEvents = (): LocalPlantaoEvent[] => {
-  const events: LocalPlantaoEvent[] = [];
-  const today = new Date();
-
-  // Gerar eventos para os próximos 30 dias
-  for (let day = 0; day < 30; day++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + day);
-
-    // 2-4 eventos por dia
-    const eventsPerDay = Math.floor(Math.random() * 3) + 2;
-
-    for (let i = 0; i < eventsPerDay; i++) {
-      const corretor = MOCK_CORRETORES[Math.floor(Math.random() * MOCK_CORRETORES.length)];
-      const hour = 9 + Math.floor(Math.random() * 9); // 9h às 17h
-      const duration = [30, 60, 90, 120][Math.floor(Math.random() * 4)]; // 30min a 2h
-
-      const startDateTime = new Date(date);
-      startDateTime.setHours(hour, 0, 0, 0);
-
-      const endDateTime = new Date(startDateTime);
-      endDateTime.setMinutes(endDateTime.getMinutes() + duration);
-
-      events.push({
-        id: `event-${day}-${i}`,
-        title: [
-          "Visita ao imóvel - Apt. Centro",
-          "Reunião com cliente - Casa Jardins",
-          "Vistoria - Cobertura Zona Sul",
-          "Assinatura de contrato",
-          "Apresentação de proposta",
-          "Follow-up com interessado"
-        ][Math.floor(Math.random() * 6)],
-        description: "Detalhes do agendamento...",
-        startDateTime,
-        endDateTime,
-        corretorId: corretor.id,
-        corretorName: corretor.name,
-        corretorColor: corretor.color,
-        status: day < 0 ? 'CONCLUIDO' : 'AGENDADO',
-        location: "São Paulo, SP",
-      });
-    }
-  }
-
-  return events;
-};
-
-// Componente de calendário local integrado
-interface LocalPlantaoCalendarProps {
-  events: LocalPlantaoEvent[];
-  corretores: LocalPlantaoUser[];
+// Componente de calendário
+interface PlantaoCalendarProps {
+  events: PlantaoEvent[];
   currentView: View;
   onViewChange: (view: View) => void;
   onNavigate: (date: Date) => void;
-  onSelectEvent: (event: LocalPlantaoEvent) => void;
+  onSelectEvent: (event: PlantaoEvent) => void;
   onSelectSlot: (slotInfo: { start: Date; end: Date }) => void;
-  isAdmin: boolean;
-  selectedCorretorId?: string;
 }
 
-function LocalPlantaoCalendar({
+function PlantaoCalendar({
   events,
-  corretores,
   currentView,
   onViewChange,
   onNavigate,
   onSelectEvent,
   onSelectSlot,
-  isAdmin,
-  selectedCorretorId,
-}: LocalPlantaoCalendarProps) {
+}: PlantaoCalendarProps) {
   // Converter eventos para formato do react-big-calendar
   const calendarEvents = useMemo(() => {
-    console.log(`📅 LocalPlantaoCalendar renderizando ${events.length} eventos`);
-    
     return events.map(event => ({
-      ...event,
       id: event.id,
       title: event.title,
       start: new Date(event.startDateTime),
@@ -165,19 +79,16 @@ function LocalPlantaoCalendar({
     }));
   }, [events]);
 
-  // Estilizar eventos com base no corretor (cores diferentes)
+  // Estilizar eventos
   const eventStyleGetter = useCallback((event: any) => {
-    const plantaoEvent = event.resource as LocalPlantaoEvent;
-    const backgroundColor = plantaoEvent.corretorColor || "#3B82F6";
-    
-    // Se um corretor específico estiver selecionado e não for o dono do evento, deixar opaco
-    const isOtherCorretor = selectedCorretorId && plantaoEvent.corretorId !== selectedCorretorId;
+    const plantaoEvent = event.resource as PlantaoEvent;
+    const backgroundColor = plantaoEvent.color || "#3B82F6";
     
     return {
       style: {
         backgroundColor,
         borderRadius: "4px",
-        opacity: isOtherCorretor ? 0.3 : 1,
+        opacity: 1,
         color: "white",
         border: "0px",
         display: "block",
@@ -185,19 +96,15 @@ function LocalPlantaoCalendar({
         cursor: "pointer",
       },
     };
-  }, [selectedCorretorId]);
+  }, []);
 
   // Componente customizado para eventos
   const EventComponent = ({ event }: { event: any }) => {
-    const plantaoEvent = event.resource as LocalPlantaoEvent;
-    const corretor = corretores.find(c => c.id === plantaoEvent.corretorId);
+    const plantaoEvent = event.resource as PlantaoEvent;
     
     return (
       <div className="p-1">
         <div className="font-medium text-xs">{event.title}</div>
-        {isAdmin && corretor && (
-          <div className="text-xs opacity-80">{corretor.name}</div>
-        )}
         {plantaoEvent.location && (
           <div className="text-xs opacity-70">{plantaoEvent.location}</div>
         )}
@@ -366,81 +273,256 @@ function LocalPlantaoCalendar({
 }
 
 export default function Plantao() {
-  // Estados locais completamente isolados
-  const [events, setEvents] = useState<LocalPlantaoEvent[]>([]);
-  const [corretores] = useState<LocalPlantaoUser[]>(MOCK_CORRETORES);
-  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+  
+  // Google OAuth hooks
+  const { 
+    isConnected: googleConnected, 
+    isConnecting: googleConnecting,
+    tokens: googleTokens,
+    connectToGoogle, 
+    disconnectFromGoogle 
+  } = useGoogleOAuth();
+  
+  // Google Calendar Sync
+  const { 
+    syncFromGoogle, 
+    syncStatus,
+    getSyncStats 
+  } = useGoogleCalendarSync();
+  
+  // Estados
+  const [events, setEvents] = useState<PlantaoEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCorretorId, setSelectedCorretorId] = useState<string | undefined>();
-  const [currentUser] = useState<LocalPlantaoUser>(MOCK_CORRETORES[0]); // Simular admin
-  const isAdmin = currentUser.role === 'ADMIN';
-
-  // Estados locais simplificados
+  
+  // Estados do calendário
   const [currentView, setCurrentView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeTab, setActiveTab] = useState("calendar");
 
-  // Carregar dados mockados na inicialização
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Simular carregamento
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setEvents(generateMockEvents());
-        setError(null);
-      } catch (err) {
-        setError("Erro ao carregar dados");
-      } finally {
-        setLoading(false);
+  // Email da conta Google conectada
+  const googleAccountEmail = googleTokens?.email || user?.email;
+
+  // Carregar eventos do Google Calendar
+  const loadGoogleCalendarEvents = useCallback(async () => {
+    if (!googleConnected) return;
+    
+    try {
+      setSyncing(true);
+      setError(null);
+      
+      const syncedEvents: PlantaoEvent[] = [];
+      
+      // Sincronizar com Google Calendar
+      const result = await syncFromGoogle(async (googleEvent) => {
+        const plantaoEvent: PlantaoEvent = {
+          id: googleEvent.id,
+          title: googleEvent.title || 'Evento sem título',
+          description: googleEvent.description,
+          startDateTime: googleEvent.startDateTime,
+          endDateTime: googleEvent.endDateTime,
+          location: googleEvent.location,
+          source: 'GOOGLE_CALENDAR',
+          googleEventId: googleEvent.id,
+          color: googleEvent.colorId ? getColorFromGoogleColorId(googleEvent.colorId) : '#3B82F6'
+        };
+        
+        syncedEvents.push(plantaoEvent);
+        return true;
+      });
+      
+      if (result.success) {
+        setEvents(syncedEvents);
+        toast({
+          title: "Sincronização concluída",
+          description: `${syncedEvents.length} eventos sincronizados do Google Calendar`,
+        });
+      } else {
+        throw new Error(result.error || 'Erro na sincronização');
       }
+    } catch (err) {
+      console.error("Erro ao sincronizar:", err);
+      setError("Erro ao sincronizar com Google Calendar");
+      toast({
+        title: "Erro na sincronização",
+        description: "Não foi possível sincronizar com o Google Calendar",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [googleConnected, syncFromGoogle, toast]);
+
+  // Função auxiliar para mapear cores do Google Calendar
+  const getColorFromGoogleColorId = (colorId: string): string => {
+    const colorMap: { [key: string]: string } = {
+      '1': '#7986CB', // Lavender
+      '2': '#33B679', // Sage
+      '3': '#8E24AA', // Grape
+      '4': '#E67C73', // Flamingo
+      '5': '#F6BF26', // Banana
+      '6': '#F4511E', // Tangerine
+      '7': '#039BE5', // Peacock
+      '8': '#616161', // Graphite
+      '9': '#3F51B5', // Blueberry
+      '10': '#0B8043', // Basil
+      '11': '#D50000', // Tomato
     };
-
-    loadData();
-  }, []);
-
-  // Handlers simplificados
-  const handleSelectEvent = (event: LocalPlantaoEvent) => {
-    console.log("Evento selecionado:", event.title);
+    return colorMap[colorId] || '#3B82F6';
   };
 
-  const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
-    console.log("Slot selecionado:", slotInfo.start);
-  };
-
-  const handleNewEvent = () => {
-    console.log("Novo evento");
-  };
-
-  const clearError = () => {
-    setError(null);
-  };
-
-  // Renderizar loading
-  if (loading && events.length === 0) {
+  // Verificar autenticação
+  if (!isAuthenticated || authLoading) {
     return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-center h-[600px]">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Carregando calendário...</p>
-          </div>
+      <div className="flex items-center justify-center h-[600px]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Verificando autenticação...</p>
         </div>
       </div>
     );
   }
 
+  // Carregar eventos quando conectar ao Google
+  useEffect(() => {
+    if (googleConnected) {
+      loadGoogleCalendarEvents();
+    } else {
+      setEvents([]);
+    }
+  }, [googleConnected, loadGoogleCalendarEvents]);
+
+  // Handlers
+  const handleSelectEvent = useCallback((event: PlantaoEvent) => {
+    console.log("Evento selecionado:", event.title);
+    toast({
+      title: event.title,
+      description: `${moment(event.startDateTime).format('DD/MM/YYYY HH:mm')} - ${moment(event.endDateTime).format('HH:mm')}`,
+    });
+  }, [toast]);
+
+  const handleSelectSlot = useCallback((slotInfo: { start: Date; end: Date }) => {
+    console.log("Slot selecionado:", slotInfo.start);
+    toast({
+      title: "Criar evento",
+      description: "Para criar eventos, use o Google Calendar",
+    });
+  }, [toast]);
+
+  const handleGoogleConnection = useCallback(async () => {
+    if (googleConnected) {
+      await disconnectFromGoogle();
+      setEvents([]);
+    } else {
+      await connectToGoogle();
+    }
+  }, [googleConnected, connectToGoogle, disconnectFromGoogle]);
+
+  const handleRefresh = useCallback(async () => {
+    await loadGoogleCalendarEvents();
+  }, [loadGoogleCalendarEvents]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header simples */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Plantão</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Sistema de agendamento de plantões
-        </p>
+      {/* Header com conexão Google */}
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Plantão</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Sincronização com Google Calendar
+          </p>
+        </div>
+        
+        {/* Google Account Status */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${
+                  googleConnected 
+                    ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                }`}>
+                  <Globe className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-medium text-sm">
+                    Google Calendar
+                    {googleConnected && (
+                      <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {googleConnected 
+                      ? `Conectado: ${googleAccountEmail}` 
+                      : 'Conecte sua conta Google para sincronizar eventos'
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {googleConnected && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={syncing}
+                  >
+                    {syncing ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Sincronizando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Atualizar
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                <Button
+                  variant={googleConnected ? "outline" : "default"}
+                  size="sm"
+                  onClick={handleGoogleConnection}
+                  disabled={googleConnecting}
+                  className={googleConnected 
+                    ? "text-red-600 border-red-200 hover:bg-red-50" 
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }
+                >
+                  {googleConnecting ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      Conectando...
+                    </>
+                  ) : googleConnected ? (
+                    <>
+                      <LogOut className="h-3 w-3 mr-1" />
+                      Desconectar
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-3 w-3 mr-1" />
+                      Conectar Google
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Alertas de erro */}
+      {/* Alertas */}
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
@@ -456,107 +538,150 @@ export default function Plantao() {
         </Alert>
       )}
 
-      {/* Controles simples */}
+      {/* Aviso quando não conectado */}
+      {!googleConnected && (
+        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+          <Globe className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            Conecte sua conta Google para visualizar e sincronizar seus eventos do calendário.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Controles do calendário */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <select 
-            value={selectedCorretorId || ''}
-            onChange={(e) => setSelectedCorretorId(e.target.value || undefined)}
-            className="px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+        <div className="flex items-center gap-2">
+          <Button
+            variant={currentView === 'month' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('month')}
           >
-            <option value="">Todos os corretores</option>
-            {corretores.filter(c => c.role === 'AGENT').map(corretor => (
-              <option key={corretor.id} value={corretor.id}>
-                {corretor.name}
-              </option>
-            ))}
-          </select>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={currentView === 'month' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setCurrentView('month')}
-            >
-              Mês
-            </Button>
-            <Button
-              variant={currentView === 'week' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setCurrentView('week')}
-            >
-              Semana
-            </Button>
-            <Button
-              variant={currentView === 'day' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setCurrentView('day')}
-            >
-              Dia
-            </Button>
-          </div>
+            Mês
+          </Button>
+          <Button
+            variant={currentView === 'week' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('week')}
+          >
+            Semana
+          </Button>
+          <Button
+            variant={currentView === 'day' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('day')}
+          >
+            Dia
+          </Button>
+          <Button
+            variant={currentView === 'agenda' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCurrentView('agenda')}
+          >
+            Agenda
+          </Button>
         </div>
 
-        <Button onClick={handleNewEvent}>
-          + Novo Evento
-        </Button>
+        <div className="text-sm text-muted-foreground">
+          {googleConnected && events.length > 0 && (
+            <span>{events.length} eventos sincronizados</span>
+          )}
+        </div>
       </div>
 
-      {/* Calendário principal integrado */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="h-[700px]">
-            <LocalPlantaoCalendar
-              events={events}
-              corretores={corretores}
-              currentView={currentView}
-              onViewChange={setCurrentView}
-              onNavigate={setCurrentDate}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              isAdmin={isAdmin}
-              selectedCorretorId={selectedCorretorId}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary">{events.length}</div>
-            <div className="text-sm text-muted-foreground">Total de Eventos</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {events.filter(e => e.status === "CONFIRMADO").length}
+      {/* Calendário principal */}
+      {googleConnected ? (
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="h-[700px]">
+              <PlantaoCalendar
+                events={events}
+                currentView={currentView}
+                onViewChange={setCurrentView}
+                onNavigate={setCurrentDate}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+              />
             </div>
-            <div className="text-sm text-muted-foreground">Confirmados</div>
           </CardContent>
         </Card>
+      ) : (
+        <Card className="h-[700px] flex items-center justify-center">
+          <CardContent className="text-center">
+            <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Calendário não conectado</h3>
+            <p className="text-muted-foreground mb-4">
+              Conecte sua conta Google para visualizar seus eventos
+            </p>
+            <Button onClick={handleGoogleConnection} disabled={googleConnecting}>
+              {googleConnecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4 mr-2" />
+                  Conectar Google Calendar
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {events.filter(e => e.status === "AGENDADO").length}
-            </div>
-            <div className="text-sm text-muted-foreground">Pendentes</div>
-          </CardContent>
-        </Card>
+      {/* Estatísticas quando conectado */}
+      {googleConnected && events.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{events.length}</div>
+              <div className="text-sm text-muted-foreground">Total de Eventos</div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {events.filter(e => e.status === "CANCELADO").length}
-            </div>
-            <div className="text-sm text-muted-foreground">Cancelados</div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {events.filter(e => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  return e.startDateTime >= today && e.startDateTime < tomorrow;
+                }).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Eventos Hoje</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {events.filter(e => {
+                  const today = new Date();
+                  const nextWeek = new Date(today);
+                  nextWeek.setDate(nextWeek.getDate() + 7);
+                  return e.startDateTime >= today && e.startDateTime < nextWeek;
+                }).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Próximos 7 dias</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {events.filter(e => {
+                  const today = new Date();
+                  const thisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                  return e.startDateTime >= today && e.startDateTime <= thisMonth;
+                }).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Este mês</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
