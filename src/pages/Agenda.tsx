@@ -24,7 +24,7 @@ import {
 // Importar componente Google Calendar Integration
 import GoogleCalendarIntegration from "@/components/agenda/GoogleCalendarIntegration";
 import { useAuth } from "@/hooks/useAuth";
-import { useAgendaV2 } from "@/hooks/useAgendaV2";
+import useAgendaV2 from "@/hooks/useAgendaV2";
 
 const Agenda = () => {
   const [showBookingWizard, setShowBookingWizard] = useState(false);

@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -103,8 +103,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Inicializar o cache manager
-getCacheManager(queryClient);
+// Inicializar o cache manager será feito dentro do componente
 
 // -----------------------------------------------------------
 // Componente de Rota Protegida com Suspense
@@ -130,16 +129,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 // Componente Principal da Aplicação
 // -----------------------------------------------------------
 
-const AppWithAuth = () => (
-  <QueryClientProvider client={queryClient}>
-    <UnifiedAuthProvider>
-      <GlobalProvider>
-        <GlobalNotificationsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
+const AppWithAuth = () => {
+  // Inicializar o cache manager
+  React.useEffect(() => {
+    getCacheManager(queryClient);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UnifiedAuthProvider>
+        <GlobalProvider>
+          <GlobalNotificationsProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
             {/* Rotas Públicas (apenas para não autenticados) */}
             <Route 
               path="/auth/login" 
@@ -398,5 +403,6 @@ const AppWithAuth = () => (
     </UnifiedAuthProvider>
   </QueryClientProvider>
 );
+};
 
-export default AppWithAuth; 
+export default AppWithAuth;

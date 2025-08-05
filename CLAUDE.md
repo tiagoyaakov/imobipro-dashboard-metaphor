@@ -248,20 +248,7 @@ src/
 ## 10. 🏗️ Arquitetura do Sistema
 
 ### Módulos Principais:
-- **Dashboard**: Funcionalidades avançadas de CRM *(Apenas DEV_MASTER e ADMIN)*
-- **Usuários**: Gestão de usuários e permissões *(Apenas DEV_MASTER e ADMIN)*
-- **Propriedades**: Catálogo e gestão de imóveis
-- **Pipeline**: Funil de vendas e oportunidades
-- **WhatsApp**: Integração de mensagens
-- **Agenda**: Agendamento e calendário
-- **Relatórios**: Dashboards e analytics *(Apenas DEV_MASTER e ADMIN)*
-- **Clientes**: Gestão de leads e relacionamento
-- **Conexões**: Integrações com sistemas externos
-- **Contatos**: Base de contatos e comunicação
-- **Lei do Inquilino**: Assistente jurídico com IA
-- **Chats**: Sistema de mensagens integrado
-- **CRM AVANÇADO**: 
-- **CONFIGURAÇÕES**: Configurações do sistema *(Apenas DEV_MASTER e ADMIN)*
+[descrever os modulos existentes e uma breve descrição sobre eles]
 
 ### Hierarquia de Usuários (baseada em @docs/hierarquia-usuarios.md):
 
@@ -275,19 +262,24 @@ src/
 
 #### **ADMIN (Administrador/Dono da Imobiliária)**
 - **Acesso completo** à sua imobiliária
-- **Não vê** dados de outras imobiliárias
-- Pode gerenciar apenas corretores (AGENT) da sua empresa
-- Pode impersonar apenas AGENT
-- Acesso a: Usuários, Relatórios, CRM Avançado, Configurações
+- Pode gerenciar completamente seus corretores
+- Pode impersonar apenas corretores
+- Acesso a: Usuários, Relatórios, Dashboard, Configurações
+- No módulo Agenda, (utilizando seu id de sessão) pode ver a agenda da imobiliária e de todos os corretores
+- No módulo Conexões pode criar instâncias para o corretor se conectar
+- No módulo Chats pode ver todas as conversas de todos os corretores desde que os clientes que o número de celular dos corretores estão conversando estejam listados no banco de dados
+- No módulo de clientes poderá realizar ações de CRUD de clientes e manipulação completa dentro dos submenus (abas crm e pipeline) desse modulo
+- Podem executar ações de CRUD no módulo Propriedades 
+- Terá acesso ao modulo de Configurações de acordo com os acessos dados pelo DEV_MASTER
 - **Não pode** criar outros ADMIN (apenas DEV_MASTER pode)
 
 #### **AGENT (Corretor/Agente)**
 - **Acesso limitado** apenas aos próprios dados
 - Não pode gerenciar outros usuários
 - **Não pode** usar impersonation
-- Não vê dados de outros corretores
-- Acesso limitado baseado nas permissões liberadas pelo ADMIN
-- Foco em: Dashboard, Propriedades, Pipeline, Clientes, Agenda, Contatos, Chats
+- Não vê dados, agenda, chats, clientes, etc, de outros corretores
+- Acesso limitado baseado nas permissões liberadas pelo ADMINISTRADOR OU DEV_MASTER
+- Foco em: Dashboard, Propriedades, Clientes, Agenda, Contatos, Chats, Lei do Inquilinato
 
 ---
 
@@ -327,12 +319,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Alterar estrutura de tabelas sem migration
 
 ### Sempre faça:
-- Teste local antes de commit
+- Teste local antes de commit (se possível com mcp apropriado)
 - Verificar lint e build antes de push
 - Documentar mudanças complexas
 - Usar tipos TypeScript apropriados
 - Seguir convenções de nomenclatura
 - Commits pequenos e focados
+- Utilizar os Agents para ações específicas
+- Antes de usar qualquer MCP, reconectá-lo forçadamente
 
 ---
 
@@ -372,7 +366,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## 15. 📊 Documentos de Referência Obrigatórios
 
 ### Documentos Vivos (sempre atualizados):
-- **@docs/progress_log.md**: Documento vivo com atualizações resumidas de cada módulo, alterações implementadas e próximos passos. **DEVE ser sempre atualizado** pelo Claude Code após implementações. **OBRIGATÓRIO**: Todas as ações tomadas devem ser citadas de forma resumida e simples no final das respostas neste arquivo.
+- **@docs/progress_log.md**: Documento vivo com atualizações resumidas de cada módulo, alterações implementadas e próximos passos. **DEVE ser sempre atualizado** pelo Claude Code após implementações, de forma clara, objetiva, direta e bem resumida. **OBRIGATÓRIO**: Todas as ações tomadas devem ser citadas de forma resumida e simples no final das respostas neste arquivo.
 
 ### Documentos Base de Planejamento:
 - **@docs/planejamento-imobipro.md**: Planejamento completo e detalhado do sistema. Base fundamental para implementações. **PODE ser alterado** quando necessário para ajustes de planejamento.

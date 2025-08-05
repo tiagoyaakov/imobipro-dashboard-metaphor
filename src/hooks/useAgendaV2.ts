@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getUnifiedCache } from '@/lib/cache/UnifiedCache';
+import { getUnifiedCache } from '@/lib/cache';
 import { CacheStrategy } from '@/lib/cache/types';
 import { 
   useCacheQuery, 
