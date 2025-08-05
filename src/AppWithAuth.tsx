@@ -27,6 +27,7 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 
 // Lazy loading das páginas para melhor performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Plantao = lazy(() => import("./pages/Plantao"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
 const Contatos = lazy(() => import("./pages/Contatos"));
 const Clientes = lazy(() => import("./pages/Clientes"));
@@ -210,6 +211,16 @@ const AppWithAuth = () => {
                 element={
                   <ProtectedRoute allowedRoles={['DEV_MASTER', 'ADMIN']}>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Plantão - Acesso para todos */}
+              <Route 
+                path="plantao" 
+                element={
+                  <ProtectedRoute>
+                    <Plantao />
                   </ProtectedRoute>
                 } 
               />

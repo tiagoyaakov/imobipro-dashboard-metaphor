@@ -42,17 +42,18 @@ function AppSidebarContent() {
   const getModuleOrder = (path: string): number => {
     const orderMap: Record<string, number> = {
       '/': 1,           // Dashboard (antigo CRM Avançado)
-      '/agenda': 2,     // Agenda
-      '/clientes': 3,   // Clientes
-      '/conexoes': 4,   // Conexões
-      '/contatos': 5,   // Contatos
-      '/lei-inquilino': 6, // Lei do Inquilino
-      '/pipeline': 7,   // Pipeline
-      '/propriedades': 8, // Propriedades
-      '/chats': 9,      // Chats
-      '/relatorios': 10, // Relatórios
-      '/usuarios': 11,  // Usuários
-      '/configuracoes': 12, // Configurações
+      '/plantao': 2,    // Plantão
+      '/agenda': 3,     // Agenda
+      '/clientes': 4,   // Clientes
+      '/conexoes': 5,   // Conexões
+      '/contatos': 6,   // Contatos
+      '/lei-inquilino': 7, // Lei do Inquilino
+      '/pipeline': 8,   // Pipeline
+      '/propriedades': 9, // Propriedades
+      '/chats': 10,     // Chats
+      '/relatorios': 11, // Relatórios
+      '/usuarios': 12,  // Usuários
+      '/configuracoes': 13, // Configurações
     };
     return orderMap[path] || 999;
   };

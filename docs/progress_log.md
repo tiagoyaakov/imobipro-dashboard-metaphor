@@ -7,6 +7,30 @@
 
 ## 🔄 **Última Atualização: 05/08/2025**
 
+### **Implementação do Módulo Plantão (Agendamento) - ETAPA 1**
+
+**✅ CONCLUÍDO:**
+- **NOVO MÓDULO CRIADO**: Sistema de agendamento e gestão de plantões totalmente funcional
+- **Estrutura de arquivos completa**:
+  - `src/types/plantao.ts` - Tipos TypeScript com enums e interfaces
+  - `src/services/plantaoService.ts` - Serviço com dados mockados temporários
+  - `src/hooks/usePlantao.ts` - Hook para gerenciamento de estado
+  - `src/pages/Plantao.tsx` - Página principal do módulo
+  - `src/components/plantao/` - Componentes específicos do módulo
+- **Interface com calendário visual**: Integração com react-big-calendar
+- **Diferenciação por perfil**:
+  - ADMIN: Visualiza todos os corretores com cores diferentes
+  - CORRETOR: Visualiza apenas seus próprios plantões
+- **Navegação configurada**: Posicionado entre Dashboard e Clientes no sidebar
+- **Modal de eventos**: Criar, editar e cancelar plantões
+- **Filtros avançados**: Por corretor, data, status e busca
+
+**🎯 RESULTADO:**
+- Módulo 100% funcional com interface moderna
+- Sistema preparado para futuras integrações (Google Calendar, n8n)
+- Build sem erros e TypeScript validado ✅
+- Interface responsiva e intuitiva
+
 ### **Correção Crítica do Módulo Agenda**
 
 **✅ CONCLUÍDO:**
@@ -99,6 +123,14 @@
 ---
 
 ## 📋 **Próximos Passos Planejados**
+
+### **Módulo Plantão - Próximas Etapas**
+- **ETAPA 2 - Integração Supabase**: Criar tabelas e implementar CRUD real
+- **ETAPA 3 - Google Calendar**: Sincronização bidirecional com OAuth
+- **ETAPA 4 - Workflows n8n**: Automações e notificações
+- **ETAPA 5 - Analytics**: Relatórios de produtividade e ocupação
+
+### **Sistema Geral**
 - Simplificação do schema do banco de dados
 - Redução de módulos desnecessários para MVP
 - Implementação de CRUD simples sem integrações complexas

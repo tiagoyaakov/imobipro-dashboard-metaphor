@@ -45,6 +45,17 @@ export const routeConfigs: RouteConfig[] = [
     requiredFeature: 'crm-automation'
   },
 
+  // Plantão (Agendamento)
+  {
+    path: '/plantao',
+    name: 'plantao',
+    title: 'Plantão',
+    description: 'Sistema de agendamento e gestão de plantões',
+    showInSidebar: true,
+    icon: 'Calendar',
+    category: 'management'
+  },
+
   // Gestão de Propriedades
   {
     path: '/propriedades',
