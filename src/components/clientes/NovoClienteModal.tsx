@@ -174,7 +174,7 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         funcionarioId = user.id;
       } else if (user?.role === 'DEV_MASTER' || user?.role === 'ADMIN') {
         // ADMIN/DEV_MASTER: usa o corretor selecionado ou null para atribuição posterior
-        funcionarioId = data.funcionario || null;
+        funcionarioId = (data.funcionario && data.funcionario !== 'unassigned') ? data.funcionario : null;
       } else {
         // Fallback: vincular ao usuário atual
         funcionarioId = user?.id || null;
@@ -431,14 +431,14 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
                       <SelectValue placeholder="Selecione um corretor ou deixe em branco" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">
+                      <SelectItem value="unassigned">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-gray-400" />
                           Atribuição posterior (n8n)
                         </div>
                       </SelectItem>
                       {loadingCorretores ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="loading" disabled>
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
                           Carregando corretores...
                         </SelectItem>
