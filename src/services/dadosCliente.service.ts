@@ -6,63 +6,56 @@ import { EventBus, SystemEvents } from '@/lib/event-bus'
 // TIPOS PARA NOVA TABELA dados_cliente
 // ========================================
 
-// Tipos básicos para dados_cliente (temporário até regenerar Supabase types)
+// Tipos básicos para dados_cliente (CORRIGIDO para coincidir com tabela real)
 export interface DadosCliente {
-  id: string
-  nome: string
+  id: number  // integer no Supabase
+  nome?: string | null
   telefone: string
   email?: string | null
-  status: 'novos' | 'contatados' | 'qualificados' | 'interessados' | 'negociando' | 'convertidos' | 'perdidos'
+  status?: string | null  // default 'novos'
   funcionario?: string | null  // UUID do corretor responsável
   observacoes?: string | null
-  ultima_interacao?: string | null
-  empresa?: string | null
-  cargo?: string | null
-  origem_lead?: string | null
-  score_lead: number
-  tags?: string[] | null
-  data_conversao?: string | null
-  proxima_acao?: string | null  // Date
-  created_at: string
-  updated_at: string
-}
-
-export interface DadosClienteInsert {
-  id?: string
-  nome: string
-  telefone: string
-  email?: string | null
-  status?: 'novos' | 'contatados' | 'qualificados' | 'interessados' | 'negociando' | 'convertidos' | 'perdidos'
-  funcionario?: string | null
-  observacoes?: string | null
-  ultima_interacao?: string | null
-  empresa?: string | null
-  cargo?: string | null
-  origem_lead?: string | null
-  score_lead?: number
-  tags?: string[] | null
-  data_conversao?: string | null
-  proxima_acao?: string | null
+  sessionid?: string | null
+  portal?: string | null
+  data_agendamento?: string | null
+  confirmacao?: string | null
+  interesse?: string | null
+  preco?: string | null
+  imovel_interesse?: string | null
   created_at?: string
   updated_at?: string
 }
 
-export interface DadosClienteUpdate {
-  nome?: string
-  telefone?: string
+export interface DadosClienteInsert {
+  nome?: string | null  // opcional no insert
+  telefone: string      // obrigatório
   email?: string | null
-  status?: 'novos' | 'contatados' | 'qualificados' | 'interessados' | 'negociando' | 'convertidos' | 'perdidos'
+  status?: string | null  // default será aplicado pelo banco
   funcionario?: string | null
   observacoes?: string | null
-  ultima_interacao?: string | null
-  empresa?: string | null
-  cargo?: string | null
-  origem_lead?: string | null
-  score_lead?: number
-  tags?: string[] | null
-  data_conversao?: string | null
-  proxima_acao?: string | null
-  updated_at?: string
+  sessionid?: string | null
+  portal?: string | null
+  data_agendamento?: string | null
+  confirmacao?: string | null
+  interesse?: string | null
+  preco?: string | null
+  imovel_interesse?: string | null
+}
+
+export interface DadosClienteUpdate {
+  nome?: string | null
+  telefone?: string
+  email?: string | null
+  status?: string | null
+  funcionario?: string | null
+  observacoes?: string | null
+  sessionid?: string | null
+  portal?: string | null
+  data_agendamento?: string | null
+  confirmacao?: string | null
+  interesse?: string | null
+  preco?: string | null
+  imovel_interesse?: string | null
 }
 
 // ========================================
@@ -71,16 +64,13 @@ export interface DadosClienteUpdate {
 
 // Filtros específicos para dados_cliente
 export interface DadosClienteFilters {
-  status?: DadosCliente['status']
-  minScore?: number
-  maxScore?: number
+  status?: string
   funcionario?: string
   search?: string
-  tags?: string[]
-  origem_lead?: string
-  empresa?: string
-  hasInteraction?: boolean
-  hasNextAction?: boolean
+  telefone?: string
+  email?: string
+  portal?: string
+  interesse?: string
 }
 
 // Estatísticas de clientes
@@ -249,12 +239,10 @@ export class DadosClienteService {
 
       const clienteWithDefaults: DadosClienteInsert = {
         ...cliente,
-        id: cliente.id || crypto.randomUUID(),
         status: cliente.status || 'novos',
-        score_lead: cliente.score_lead || 50,
-        funcionario: cliente.funcionario || user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        funcionario: cliente.funcionario || user.id
+        // created_at e updated_at são auto-gerados pelo banco
+        // id é auto-increment, não deve ser enviado
       }
 
       const { data, error } = await supabase

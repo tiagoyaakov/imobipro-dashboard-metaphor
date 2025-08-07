@@ -57,21 +57,13 @@ const novoClienteSchema = z.object({
     .email('Email inválido')
     .optional()
     .or(z.literal('')),
-  empresa: z.string()
-    .max(100, 'Nome da empresa deve ter no máximo 100 caracteres')
-    .optional(),
-  cargo: z.string()
-    .max(50, 'Cargo deve ter no máximo 50 caracteres')
-    .optional(),
-  origem_lead: z.enum(['Site', 'WhatsApp', 'Indicação', 'Facebook', 'Instagram', 'Google', 'Outros'])
-    .optional(),
   status: z.enum(['novos', 'contatados', 'qualificados', 'interessados', 'negociando', 'convertidos', 'perdidos'])
     .default('novos'),
-  score_lead: z.number()
-    .min(0, 'Score deve ser entre 0 e 100')
-    .max(100, 'Score deve ser entre 0 e 100')
-    .default(50),
-  proxima_acao: z.string()
+  portal: z.string()
+    .max(50, 'Portal deve ter no máximo 50 caracteres')
+    .optional(),
+  interesse: z.string()
+    .max(200, 'Interesse deve ter no máximo 200 caracteres')
     .optional(),
   observacoes: z.string()
     .max(500, 'Observações devem ter no máximo 500 caracteres')
@@ -112,14 +104,12 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
   } = useForm<NovoClienteForm>({
     resolver: zodResolver(novoClienteSchema),
     defaultValues: {
-      status: 'novos',
-      score_lead: 50
+      status: 'novos'
     }
   });
 
   // Watch para valores dinâmicos
   const watchedStatus = watch('status');
-  const watchedScore = watch('score_lead');
 
   // ========================================
   // LÓGICA DE SUBMISSÃO
@@ -132,15 +122,11 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         nome: data.nome.trim(),
         telefone: data.telefone.trim(),
         email: data.email?.trim() || null,
-        empresa: data.empresa?.trim() || null,
-        cargo: data.cargo?.trim() || null,
-        origem_lead: data.origem_lead || null,
         status: data.status,
-        score_lead: data.score_lead,
-        proxima_acao: data.proxima_acao?.trim() || null,
+        portal: data.portal?.trim() || null,
+        interesse: data.interesse?.trim() || null,
         observacoes: data.observacoes?.trim() || null,
         funcionario: user?.id || null, // Auto-assign corretor atual
-        ultima_interacao: new Date().toISOString(),
       };
 
       // Executar mutation
@@ -172,13 +158,13 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
   // OPÇÕES DE SELECT
   // ========================================
 
-  const origensLead = [
-    'Site',
-    'WhatsApp', 
+  const portaisDisponiveis = [
+    'WhatsApp',
+    'Site Institucional', 
     'Indicação',
     'Facebook',
     'Instagram',
-    'Google',
+    'Google Ads',
     'Outros'
   ];
 
@@ -263,64 +249,51 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
           </CardContent>
         </Card>
 
-        {/* SEÇÃO 2: INFORMAÇÕES COMERCIAIS */}
+        {/* SEÇÃO 2: INFORMAÇÕES ADICIONAIS */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Building2 className="w-5 h-5 text-imobipro-blue" />
-              Informações Comerciais
+              <Target className="w-5 h-5 text-imobipro-blue" />
+              Informações Adicionais
             </CardTitle>
             <CardDescription>
-              Dados profissionais e origem do lead
+              Origem e interesse do cliente
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               
-              {/* Empresa */}
+              {/* Portal/Origem */}
               <div className="space-y-2">
-                <Label htmlFor="empresa" className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  Empresa
-                </Label>
-                <Input
-                  id="empresa"
-                  placeholder="Nome da empresa"
-                  {...register('empresa')}
-                />
-              </div>
-
-              {/* Cargo */}
-              <div className="space-y-2">
-                <Label htmlFor="cargo" className="text-sm font-medium flex items-center gap-2">
-                  <Briefcase className="w-4 h-4" />
-                  Cargo
-                </Label>
-                <Input
-                  id="cargo"
-                  placeholder="Cargo na empresa"
-                  {...register('cargo')}
-                />
-              </div>
-
-              {/* Origem do Lead */}
-              <div className="space-y-2 lg:col-span-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <Target className="w-4 h-4" />
-                  Origem do Lead
+                  Portal/Origem
                 </Label>
-                <Select onValueChange={(value) => setValue('origem_lead', value as any)}>
+                <Select onValueChange={(value) => setValue('portal', value as any)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Como conheceu a empresa?" />
                   </SelectTrigger>
                   <SelectContent>
-                    {origensLead.map((origem) => (
-                      <SelectItem key={origem} value={origem}>
-                        {origem}
+                    {portaisDisponiveis.map((portal) => (
+                      <SelectItem key={portal} value={portal}>
+                        {portal}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Interesse */}
+              <div className="space-y-2">
+                <Label htmlFor="interesse" className="text-sm font-medium flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  Interesse Principal
+                </Label>
+                <Input
+                  id="interesse"
+                  placeholder="Ex: Apartamento 2 quartos, Casa com quintal..."
+                  {...register('interesse')}
+                />
               </div>
 
             </div>
@@ -335,12 +308,12 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
               Gestão e Controle
             </CardTitle>
             <CardDescription>
-              Configurações iniciais de CRM e pipeline
+              Status inicial e observações
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               
               {/* Status Inicial */}
               <div className="space-y-3">
@@ -371,48 +344,6 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
                     Status: {STATUS_CLIENTE_CONFIG[watchedStatus]?.label}
                   </Badge>
                 )}
-              </div>
-
-              {/* Score Inicial */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Star className="w-4 h-4" />
-                  Score Inicial: {watchedScore}
-                </Label>
-                <div className="px-3">
-                  <Slider
-                    value={[watchedScore]}
-                    onValueChange={(value) => setValue('score_lead', value[0])}
-                    max={100}
-                    min={0}
-                    step={5}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0 - Baixo</span>
-                  <span>50 - Médio</span>
-                  <span>100 - Alto</span>
-                </div>
-              </div>
-
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              
-              {/* Próxima Ação */}
-              <div className="space-y-2">
-                <Label htmlFor="proxima_acao" className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Próxima Ação (opcional)
-                </Label>
-                <Input
-                  id="proxima_acao"
-                  type="datetime-local"
-                  {...register('proxima_acao')}
-                />
               </div>
 
               {/* Observações */}
