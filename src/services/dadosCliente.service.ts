@@ -235,6 +235,27 @@ export class DadosClienteService {
   async create(cliente: DadosClienteInsert) {
     try {
       console.log('🔥 [DEBUG] Iniciando criação de cliente:', cliente);
+      
+      // VERIFICAR USUÁRIO AUTENTICADO ANTES DA INSERÇÃO
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.error('🔥 [ERROR] Usuário não autenticado');
+        throw new Error('User not authenticated');
+      }
+
+      // VERIFICAR SE USUÁRIO EXISTE NA TABELA User
+      const { data: profile } = await supabase
+        .from('User')
+        .select('id, role, companyId')
+        .eq('id', user.id)
+        .single()
+      
+      if (!profile) {
+        console.error('🔥 [ERROR] Perfil do usuário não encontrado:', user.id);
+        throw new Error('User profile not found');
+      }
+
+      console.log('🔥 [DEBUG] Usuário autenticado:', profile);
 
       // Preparar dados do cliente
       const clienteWithDefaults: DadosClienteInsert = {
@@ -250,7 +271,7 @@ export class DadosClienteService {
 
       console.log('🔥 [DEBUG] Cliente processado:', clienteWithDefaults);
 
-      // INSERÇÃO DIRETA SEM RLS - MODO SIMPLES
+      // INSERÇÃO COM VERIFICAÇÃO DE AUTENTICAÇÃO
       const { data, error } = await supabase
         .from(this.tableName)
         .insert(clienteWithDefaults)
