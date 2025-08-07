@@ -231,70 +231,66 @@ export class DadosClienteService {
     }
   }
 
-  // Criar novo cliente
+  // Criar novo cliente - VERSÃO SIMPLIFICADA SEM RLS
   async create(cliente: DadosClienteInsert) {
     try {
-      // Tentar obter usuário autenticado, mas usar fallback se não conseguir
-      let userId: string | null = null;
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        userId = user?.id || null;
-      } catch (authError) {
-        console.warn('Auth error, usando fallback:', authError);
-        // Em caso de erro de auth, usar um DEV_MASTER conhecido
-        userId = 'e9e8c4d9-012a-4ada-a007-50a2d54a39dc'; // Tiago França Lima
-      }
+      console.log('🔥 [DEBUG] Iniciando criação de cliente:', cliente);
 
+      // Preparar dados do cliente
       const clienteWithDefaults: DadosClienteInsert = {
-        ...cliente,
+        nome: cliente.nome?.trim() || null,
+        telefone: cliente.telefone?.trim() || '',  // obrigatório
+        email: cliente.email?.trim() || null,
         status: cliente.status || 'novos',
-        funcionario: cliente.funcionario || userId
-        // created_at e updated_at são auto-gerados pelo banco
-        // id é auto-increment, não deve ser enviado
+        funcionario: cliente.funcionario || null,  // será definido pela regra de negócio
+        observacoes: cliente.observacoes?.trim() || null,
+        portal: cliente.portal?.trim() || null,
+        interesse: cliente.interesse?.trim() || null
       }
 
-      // USAR SERVICE ROLE PARA BYPASS RLS EM DESENVOLVIMENTO
-      const isDevMode = import.meta.env.DEV;
-      let insertQuery;
+      console.log('🔥 [DEBUG] Cliente processado:', clienteWithDefaults);
 
-      if (isDevMode) {
-        // Em desenvolvimento, usar query simples sem RLS
-        insertQuery = supabase
-          .from(this.tableName)
-          .insert(clienteWithDefaults)
-          .select()
-          .single()
-      } else {
-        // Em produção, usar RLS normal
-        insertQuery = supabase
-          .from(this.tableName)
-          .insert(clienteWithDefaults)
-          .select()
-          .single()
-      }
-
-      const { data, error } = await insertQuery;
+      // INSERÇÃO DIRETA SEM RLS - MODO SIMPLES
+      const { data, error } = await supabase
+        .from(this.tableName)
+        .insert(clienteWithDefaults)
+        .select(`
+          id,
+          nome,
+          telefone,
+          email,
+          status,
+          funcionario,
+          observacoes,
+          portal,
+          interesse,
+          created_at,
+          updated_at
+        `)
+        .single();
 
       if (error) {
-        console.error('Erro detalhado do Supabase:', error);
-        throw error;
+        console.error('🔥 [ERROR] Erro na inserção:', error);
+        console.error('🔥 [ERROR] Detalhes:', error.message, error.code, error.details);
+        throw new Error(`Falha ao criar cliente: ${error.message}`);
       }
 
+      console.log('🔥 [SUCCESS] Cliente criado com sucesso:', data);
+      
       // Emitir evento se possível
       try {
         EventBus.emit(SystemEvents.CONTACT_CREATED, {
-          contactId: data.id,
-          userId: userId
-        })
+          contactId: data?.id,
+          userId: clienteWithDefaults.funcionario
+        });
       } catch (eventError) {
-        console.warn('Erro ao emitir evento:', eventError);
-        // Não falhar por causa do evento
+        console.warn('🔥 [WARN] Erro ao emitir evento (não crítico):', eventError);
       }
 
-      return { data, error: null }
+      return { data, error: null };
     } catch (error) {
-      console.error('Erro completo ao criar cliente:', error);
-      return { data: null, error: error as Error }
+      console.error('🔥 [FATAL] Erro fatal ao criar cliente:', error);
+      return { data: null, error: error as Error };
     }
   }
 

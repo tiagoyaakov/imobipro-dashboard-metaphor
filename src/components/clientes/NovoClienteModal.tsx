@@ -8,7 +8,7 @@
  * @version 1.0.0 - Modal de Criação MVP
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,13 +33,16 @@ import {
   Calendar,
   FileText,
   Loader2,
-  Check
+  Check,
+  Users,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClientesMutationsMVP } from '@/hooks/useClientesMVP';
 import { useToast } from '@/hooks/use-toast';
 import { STATUS_CLIENTE_CONFIG, type StatusCliente } from '@/types/clientes';
 import type { DadosClienteInsert } from '@/services/dadosCliente.service';
+import { supabase } from '@/lib/supabase-client';
 
 // ========================================
 // SCHEMA DE VALIDAÇÃO ZOD
@@ -67,8 +70,18 @@ const novoClienteSchema = z.object({
     .optional(),
   observacoes: z.string()
     .max(500, 'Observações devem ter no máximo 500 caracteres')
-    .optional()
+    .optional(),
+  funcionario: z.string()
+    .optional() // Corretor responsável (apenas para ADMIN/DEV_MASTER)
 });
+
+// Tipo para corretor
+interface Corretor {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 type NovoClienteForm = z.infer<typeof novoClienteSchema>;
 
@@ -92,6 +105,13 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const mutations = useClientesMutationsMVP();
+  
+  // Estados para corretores
+  const [corretores, setCorretores] = useState<Corretor[]>([]);
+  const [loadingCorretores, setLoadingCorretores] = useState(false);
+  
+  // Verificar se usuário pode escolher corretor
+  const canSelectAgent = user?.role === 'DEV_MASTER' || user?.role === 'ADMIN';
 
   // Setup do React Hook Form
   const {
@@ -111,12 +131,55 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
   // Watch para valores dinâmicos
   const watchedStatus = watch('status');
 
+  // Carregar corretores disponíveis
+  useEffect(() => {
+    const loadCorretores = async () => {
+      if (!canSelectAgent) return;
+      
+      setLoadingCorretores(true);
+      try {
+        const { data, error } = await supabase
+          .from('User')
+          .select('id, name, email, role')
+          .in('role', ['AGENT', 'ADMIN']) // Carregar AGENT e ADMIN
+          .eq('isActive', true)
+          .order('name');
+
+        if (error) {
+          console.error('Erro ao carregar corretores:', error);
+        } else {
+          setCorretores(data || []);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar corretores:', error);
+      } finally {
+        setLoadingCorretores(false);
+      }
+    };
+
+    loadCorretores();
+  }, [canSelectAgent]);
+
   // ========================================
   // LÓGICA DE SUBMISSÃO
   // ========================================
 
   const onSubmit = async (data: NovoClienteForm) => {
     try {
+      // REGRAS DE NEGÓCIO PARA ATRIBUIÇÃO DE CORRETOR
+      let funcionarioId: string | null = null;
+
+      if (user?.role === 'AGENT') {
+        // CORRETOR: sempre vincula a si mesmo
+        funcionarioId = user.id;
+      } else if (user?.role === 'DEV_MASTER' || user?.role === 'ADMIN') {
+        // ADMIN/DEV_MASTER: usa o corretor selecionado ou null para atribuição posterior
+        funcionarioId = data.funcionario || null;
+      } else {
+        // Fallback: vincular ao usuário atual
+        funcionarioId = user?.id || null;
+      }
+
       // Preparar dados para inserção
       const clienteData: DadosClienteInsert = {
         nome: data.nome.trim(),
@@ -126,16 +189,24 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         portal: data.portal?.trim() || null,
         interesse: data.interesse?.trim() || null,
         observacoes: data.observacoes?.trim() || null,
-        funcionario: user?.id || null, // Auto-assign corretor atual
+        funcionario: funcionarioId,
       };
+
+      console.log('🔥 [MODAL] Dados a serem enviados:', clienteData);
+      console.log('🔥 [MODAL] Role do usuário:', user?.role);
+      console.log('🔥 [MODAL] Funcionario atribuído:', funcionarioId);
 
       // Executar mutation
       await mutations.create.mutateAsync(clienteData);
 
       // Sucesso - toast e callback
+      const corretorNome = funcionarioId 
+        ? (corretores.find(c => c.id === funcionarioId)?.name || 'Corretor')
+        : 'Atribuição posterior';
+
       toast({
         title: "Cliente criado com sucesso!",
-        description: `${data.nome} foi adicionado ao sistema e aparecerá nas suas listas.`,
+        description: `${data.nome} foi adicionado ao sistema (${corretorNome}) e aparecerá nas listas.`,
         variant: "default",
       });
 
@@ -145,10 +216,10 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
       onClose?.();
 
     } catch (error) {
-      console.error('Erro ao criar cliente:', error);
+      console.error('🔥 [MODAL] Erro ao criar cliente:', error);
       toast({
         title: "Erro ao criar cliente",
-        description: "Ocorreu um erro ao salvar o cliente. Tente novamente.",
+        description: "Ocorreu um erro ao salvar o cliente. Verifique o console para detalhes.",
         variant: "destructive",
       });
     }
@@ -304,11 +375,11 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Star className="w-5 h-5 text-imobipro-blue" />
+              <Settings className="w-5 h-5 text-imobipro-blue" />
               Gestão e Controle
             </CardTitle>
             <CardDescription>
-              Status inicial e observações
+              Status inicial, atribuição de corretor e observações
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -346,8 +417,59 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
                 )}
               </div>
 
+              {/* Atribuição de Corretor (apenas para ADMIN/DEV_MASTER) */}
+              {canSelectAgent && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Atribuir a Corretor
+                  </Label>
+                  <Select 
+                    onValueChange={(value) => setValue('funcionario', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um corretor ou deixe em branco" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-400" />
+                          Atribuição posterior (n8n)
+                        </div>
+                      </SelectItem>
+                      {loadingCorretores ? (
+                        <SelectItem value="" disabled>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Carregando corretores...
+                        </SelectItem>
+                      ) : (
+                        corretores.map((corretor) => (
+                          <SelectItem key={corretor.id} value={corretor.id}>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                corretor.role === 'ADMIN' ? 'bg-blue-500' : 'bg-green-500'
+                              }`} />
+                              {corretor.name}
+                              <Badge variant="outline" className="text-xs ml-2">
+                                {corretor.role === 'ADMIN' ? 'Admin' : 'Corretor'}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.role === 'AGENT' 
+                      ? 'Como corretor, clientes serão automaticamente atribuídos a você'
+                      : 'Deixe em branco para atribuição automática pelo n8n'
+                    }
+                  </p>
+                </div>
+              )}
+
               {/* Observações */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${canSelectAgent ? 'lg:col-span-2' : ''}`}>
                 <Label htmlFor="observacoes" className="text-sm font-medium flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Observações
