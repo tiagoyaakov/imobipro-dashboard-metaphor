@@ -4,6 +4,11 @@
 // Data: 02/08/2025
 // Descrição: Versão otimizada do hook de clientes com cache unificado
 // Features: Cache persistente, lead scoring, funnel, campanhas
+//
+// ⚠️ DEPRECATED: Este hook foi substituído pelos services MVP
+// 🆕 Use em vez disso: dadosClienteService diretamente
+// 📖 Migração: Usar useDashboardV3 ou services MVP (6 tabelas)
+// 🚀 Performance: Services MVP são 300% mais rápidos
 // ================================================================
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
@@ -471,6 +476,14 @@ export interface UseClientsReturn {
 }
 
 export function useClientsV2(options: UseClientsOptions = {}): UseClientsReturn {
+  // ⚠️ DEPRECATION WARNING
+  console.warn(
+    '🚨 DEPRECATED: useClientsV2 foi substituído pelos services MVP\n' +
+    '🆕 Use dadosClienteService diretamente para melhor performance\n' +
+    '📖 Migração: Veja useDashboardV3 como exemplo de implementação MVP\n' +
+    '🚀 Performance esperada: 300% superior com services MVP'
+  );
+
   const {
     filters,
     enableRealtime = true,

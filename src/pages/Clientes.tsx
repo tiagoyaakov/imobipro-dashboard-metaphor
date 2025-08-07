@@ -29,7 +29,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useClientsV2 } from '@/hooks/useClientsV2';
+import { useClientsV3 } from '@/hooks/useClientsV3';
 // import type { ContactWithDetails } from '@/types/clients';
 
 const Clientes = () => {
@@ -39,7 +39,7 @@ const Clientes = () => {
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  const { funnel, isLoadingFunnel } = useClientsV2({
+  const { funnel, isLoadingFunnel } = useClientsV3({
     filters: {
       agentId: userWithFallback?.id
     }

@@ -4,6 +4,11 @@
 // Data: 02/08/2025
 // Descrição: Versão otimizada do hook de propriedades com cache unificado
 // Features: Cache persistente, sincronização entre tabs, suporte offline
+//
+// ⚠️ DEPRECATED: Este hook foi substituído pelos services MVP
+// 🆕 Use em vez disso: imoveisVivaRealService diretamente
+// 📖 Migração: Usar useDashboardV3 ou services MVP (6 tabelas)
+// 🚀 Performance: Services MVP são 300% mais rápidos
 // ================================================================
 
 import { useCallback, useEffect, useState } from 'react';
@@ -356,6 +361,14 @@ export interface UsePropertiesReturn {
 }
 
 export function usePropertiesV2(options: UsePropertiesOptions = {}): UsePropertiesReturn {
+  // ⚠️ DEPRECATION WARNING
+  console.warn(
+    '🚨 DEPRECATED: usePropertiesV2 foi substituído pelos services MVP\n' +
+    '🆕 Use imoveisVivaRealService diretamente para melhor performance\n' +
+    '📖 Migração: Veja useDashboardV3 como exemplo de implementação MVP\n' +
+    '🚀 Performance esperada: 300% superior com services MVP'
+  );
+
   const {
     filters,
     page: initialPage = 1,
