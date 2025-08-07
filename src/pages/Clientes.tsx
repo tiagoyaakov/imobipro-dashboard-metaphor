@@ -32,6 +32,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useClientesMVP, useClientesStatsMVP, useKanbanMVP, useClientesListMVP } from '@/hooks/useClientesMVP';
 import KanbanBoard from '@/components/clientes/KanbanBoard';
 import ClientesList from '@/components/clientes/ClientesList';
+import { NovoClienteModal } from '@/components/clientes/NovoClienteModal';
 
 const Clientes = () => {
   const { user } = useAuth();
@@ -66,7 +67,17 @@ const Clientes = () => {
 
   const handleClienteCreate = () => {
     setShowCreateModal(true);
-    console.log('Criar novo cliente');
+    console.log('Abrir modal de criar novo cliente');
+  };
+
+  const handleClienteCreateSuccess = () => {
+    // Modal será fechado automaticamente pelo componente
+    // As queries serão invalidadas automaticamente pelo mutation
+    console.log('Cliente criado com sucesso!');
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
   };
 
   return (
@@ -92,11 +103,17 @@ const Clientes = () => {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Criar Novo Cliente</DialogTitle>
+                <DialogTitle className="text-xl font-semibold text-foreground">
+                  Criar Novo Cliente
+                </DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Adicione um novo cliente ao sistema. Ele aparecerá automaticamente nas abas Lista e CRM.
+                </p>
               </DialogHeader>
-              <div className="p-4 text-center text-muted-foreground">
-                <p>Formulário de criação de cliente será implementado aqui.</p>
-              </div>
+              <NovoClienteModal
+                onSuccess={handleClienteCreateSuccess}
+                onClose={handleCloseModal}
+              />
             </DialogContent>
           </Dialog>
           
