@@ -50,11 +50,11 @@ export function useClientesMVP(options?: {
     email: cliente.email,
     status: cliente.status as StatusCliente,
     funcionario: cliente.funcionario,
-    score_lead: cliente.score_lead,
-    origem_lead: cliente.origem_lead,
-    empresa: cliente.empresa,
-    ultima_interacao: cliente.ultima_interacao,
-    proxima_acao: cliente.proxima_acao,
+    score_lead: 50, // Valor padrão enquanto campo não existe
+    origem_lead: 'site', // Valor padrão enquanto campo não existe
+    empresa: undefined, // Campo não existe ainda
+    ultima_interacao: cliente.updated_at, // Usar updated_at como proxy
+    proxima_acao: undefined, // Campo não existe ainda
     created_at: cliente.created_at,
     updated_at: cliente.updated_at,
   })) || [];

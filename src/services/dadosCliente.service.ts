@@ -140,10 +140,7 @@ export class DadosClienteService {
     try {
       let query = supabase
         .from(this.tableName)
-        .select(`
-          *,
-          agent:User!funcionario(id, name, email, avatarUrl)
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
 
       // Aplicar RLS
       query = await this.applyRLS(query)
@@ -153,28 +150,15 @@ export class DadosClienteService {
         const filters = options.filters
         
         if (filters.status) query = query.eq('status', filters.status)
-        if (filters.minScore !== undefined) query = query.gte('score_lead', filters.minScore)
-        if (filters.maxScore !== undefined) query = query.lte('score_lead', filters.maxScore)
         if (filters.funcionario) query = query.eq('funcionario', filters.funcionario)
-        if (filters.origem_lead) query = query.eq('origem_lead', filters.origem_lead)
-        if (filters.empresa) query = query.ilike('empresa', `%${filters.empresa}%`)
+        if (filters.telefone) query = query.eq('telefone', filters.telefone)
+        if (filters.email) query = query.eq('email', filters.email)
+        if (filters.portal) query = query.eq('portal', filters.portal)
+        if (filters.interesse) query = query.eq('interesse', filters.interesse)
         
-        // Filtro por tags (array contains)
-        if (filters.tags && filters.tags.length > 0) {
-          query = query.contains('tags', filters.tags)
-        }
-        
-        // Busca textual
+        // Busca textual (apenas campos que existem)
         if (filters.search) {
-          query = query.or(`nome.ilike.%${filters.search}%,email.ilike.%${filters.search}%,telefone.ilike.%${filters.search}%,empresa.ilike.%${filters.search}%`)
-        }
-
-        // Filtros booleanos
-        if (filters.hasInteraction) {
-          query = query.not('ultima_interacao', 'is', null)
-        }
-        if (filters.hasNextAction) {
-          query = query.not('proxima_acao', 'is', null)
+          query = query.or(`nome.ilike.%${filters.search}%,email.ilike.%${filters.search}%,telefone.ilike.%${filters.search}%`)
         }
       }
 
@@ -182,10 +166,8 @@ export class DadosClienteService {
       if (options?.orderBy) {
         query = query.order(options.orderBy, { ascending: options.ascending ?? true })
       } else {
-        // Ordenação padrão: score e data de criação
-        query = query
-          .order('score_lead', { ascending: false })
-          .order('created_at', { ascending: false })
+        // Ordenação padrão: data de criação
+        query = query.order('created_at', { ascending: false })
       }
 
       // Aplicar paginação
@@ -211,10 +193,7 @@ export class DadosClienteService {
     try {
       let query = supabase
         .from(this.tableName)
-        .select(`
-          *,
-          agent:User!funcionario(id, name, email, avatarUrl)
-        `)
+        .select('*')
         .eq('id', id)
         .single()
 
@@ -379,9 +358,7 @@ export class DadosClienteService {
       // Atualizar status
       const updates: DadosClienteUpdate = {
         status: newStatus,
-        ultima_interacao: new Date().toISOString(),
-        ...(observacoes && { observacoes }),
-        ...(newStatus === 'convertidos' && { data_conversao: new Date().toISOString() })
+        ...(observacoes && { observacoes })
       }
 
       const { data, error } = await this.update(id, updates)
@@ -395,20 +372,7 @@ export class DadosClienteService {
         userId: user.id
       })
 
-      // Calcular novo score baseado no status
-      const statusScores = {
-        'novos': 10,
-        'contatados': 25,
-        'qualificados': 50,
-        'interessados': 70,
-        'negociando': 85,
-        'convertidos': 100,
-        'perdidos': 0
-      }
-
-      if (statusScores[newStatus] !== undefined) {
-        await this.updateScore(id, statusScores[newStatus], `Status alterado para ${newStatus}`)
-      }
+      // Sistema de score será implementado posteriormente quando campos existirem
 
       return { data, error: null }
     } catch (error) {
@@ -416,25 +380,18 @@ export class DadosClienteService {
     }
   }
 
-  // Atualizar score do cliente
+  // Atualizar score do cliente (temporariamente desabilitado)
   async updateScore(id: string, score: number, reason?: string) {
     try {
-      const boundedScore = Math.max(0, Math.min(100, score))
-
-      const { data, error } = await this.update(id, {
-        score_lead: boundedScore,
-        ultima_interacao: new Date().toISOString()
-      })
-
-      if (error) throw error
-
-      return { data, error: null }
+      // Campo score_lead não existe na tabela atual
+      console.warn('updateScore: Campo score_lead não implementado ainda')
+      return { data: null, error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
   }
 
-  // Obter estatísticas
+  // Obter estatísticas (versão simplificada)
   async getStats(): Promise<{ data: DadosClienteStats | null; error: Error | null }> {
     try {
       // Query base com RLS
@@ -456,40 +413,20 @@ export class DadosClienteService {
       const statusCounts = await Promise.all(statusQueries)
       const byStatus = Object.fromEntries(statusCounts.map(s => [s.status, s.count]))
 
-      // Média de score
-      let scoreQuery = supabase.from(this.tableName).select('score_lead')
-      scoreQuery = await this.applyRLS(scoreQuery)
-      const { data: scoreData } = await scoreQuery
-      const avgScore = scoreData?.length 
-        ? scoreData.reduce((sum, c) => sum + (c.score_lead || 0), 0) / scoreData.length 
-        : 0
-
       // Contadores específicos
       let qualifiedQuery = supabase.from(this.tableName).select('*', { count: 'exact', head: true }).in('status', ['qualificados', 'interessados', 'negociando'])
       qualifiedQuery = await this.applyRLS(qualifiedQuery)
       const { count: qualified } = await qualifiedQuery
 
-      // Com próxima ação
-      let nextActionQuery = supabase.from(this.tableName).select('*', { count: 'exact', head: true }).not('proxima_acao', 'is', null)
-      nextActionQuery = await this.applyRLS(nextActionQuery)
-      const { count: withNextAction } = await nextActionQuery
-
-      // Com interações recentes (últimos 30 dias)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      let recentQuery = supabase.from(this.tableName).select('*', { count: 'exact', head: true }).gte('ultima_interacao', thirtyDaysAgo.toISOString())
-      recentQuery = await this.applyRLS(recentQuery)
-      const { count: recentInteractions } = await recentQuery
-
       const stats: DadosClienteStats = {
         total: total || 0,
         byStatus,
-        avgScore,
+        avgScore: 0, // Campo não existe ainda
         qualified: qualified || 0,
         converted: byStatus.convertidos || 0,
         lost: byStatus.perdidos || 0,
-        withNextAction: withNextAction || 0,
-        recentInteractions: recentInteractions || 0
+        withNextAction: 0, // Campo não existe ainda
+        recentInteractions: 0 // Campo não existe ainda
       }
 
       return { data: stats, error: null }
@@ -498,30 +435,12 @@ export class DadosClienteService {
     }
   }
 
-  // Buscar clientes com próxima ação próxima
+  // Buscar clientes com próxima ação próxima (temporariamente desabilitado)
   async getUpcomingActions(days: number = 7) {
     try {
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + days)
-
-      let query = supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          agent:User!funcionario(id, name, email, avatarUrl)
-        `)
-        .lte('proxima_acao', futureDate.toISOString().split('T')[0])
-        .gte('proxima_acao', new Date().toISOString().split('T')[0])
-        .order('proxima_acao', { ascending: true })
-
-      // Aplicar RLS
-      query = await this.applyRLS(query)
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      return { data, error: null }
+      // Campo proxima_acao não existe na tabela atual
+      console.warn('getUpcomingActions: Campo proxima_acao não implementado ainda')
+      return { data: [], error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
@@ -536,12 +455,8 @@ export class DadosClienteService {
       // Preparar clientes com defaults
       const clientesWithDefaults = clientes.map(cliente => ({
         ...cliente,
-        id: cliente.id || crypto.randomUUID(),
         status: cliente.status || 'novos',
-        score_lead: cliente.score_lead || 50,
-        funcionario: cliente.funcionario || user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        funcionario: cliente.funcionario || user.id
       }))
 
       const { data, error } = await supabase
