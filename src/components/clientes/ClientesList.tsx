@@ -29,21 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Search,
-  Filter,
-  MoreVertical,
-  Eye,
-  Edit,
-  Phone,
-  Mail,
-  Calendar,
-  Star,
-  Trash2,
-  Download,
-  FileText,
-  MessageSquare
-} from 'lucide-react';
+import { Search, Filter, MoreVertical, Eye, Edit, Phone, Mail, Trash2, Download, FileText, MessageSquare } from 'lucide-react';
 import { 
   STATUS_CLIENTE_CONFIG,
   type StatusCliente, 
@@ -72,7 +58,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
 }) => {
   const [search, setSearch] = useState(filters.search || '');
   const [selectedStatus, setSelectedStatus] = useState<StatusCliente | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'nome' | 'score_lead' | 'created_at' | 'ultima_interacao'>('created_at');
+  const [sortBy, setSortBy] = useState<'nome' | 'created_at'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Filtrar clientes baseado nas permissões e filtros locais
@@ -91,12 +77,10 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
         const nome = cliente.nome || '';
         const telefone = cliente.telefone || '';
         const email = cliente.email || '';
-        const empresa = cliente.empresa || '';
         return (
           nome.toLowerCase().includes(searchLower) ||
           telefone.includes(search) ||
-          email.toLowerCase().includes(searchLower) ||
-          empresa.toLowerCase().includes(searchLower)
+          email.toLowerCase().includes(searchLower)
         );
       });
     }
@@ -115,22 +99,10 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
           comparison = a.nome.localeCompare(b.nome);
           break;
         }
-        case 'score_lead': {
-          const scoreA = a.score_lead;
-          const scoreB = b.score_lead;
-          comparison = scoreA - scoreB;
-          break;
-        }
         case 'created_at': {
           const createdA = new Date(a.created_at || 0).getTime();
           const createdB = new Date(b.created_at || 0).getTime();
           comparison = createdA - createdB;
-          break;
-        }
-        case 'ultima_interacao': {
-          const dateA = a.ultima_interacao ? new Date(a.ultima_interacao).getTime() : 0;
-          const dateB = b.ultima_interacao ? new Date(b.ultima_interacao).getTime() : 0;
-          comparison = dateA - dateB;
           break;
         }
         default: {
@@ -192,13 +164,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
       .toUpperCase();
   };
 
-  // Função para cor do score
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    if (score >= 40) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
-  };
+  // Score removido (não existe no banco)
 
   if (isLoading) {
     return (
@@ -284,7 +250,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
         </CardContent>
       </Card>
 
-      {/* Tabela de clientes */}
+      {/* Tabela de clientes (campos reais) */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -301,26 +267,11 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
                     )}
                   </TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('score_lead')}
-                  >
-                    Score
-                    {sortBy === 'score_lead' && (
-                      <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('ultima_interacao')}
-                  >
-                    Última Interação
-                    {sortBy === 'ultima_interacao' && (
-                      <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Portal</TableHead>
+                  <TableHead>Interesse</TableHead>
+                  <TableHead>Corretor</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('created_at')}
@@ -336,7 +287,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
               <TableBody>
                 {filteredClientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       <div className="text-center">
                         <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                         <p className="text-sm font-medium mb-2">Nenhum cliente encontrado</p>
@@ -381,67 +332,30 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
                           </Badge>
                         </TableCell>
 
-                        {/* Contato */}
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Phone className="w-3 h-3 mr-1" />
-                              {cliente.telefone}
-                            </div>
-                            {cliente.email && (
-                              <div className="flex items-center text-xs text-muted-foreground">
-                                <Mail className="w-3 h-3 mr-1" />
-                                {cliente.email}
-                              </div>
-                            )}
+                        {/* Telefone */}
+                        <TableCell className="text-xs text-muted-foreground">
+                          <div className="flex items-center">
+                            <Phone className="w-3 h-3 mr-1" />
+                            {cliente.telefone}
                           </div>
                         </TableCell>
 
-                        {/* Score */}
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant="secondary" 
-                              className={cn("text-xs font-medium", getScoreColor(cliente.score_lead))}
-                            >
-                              {cliente.score_lead}
-                            </Badge>
-                            <div className="flex">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <Star 
-                                  key={i}
-                                  className={cn(
-                                    "w-3 h-3",
-                                    i < Math.floor(cliente.score_lead / 20) 
-                                      ? "text-yellow-400 fill-current" 
-                                      : "text-gray-300"
-                                  )}
-                                />
-                              ))}
-                            </div>
+                        {/* Email */}
+                        <TableCell className="text-xs text-muted-foreground">
+                          <div className="flex items-center">
+                            <Mail className="w-3 h-3 mr-1" />
+                            {cliente.email || '-'}
                           </div>
                         </TableCell>
 
-                        {/* Origem */}
-                        <TableCell>
-                          {cliente.origem_lead && (
-                            <Badge variant="outline" className="text-xs">
-                              {cliente.origem_lead}
-                            </Badge>
-                          )}
-                        </TableCell>
+                        {/* Portal */}
+                        <TableCell className="text-xs text-muted-foreground">-</TableCell>
 
-                        {/* Última Interação */}
-                        <TableCell>
-                          {cliente.ultima_interacao ? (
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {new Date(cliente.ultima_interacao).toLocaleDateString('pt-BR')}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
+                        {/* Interesse */}
+                        <TableCell className="text-xs text-muted-foreground">-</TableCell>
+
+                        {/* Corretor */}
+                        <TableCell className="text-xs text-muted-foreground">{cliente.funcionario || '-'}</TableCell>
 
                         {/* Criado */}
                         <TableCell>
