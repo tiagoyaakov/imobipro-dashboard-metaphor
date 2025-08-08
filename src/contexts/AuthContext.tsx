@@ -172,6 +172,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     retry: 2,
   });
 
+  // -----------------------------------------------------------
+  // Provisionamento pós-login: garantir registro em public."User"
+  // -----------------------------------------------------------
+  const ensurePublicUserRecord = useCallback(async (current: SupabaseUser | null) => {
+    try {
+      if (!current) return;
+
+      // Verificar se já existe registro em public."User"
+      const { data: existing, error: fetchError } = await supabase
+        .from('User')
+        .select('id')
+        .eq('id', current.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 = row not found (ok para prosseguir com insert)
+        console.warn('🔐 [Auth] Não foi possível verificar usuário em public."User" (seguindo):', fetchError);
+      }
+
+      if (existing?.id) {
+        // Já provisionado
+        return;
+      }
+
+      // Determinar companyId
+      let companyId: string | null = authConfig.development.defaultCompanyId || null;
+      if (!companyId) {
+        const { data: companies } = await supabase
+          .from('Company')
+          .select('id')
+          .limit(1);
+        companyId = companies?.[0]?.id ?? null;
+      }
+
+      // Determinar role básica (padrão AGENT)
+      const metadataRole = (current.user_metadata?.role as string | undefined) || 'AGENT';
+      const normalizedRole = ['DEV_MASTER', 'ADMIN', 'MANAGER', 'VIEWER', 'CREATOR', 'AGENT'].includes(metadataRole)
+        ? metadataRole
+        : 'AGENT';
+
+      const insertData = {
+        id: current.id,
+        email: (current.email || '').trim().toLowerCase(),
+        password: '[HANDLED_BY_SUPABASE_AUTH]',
+        name: (current.user_metadata?.name as string) || current.email || 'Usuário',
+        role: normalizedRole,
+        companyId: companyId,
+        isActive: true,
+        avatarUrl: (current.user_metadata?.avatar_url as string) || null,
+      } as const;
+
+      const { error: insertError } = await supabase
+        .from('User')
+        .insert([insertData]);
+
+      if (insertError) {
+        // Se falhar, apenas logar. A tela utilizará fallback já existente.
+        console.error('🔐 [Auth] Falha ao provisionar usuário em public."User":', insertError);
+      } else {
+        console.log('🔐 [Auth] Usuário provisionado em public."User":', { id: insertData.id, companyId: insertData.companyId, role: insertData.role });
+      }
+    } catch (err) {
+      console.warn('🔐 [Auth] Erro inesperado no provisionamento de public."User" (ignorado):', err);
+    }
+  }, []);
+
   /**
    * Mapeia erros do Supabase para mensagens em português
    */
@@ -407,6 +473,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('🔐 [Auth] Erro ao obter sessão inicial:', error);
       }
       
+      // Garantir provisionamento caso já exista sessão válida
+      if (session?.user) {
+        await ensurePublicUserRecord(session.user);
+      }
+
       if (mounted) {
         setSession(session);
         setSupabaseUser(session?.user ?? null);
@@ -426,6 +497,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSupabaseUser(session?.user ?? null);
           
           if (event === 'SIGNED_IN') {
+            // Provisionar public."User" e só então atualizar dados
+            await ensurePublicUserRecord(session?.user ?? null);
             // Invalidar cache para recarregar dados do usuário
             queryClient.invalidateQueries({ queryKey: authKeys.user() });
           }
