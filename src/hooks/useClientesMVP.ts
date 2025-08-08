@@ -45,19 +45,19 @@ export function useClientesMVP(options?: {
 
   // Converter DadosCliente[] para ClienteKanbanCard[]
   const clientes: ClienteKanbanCard[] = query.data?.data?.map(cliente => ({
-    id: cliente.id,
-    nome: cliente.nome,
-    telefone: cliente.telefone,
-    email: cliente.email,
-    status: cliente.status as StatusCliente,
-    funcionario: cliente.funcionario,
+    id: String(cliente.id),
+    nome: cliente.nome || 'Sem nome',
+    telefone: cliente.telefone || '',
+    email: cliente.email || null,
+    status: (cliente.status || 'novos') as StatusCliente,
+    funcionario: cliente.funcionario || null,
     score_lead: 50, // Valor padrão enquanto campo não existe
     origem_lead: 'site', // Valor padrão enquanto campo não existe
     empresa: undefined, // Campo não existe ainda
-    ultima_interacao: cliente.updated_at, // Usar updated_at como proxy
+    ultima_interacao: cliente.updated_at || cliente.created_at || new Date().toISOString(),
     proxima_acao: undefined, // Campo não existe ainda
-    created_at: cliente.created_at,
-    updated_at: cliente.updated_at,
+    created_at: cliente.created_at || new Date().toISOString(),
+    updated_at: cliente.updated_at || cliente.created_at || new Date().toISOString(),
   })) || [];
 
   return {

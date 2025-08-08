@@ -85,14 +85,20 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
     }
 
     // Aplicar busca
-    if (search.trim()) {
+    if (search?.trim()) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(cliente => 
-        cliente.nome.toLowerCase().includes(searchLower) ||
-        cliente.telefone.includes(search) ||
-        (cliente.email && cliente.email.toLowerCase().includes(searchLower)) ||
-        (cliente.empresa && cliente.empresa.toLowerCase().includes(searchLower))
-      );
+      filtered = filtered.filter(cliente => {
+        const nome = cliente.nome || '';
+        const telefone = cliente.telefone || '';
+        const email = cliente.email || '';
+        const empresa = cliente.empresa || '';
+        return (
+          nome.toLowerCase().includes(searchLower) ||
+          telefone.includes(search) ||
+          email.toLowerCase().includes(searchLower) ||
+          empresa.toLowerCase().includes(searchLower)
+        );
+      });
     }
 
     // Aplicar filtro de status
@@ -116,8 +122,8 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
           break;
         }
         case 'created_at': {
-          const createdA = new Date(a.created_at).getTime();
-          const createdB = new Date(b.created_at).getTime();
+          const createdA = new Date(a.created_at || 0).getTime();
+          const createdB = new Date(b.created_at || 0).getTime();
           comparison = createdA - createdB;
           break;
         }
