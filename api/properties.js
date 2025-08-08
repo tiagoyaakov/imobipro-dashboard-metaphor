@@ -4,6 +4,16 @@
 
 import { createClient } from '@supabase/supabase-js'
 
+// Vercel Edge/Node: garantir parse do body JSON
+function getBody(req) {
+  if (req.body) return req.body
+  try {
+    return JSON.parse(req?.rawBody || '{}')
+  } catch {
+    return {}
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -66,7 +76,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const body = req.body || {}
+      const body = getBody(req)
       const now = new Date().toISOString()
       const payload = {
         id: body.id || crypto.randomUUID(),

@@ -3,6 +3,15 @@
 
 import { createClient } from '@supabase/supabase-js'
 
+function getBody(req) {
+  if (req.body) return req.body
+  try {
+    return JSON.parse(req?.rawBody || '{}')
+  } catch {
+    return {}
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS')
@@ -36,7 +45,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const body = req.body || {}
+      const body = getBody(req)
       const updates = {
         ...body,
         price: body.salePrice || body.rentPrice ? Number(body.salePrice || body.rentPrice) : undefined,
