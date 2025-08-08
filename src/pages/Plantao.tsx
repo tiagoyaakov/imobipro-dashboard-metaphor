@@ -728,7 +728,7 @@ export default function Plantao() {
   const googleAccountEmail = googleTokens?.email || user?.email;
 
   // Configurações do Google Calendar
-  const googleApiKey = process.env.VITE_GOOGLE_CALENDAR_API_KEY || '';
+  const googleApiKey = import.meta.env.VITE_GOOGLE_CALENDAR_API_KEY ?? '';
   const googleCalendarId = googleTokens?.calendarId || 'primary';
 
   // Determinar permissões do usuário atual
