@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { toast } from '@/hooks/use-toast'
 
 import {
   PropertyFormData,
@@ -141,6 +142,164 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ mode, defaultValues, onSubm
       .map(v => v.trim())
       .filter(Boolean)
 
+  // ================================================
+  // IMPORTAÇÃO INTELIGENTE (JSON/XML Viva Real, PDF placeholder)
+  // ================================================
+
+  type VivaJson = Partial<{
+    idx: number
+    id: number | string
+    listing_id: string
+    imagens: string[]
+    tipo_categoria: string
+    tipo_imovel: string
+    descricao: string
+    preco: string | number
+    tamanho_m2: string | number
+    quartos: number
+    banheiros: number
+    suite: number
+    garagem: number
+    features: string[]
+    andar?: number
+    blocos?: number
+    cidade: string
+    bairro: string
+    endereco: string
+    numero?: string
+    complemento?: string
+    cep: string
+  }>
+
+  const normalizePrice = (v?: string | number) => {
+    if (v === undefined || v === null) return undefined
+    if (typeof v === 'number') return v
+    // Remove tudo que não é número e vírgula/ponto e tenta converter
+    const cleaned = v.replace(/[^0-9,\.]/g, '').replace('.', '').replace(',', '.')
+    const num = Number(cleaned)
+    return Number.isNaN(num) ? undefined : num
+  }
+
+  const mapVivaToForm = (item: VivaJson): Partial<PropertyFormData> => {
+    const salePrice = normalizePrice(item.preco)
+    const totalArea = typeof item.tamanho_m2 === 'string' ? Number(item.tamanho_m2) : item.tamanho_m2
+    // Mapeamento simples de tipo
+    const typeMap: Record<string, PropertyType> = {
+      'apartamento': PropertyType.APARTMENT,
+      'apartment': PropertyType.APARTMENT,
+      'casa': PropertyType.HOUSE,
+      'house': PropertyType.HOUSE,
+      'comercial': PropertyType.COMMERCIAL_BUILDING,
+      'loja': PropertyType.RETAIL,
+      'terreno': PropertyType.LAND,
+      'land': PropertyType.LAND,
+      'studio': PropertyType.STUDIO,
+      'cobertura': PropertyType.PENTHOUSE,
+    }
+    const normalizedTypeKey = String(item.tipo_imovel || '').toLowerCase()
+    const propertyType = typeMap[normalizedTypeKey] || PropertyType.OTHER
+
+    const titleSuggestion = `${item.tipo_imovel || 'Imóvel'} ${item.bairro ? `- ${item.bairro}` : ''}`.trim()
+
+    return {
+      title: titleSuggestion,
+      description: item.descricao || '',
+      propertyType,
+      status: PropertyStatus.AVAILABLE,
+      listingType: PropertyListingType.SALE,
+      salePrice,
+      totalArea: totalArea && !Number.isNaN(totalArea) ? totalArea : undefined,
+      bedrooms: item.quartos ?? 0,
+      bathrooms: item.banheiros ?? 0,
+      suites: item.suite ?? 0,
+      parkingSpaces: item.garagem ?? 0,
+      floors: 0,
+      address: item.endereco || '',
+      number: item.numero || '',
+      complement: item.complemento || '',
+      neighborhood: item.bairro || '',
+      city: item.cidade || '',
+      state: form.getValues('state') || 'SP',
+      zipCode: item.cep || '',
+      features: Array.isArray(item.features) ? item.features : [],
+      amenities: [],
+      isFeatured: false,
+      notes: '',
+    }
+  }
+
+  const setFormFromData = (data: Partial<PropertyFormData>) => {
+    const keys = Object.keys(data) as (keyof PropertyFormData)[]
+    keys.forEach((k) => {
+      // @ts-expect-error setValue tipagem parcial
+      form.setValue(k, data[k] as any, { shouldDirty: true, shouldValidate: false })
+    })
+  }
+
+  const handleJsonPaste = (text: string) => {
+    try {
+      const parsed = JSON.parse(text)
+      const first: VivaJson = Array.isArray(parsed) ? parsed[0] : parsed
+      const mapped = mapVivaToForm(first)
+      setFormFromData(mapped)
+      toast({ title: 'Importação JSON', description: 'Campos pré-preenchidos com sucesso.' })
+    } catch (e) {
+      toast({ title: 'JSON inválido', description: 'Não foi possível processar o JSON informado.', variant: 'destructive' })
+    }
+  }
+
+  const parseXmlString = (xmlStr: string): VivaJson | null => {
+    try {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(xmlStr, 'text/xml')
+      // Tentativa simples: ler tags comuns (ajuste conforme necessário)
+      const get = (tag: string) => doc.getElementsByTagName(tag)?.[0]?.textContent || ''
+      const images = Array.from(doc.getElementsByTagName('imagem')).map((n) => n.textContent || '')
+      const obj: VivaJson = {
+        tipo_imovel: get('tipo') || get('tipo_imovel'),
+        descricao: get('descricao'),
+        preco: get('venda') || get('preco'),
+        tamanho_m2: get('areaTotal') || get('tamanho_m2'),
+        quartos: Number(get('quartos') || '0'),
+        banheiros: Number(get('banheiros') || '0'),
+        garagem: Number(get('vagas') || '0'),
+        cidade: get('cidade'),
+        bairro: get('bairro'),
+        endereco: get('endereco'),
+        cep: get('cep'),
+        imagens: images,
+      }
+      return obj
+    } catch {
+      return null
+    }
+  }
+
+  const handleFileImport = async (file: File) => {
+    const ext = file.name.toLowerCase().split('.').pop()
+    if (ext === 'pdf') {
+      toast({ title: 'PDF enviado', description: 'Parsing de PDF não implementado. Arquivo aceito como evidência.', variant: 'default' })
+      return
+    }
+    const text = await file.text()
+    if (ext === 'json') {
+      handleJsonPaste(text)
+      return
+    }
+    if (ext === 'xml') {
+      const viva = parseXmlString(text)
+      if (!viva) {
+        toast({ title: 'XML inválido', description: 'Não foi possível processar o XML.', variant: 'destructive' })
+        return
+      }
+      const mapped = mapVivaToForm(viva)
+      setFormFromData(mapped)
+      toast({ title: 'Importação XML', description: 'Campos pré-preenchidos com sucesso.' })
+      return
+    }
+    toast({ title: 'Formato não suportado', description: 'Use JSON ou XML do Viva Real.', variant: 'destructive' })
+  }
+
   const handleSubmit = (values: FormSchema) => {
     const payload: PropertyFormData = {
       ...values,
@@ -152,6 +311,31 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ mode, defaultValues, onSubm
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      {/* Importação Inteligente */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Importar Dados (Viva Real)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="space-y-1 md:col-span-2">
+              <Label htmlFor="jsonPaste">Colar JSON Viva Real</Label>
+              <Textarea id="jsonPaste" placeholder="Cole aqui o JSON do Viva Real" onBlur={(e) => {
+                if (e.target.value.trim()) handleJsonPaste(e.target.value)
+              }} />
+              <p className="text-xs text-gray-500">Ao sair do campo, tentaremos pré-preencher automaticamente.</p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="fileImport">Upload JSON/XML/PDF</Label>
+              <Input id="fileImport" type="file" accept=".json,.xml,.pdf" onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) void handleFileImport(f)
+              }} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Básico */}
       <Card>
         <CardHeader>

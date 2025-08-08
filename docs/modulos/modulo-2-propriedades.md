@@ -84,3 +84,91 @@ Observação: Implementação dos handlers será feita na pasta `api/` (Vercel F
 6. Testes unitários e de integração (≥ 80% cobertura no módulo)
 
 
+### Como usar os endpoints no n8n (HTTP Request)
+
+- **Base URL**: `https://SEU_DEPLOY.vercel.app`
+  - Em dev local (com Vite + dev serverless): `http://localhost:5173/api` (ou conforme setup do hosting)
+
+- **Lista de propriedades** (GET)
+  - Método: GET
+  - URL: `/api/properties?limit=20&page=1&status=AVAILABLE&city=Sao%20Paulo&search=apartamento`
+  - Resposta (200):
+    ```json
+    {
+      "items": [ { "id": "...", "title": "...", "city": "..." } ],
+      "total": 120,
+      "page": 1,
+      "pages": 6
+    }
+    ```
+
+- **Detalhe de propriedade** (GET)
+  - Método: GET
+  - URL: `/api/properties/IMOVEL_ID`
+  - Resposta (200): objeto do imóvel
+
+- **Criar propriedade** (POST)
+  - Método: POST
+  - URL: `/api/properties`
+  - Body (JSON):
+    ```json
+    {
+      "title": "Apartamento 2 dorm",
+      "address": "Rua Exemplo, 123",
+      "city": "São Paulo",
+      "state": "SP",
+      "zipCode": "01234-567",
+      "propertyType": "APARTMENT",
+      "status": "AVAILABLE",
+      "listingType": "SALE",
+      "salePrice": 450000,
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "totalArea": 60
+    }
+    ```
+  - Resposta (201): objeto criado
+
+- **Atualizar propriedade** (PUT)
+  - Método: PUT
+  - URL: `/api/properties/IMOVEL_ID`
+  - Body (JSON): apenas campos a atualizar (ex.: `{ "status": "RESERVED" }`)
+  - Resposta (200): objeto atualizado
+
+- **Excluir propriedade** (DELETE)
+  - Método: DELETE
+  - URL: `/api/properties/IMOVEL_ID`
+  - Resposta (200): `{ "success": true }`
+
+- **Matching por propriedade** (POST)
+  - Método: POST
+  - URL: `/api/matching/property`
+  - Body (JSON): `{ "id": "IMOVEL_ID" }`
+  - Resposta (200): `{ "matches": [ /* interesses compatíveis */ ] }`
+
+- Dica n8n:
+  - Use o nó "HTTP Request" com "Send Body" = JSON para POST/PUT
+  - Mapeie dados com Expression (ex.: `{{$json["id"]}}`) para encadear fluxos
+
+
+### Arquivos serverless (api/) e comportamento
+
+- `api/properties.js`
+  - Métodos: `GET` (lista paginada com filtros), `POST` (criação)
+  - Lê query params (`status`, `propertyType`, `city`, `minPrice`, `maxPrice`, `minBedrooms`, `search`, etc.)
+  - Persiste em `imoveisvivareal4` (campos: `title`, `address`, `city`, `state`, `zipCode`, `price`, `area`, `bedrooms`, `bathrooms`, `propertyType`, `status`, `listingType`, `images`, `isActive`, timestamps)
+
+- `api/properties_[id].js`
+  - Métodos: `GET` (detalhe), `PUT` (atualização), `DELETE` (remoção)
+  - Atualização aplica `updated_at` e mapeia `salePrice/rentPrice → price` quando enviados
+
+- `api/matching_property.js`
+  - Método: `POST` com `{ id }`
+  - Busca o imóvel (tipo/cidade/preço) e filtra `interesse_imoveis` por critérios simples (cidade e faixa ±20% do preço). Pode ser enriquecido conforme necessidade
+
+- Segurança/Configs
+  - Os handlers usam `@supabase/supabase-js` com `SUPABASE_SERVICE_ROLE_KEY` (backend) e `VITE_SUPABASE_URL` / `SUPABASE_URL`
+  - Configure as variáveis no ambiente do hosting (Vercel). Nunca exponha o `SERVICE_ROLE_KEY` no frontend
+  - CORS: padrão `*` no exemplo; restrinja para os domínios da sua aplicação em produção
+
+
