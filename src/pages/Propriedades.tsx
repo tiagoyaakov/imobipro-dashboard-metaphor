@@ -35,6 +35,8 @@ import {
 import { useImportFromVivaRealV3 } from '@/hooks/usePropertiesV3';
 import { usePermissions } from '@/hooks/security/usePermissions';
 import { usePropertyV3 } from '@/hooks/usePropertiesV3';
+import PropertyForm from '@/components/properties/PropertyForm';
+import type { PropertyFormData } from '@/types/properties';
 
 // Types
 import type { 
@@ -264,6 +266,9 @@ const PropriedadesPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
   // ================================================
   // PARÂMETROS DE BUSCA
@@ -327,8 +332,10 @@ const PropriedadesPage: React.FC = () => {
   };
 
   const handleEditProperty = (property: Property) => {
-    // TODO: Open edit dialog/form
-    console.log('Edit property:', property.id);
+    if (!canManage) return;
+    setEditingProperty(property);
+    setFormMode('edit');
+    setIsFormOpen(true);
   };
 
   const handleDeleteProperty = async (property: Property) => {
@@ -342,8 +349,10 @@ const PropriedadesPage: React.FC = () => {
   };
 
   const handleCreateProperty = () => {
-    // TODO: Open create dialog/form
-    console.log('Create new property');
+    if (!canManage) return;
+    setEditingProperty(null);
+    setFormMode('create');
+    setIsFormOpen(true);
   };
 
   // ================================================
@@ -370,6 +379,40 @@ const PropriedadesPage: React.FC = () => {
   }), [properties]);
 
   const hasActiveFilters = Object.keys(filters).length > 0 || searchQuery.length > 0;
+
+  // Mapear Property (UI) → PropertyFormData
+  const mapPropertyToForm = (p: Property): PropertyFormData => ({
+    title: p.title,
+    description: p.description || '',
+    propertyType: p.propertyType as any,
+    status: p.status as any,
+    listingType: p.listingType as any,
+    salePrice: p.salePrice,
+    rentPrice: p.rentPrice,
+    condominiumFee: p.condominiumFee,
+    iptuPrice: p.iptuPrice,
+    totalArea: p.totalArea,
+    builtArea: p.builtArea,
+    usefulArea: p.usefulArea,
+    bedrooms: p.bedrooms,
+    bathrooms: p.bathrooms,
+    suites: p.suites,
+    parkingSpaces: p.parkingSpaces,
+    floors: p.floors,
+    floor: p.floor,
+    yearBuilt: p.yearBuilt,
+    address: p.address,
+    number: p.number,
+    complement: p.complement,
+    neighborhood: p.neighborhood,
+    city: p.city,
+    state: p.state,
+    zipCode: p.zipCode,
+    features: p.features || [],
+    amenities: p.amenities || [],
+    isFeatured: p.isFeatured,
+    notes: p.notes || '',
+  });
 
   // ================================================
   // RENDER
@@ -671,6 +714,40 @@ const PropriedadesPage: React.FC = () => {
           onOpenChange={setIsDetailsOpen}
           canManage={canManage}
         />
+      )}
+
+      {/* Create/Edit Form Dialog */}
+      {canManage && (
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {formMode === 'create' ? 'Nova Propriedade' : 'Editar Propriedade'}
+              </DialogTitle>
+              <DialogDescription>
+                Preencha os campos obrigatórios e salve para {formMode === 'create' ? 'criar' : 'atualizar'}.
+              </DialogDescription>
+            </DialogHeader>
+
+            <PropertyForm
+              mode={formMode}
+              defaultValues={editingProperty ? mapPropertyToForm(editingProperty) : undefined}
+              onCancel={() => setIsFormOpen(false)}
+              onSubmit={async (values) => {
+                try {
+                  if (formMode === 'create') {
+                    await createProperty(values);
+                  } else if (editingProperty) {
+                    await updateProperty(editingProperty.id, values);
+                  }
+                  setIsFormOpen(false);
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
