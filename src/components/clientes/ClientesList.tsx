@@ -95,18 +95,17 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
       if (ids.length === 0) return;
       const { data, error } = await supabase
         .from('User')
-        .select('id, name, fullName, email')
+        .select('id, name, email')
         .in('id', ids);
       if (!error && Array.isArray(data)) {
-        type RawRow = { [key: string]: unknown };
-        const rows: RawRow[] = (data ?? []) as unknown as RawRow[];
+        type Row = { id: string; name?: string | null; email?: string | null };
+        const rows: Row[] = (data ?? []) as Row[];
         const map: Record<string, string> = {};
         for (const u of rows) {
-          const id = typeof u.id === 'string' ? u.id : '';
-          const name = typeof u.name === 'string' ? (u.name as string) : null;
-          const fullName = typeof u['fullName'] === 'string' ? (u['fullName'] as string) : null;
-          const email = typeof u.email === 'string' ? (u.email as string) : null;
-          const label = name || fullName || email || id;
+          const id = u.id;
+          const name = u.name ?? null;
+          const email = u.email ?? null;
+          const label = name || email || id;
           if (id) map[id] = label;
         }
         setCorretoresMap(map);
