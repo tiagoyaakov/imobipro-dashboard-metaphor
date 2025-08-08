@@ -63,6 +63,7 @@ export function useClientesMVP(options?: {
       email: cliente.email || null,
       status: normalizedStatus,
       funcionario: cliente.funcionario || null,
+      interesse: (cliente as unknown as { interesse?: string | null }).interesse ?? null,
       score_lead: 50,
       origem_lead: 'site',
       empresa: undefined,
@@ -272,7 +273,8 @@ export function useClientesMutationsMVP() {
 export function useKanbanMVP(filters?: DadosClienteFilters) {
   const { clientes, isLoading, error, refetch } = useClientesMVP({
     filters,
-    orderBy: 'score_lead',
+    // score_lead não existe na tabela; ordenar por created_at desc
+    orderBy: 'created_at',
     ascending: false,
   });
 

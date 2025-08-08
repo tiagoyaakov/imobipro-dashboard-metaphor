@@ -6,7 +6,7 @@
 // Features: Filtros, busca, paginação, ações, permissões RLS
 // ================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, Filter, MoreVertical, Eye, Edit, Phone, Mail, Trash2, Download, FileText, MessageSquare } from 'lucide-react';
+import { Search, Filter, Eye, Edit, Phone, Mail, Trash2, Download } from 'lucide-react';
 import { 
   STATUS_CLIENTE_CONFIG,
   type StatusCliente, 
@@ -38,6 +38,10 @@ import {
   type ClienteFilters
 } from '@/types/clientes';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase-client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useClientesMutationsMVP } from '@/hooks/useClientesMVP';
+import { Select as ShSelect, SelectTrigger as ShSelectTrigger, SelectValue as ShSelectValue, SelectContent as ShSelectContent, SelectItem as ShSelectItem } from '@/components/ui/select';
 
 // Props do componente
 interface ClientesListViewProps extends ClientesListProps {
@@ -60,6 +64,51 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<StatusCliente | 'all'>('all');
   const [sortBy, setSortBy] = useState<'nome' | 'created_at'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Mapa id do corretor -> nome/email para exibição
+  const [corretoresMap, setCorretoresMap] = useState<Record<string, string>>({});
+
+  // Modal de detalhes/edição
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [current, setCurrent] = useState<ClienteKanbanCard | null>(null);
+  const [form, setForm] = useState<{ 
+    nome: string; 
+    telefone: string; 
+    email: string; 
+    status: StatusCliente; 
+    interesse: string; 
+    funcionario: string | null; 
+  }>({ nome: '', telefone: '', email: '', status: 'novos', interesse: '', funcionario: null });
+
+  const mutations = useClientesMutationsMVP();
+
+  useEffect(() => {
+    const fetchCorretores = async () => {
+      const ids = Array.from(
+        new Set(
+          clientes
+            .map((c) => c.funcionario)
+            .filter((v): v is string => typeof v === 'string' && v.length > 0)
+        )
+      );
+      if (ids.length === 0) return;
+      const { data, error } = await supabase
+        .from('User')
+        .select('id, name, fullName, email')
+        .in('id', ids);
+      if (!error && Array.isArray(data)) {
+        const map: Record<string, string> = {};
+        for (const u of data as any[]) {
+          const id = (u as any)?.id as string;
+          const label = (u as any)?.name || (u as any)?.fullName || (u as any)?.email || id;
+          if (id) map[id] = label;
+        }
+        setCorretoresMap(map);
+      }
+    };
+    fetchCorretores();
+  }, [clientes]);
 
   // Filtrar clientes baseado nas permissões e filtros locais
   const filteredClientes = useMemo(() => {
@@ -269,18 +318,8 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
                   <TableHead>Status</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Portal</TableHead>
                   <TableHead>Interesse</TableHead>
                   <TableHead>Corretor</TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    Criado
-                    {sortBy === 'created_at' && (
-                      <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -348,71 +387,35 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
                           </div>
                         </TableCell>
 
-                        {/* Portal */}
-                        <TableCell className="text-xs text-muted-foreground">-</TableCell>
-
                         {/* Interesse */}
-                        <TableCell className="text-xs text-muted-foreground">-</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{cliente.interesse || '-'}</TableCell>
 
                         {/* Corretor */}
-                        <TableCell className="text-xs text-muted-foreground">{cliente.funcionario || '-'}</TableCell>
-
-                        {/* Criado */}
-                        <TableCell>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(cliente.created_at).toLocaleDateString('pt-BR')}
-                          </span>
-                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{(cliente.funcionario && corretoresMap[cliente.funcionario]) || '-'}</TableCell>
 
                         {/* Ações */}
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => onView(cliente)}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                Ver Detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onEdit(cliente)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Phone className="w-4 h-4 mr-2" />
-                                Ligar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <MessageSquare className="w-4 h-4 mr-2" />
-                                WhatsApp
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Mail className="w-4 h-4 mr-2" />
-                                Email
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <FileText className="w-4 h-4 mr-2" />
-                                Relatório
-                              </DropdownMenuItem>
-                              {onDelete && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    onClick={() => onDelete(cliente.id)}
-                                    className="text-red-600"
-                                  >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Excluir
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" size="sm" className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setCurrent(cliente);
+                                setForm({
+                                  nome: cliente.nome,
+                                  telefone: cliente.telefone,
+                                  email: cliente.email || '',
+                                  status: cliente.status,
+                                  interesse: (cliente as unknown as { interesse?: string | null }).interesse || '',
+                                  funcionario: cliente.funcionario || null,
+                                });
+                                setEditing(false);
+                                setDetailsOpen(true);
+                              }}
+                              aria-label="Ver detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -435,6 +438,135 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de detalhes */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{editing ? 'Editar Cliente' : 'Detalhes do Cliente'}</span>
+              {current && (
+                <Badge variant="secondary" className={cn('ml-2', STATUS_CLIENTE_CONFIG[current.status].bgColor, STATUS_CLIENTE_CONFIG[current.status].color)}>
+                  {STATUS_CLIENTE_CONFIG[current.status].label}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Conteúdo */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Nome</label>
+                <Input 
+                  value={form.nome}
+                  onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                  disabled={!editing}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Telefone</label>
+                <Input 
+                  value={form.telefone}
+                  onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))}
+                  disabled={!editing}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Email</label>
+                <Input 
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  disabled={!editing}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Interesse</label>
+                <Input 
+                  value={form.interesse}
+                  onChange={(e) => setForm((f) => ({ ...f, interesse: e.target.value }))}
+                  disabled={!editing}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Status</label>
+                <ShSelect value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as StatusCliente }))}>
+                  <ShSelectTrigger disabled={!editing}>
+                    <ShSelectValue placeholder="Selecione o status" />
+                  </ShSelectTrigger>
+                  <ShSelectContent>
+                    {Object.keys(STATUS_CLIENTE_CONFIG).map((key) => (
+                      <ShSelectItem key={key} value={key}>{STATUS_CLIENTE_CONFIG[key as StatusCliente].label}</ShSelectItem>
+                    ))}
+                  </ShSelectContent>
+                </ShSelect>
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Corretor</label>
+                <ShSelect value={form.funcionario || ''} onValueChange={(v) => setForm((f) => ({ ...f, funcionario: v || null }))}>
+                  <ShSelectTrigger disabled={!editing}>
+                    <ShSelectValue placeholder="Selecione o corretor" />
+                  </ShSelectTrigger>
+                  <ShSelectContent>
+                    {Object.entries(corretoresMap).map(([id, label]) => (
+                      <ShSelectItem key={id} value={id}>{label}</ShSelectItem>
+                    ))}
+                  </ShSelectContent>
+                </ShSelect>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex items-center justify-between gap-2 mt-4">
+            <div className="flex items-center gap-2">
+              {!editing && (
+                <Button variant="secondary" onClick={() => setEditing(true)}>
+                  <Edit className="w-4 h-4 mr-2" /> Editar
+                </Button>
+              )}
+              {editing && current && (
+                <Button 
+                  onClick={async () => {
+                    try {
+                      await mutations.update.mutateAsync({ id: current.id, data: {
+                        nome: form.nome,
+                        telefone: form.telefone,
+                        email: form.email,
+                        status: form.status,
+                        funcionario: form.funcionario || undefined,
+                        interesse: form.interesse,
+                      }});
+                      setEditing(false);
+                      setDetailsOpen(false);
+                    } catch (e) {
+                      // erros já são tratados globalmente pelos mutations
+                    }
+                  }}
+                >
+                  Salvar
+                </Button>
+              )}
+            </div>
+            {current && (
+              <Button 
+                variant="destructive"
+                onClick={async () => {
+                  if (confirm('Tem certeza que deseja excluir este cliente?')) {
+                    try {
+                      await mutations.delete.mutateAsync(current.id);
+                      setDetailsOpen(false);
+                    } catch (e) {
+                      console.error('Erro ao excluir cliente:', e);
+                    }
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

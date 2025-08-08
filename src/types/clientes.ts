@@ -100,6 +100,7 @@ export interface ClienteKanbanCard {
   email?: string | null;
   status: StatusCliente;
   funcionario?: string | null;
+  interesse?: string | null;
   score_lead: number;
   origem_lead?: string | null;
   empresa?: string | null;
