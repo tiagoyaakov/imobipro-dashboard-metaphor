@@ -141,7 +141,7 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         const { data, error } = await supabase
           .from('User')
           .select('id, name, email, role')
-          .in('role', ['AGENT', 'ADMIN']) // Carregar AGENT e ADMIN
+          .in('role', ['AGENT']) // Carregar apenas corretores (AGENT)
           .eq('isActive', true)
           .order('name');
 
@@ -159,6 +159,13 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
 
     loadCorretores();
   }, [canSelectAgent]);
+
+  // Para usuários CORRETOR, garantir atribuição automática a si mesmo no form
+  useEffect(() => {
+    if (user?.role === 'AGENT' && user?.id) {
+      setValue('funcionario', user.id);
+    }
+  }, [user?.role, user?.id, setValue]);
 
   // ========================================
   // LÓGICA DE SUBMISSÃO
@@ -483,8 +490,8 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
                   </Select>
                   <p className="text-xs text-muted-foreground">
                     {user?.role === 'AGENT' 
-                      ? 'Como corretor, clientes serão automaticamente atribuídos a você'
-                      : 'Deixe em branco para atribuição automática pelo n8n'
+                      ? 'Como corretor, clientes serão automaticamente atribuídos a você.'
+                      : 'Selecione um corretor responsável para criar o cliente.'
                     }
                   </p>
                 </div>

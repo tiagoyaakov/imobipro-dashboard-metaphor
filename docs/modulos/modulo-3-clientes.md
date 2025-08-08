@@ -160,3 +160,9 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
   - AGENT cria cliente sempre com `funcionario = auth.uid()`.
   - ADMIN/DEV_MASTER criam cliente somente quando um corretor for selecionado (ou regra/fallback decidido), sem erro de RLS.
   - Toast de sucesso/erro claros, exibindo mensagens amigáveis quando for RLS (código 42501/301) ou validação.
+
+##### 8.1) Correções iniciais aplicadas no NovoClienteModal
+- Atribuição automática de `funcionario` para usuários `AGENT` no form (`setValue('funcionario', user.id)`).
+- Lista de corretores para ADMIN/DEV_MASTER filtrada apenas por `role = 'AGENT'` (evita atribuição a ADMIN).
+- Texto de ajuda atualizado para refletir a obrigatoriedade de seleção de corretor para ADMIN/DEV_MASTER.
+- Build executado com sucesso após as alterações (Vite OK).
