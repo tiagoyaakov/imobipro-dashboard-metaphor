@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { dadosClienteService, type DadosCliente, type DadosClienteFilters, type DadosClienteInsert, type DadosClienteUpdate } from '@/services/dadosCliente.service';
 import { type ClienteKanbanCard, type StatusCliente } from '@/types/clientes';
+import { useToast } from '@/hooks/use-toast';
 
 // Chaves para React Query
 const QUERY_KEYS = {
@@ -255,12 +256,25 @@ export function useKanbanMVP(filters?: DadosClienteFilters) {
   });
 
   const { updateStatus } = useClientesMutationsMVP();
+  const { toast } = useToast();
 
   const handleStatusChange = async (clienteId: string, novoStatus: StatusCliente) => {
     try {
       await updateStatus.mutateAsync({ clienteId, novoStatus });
+      toast({
+        title: 'Status atualizado',
+        description: `O cliente foi movido para "${novoStatus}" com sucesso.`,
+      });
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      const err = error as any;
+      console.error('Erro ao atualizar status:', err);
+      const code = err?.code || '';
+      const isRls = code === '42501' || code === 'PGRST301' || code === '301';
+      toast({
+        title: isRls ? 'Permissão negada' : 'Erro ao atualizar status',
+        description: err?.message || 'Ocorreu um erro ao mover o cliente.',
+        variant: 'destructive',
+      });
       throw error;
     }
   };
