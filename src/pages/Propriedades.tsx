@@ -34,6 +34,7 @@ import {
 } from '@/hooks/usePropertiesV3';
 import { useImportFromVivaRealV3 } from '@/hooks/usePropertiesV3';
 import { usePermissions } from '@/hooks/security/usePermissions';
+import { usePropertyV3 } from '@/hooks/usePropertiesV3';
 
 // Types
 import type { 
@@ -261,6 +262,8 @@ const PropriedadesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt' | 'price'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // ================================================
   // PARÂMETROS DE BUSCA
@@ -319,8 +322,8 @@ const PropriedadesPage: React.FC = () => {
   };
 
   const handlePropertyClick = (property: Property) => {
-    // TODO: Navigate to property details page
-    console.log('View property:', property.id);
+    setSelectedPropertyId(property.id);
+    setIsDetailsOpen(true);
   };
 
   const handleEditProperty = (property: Property) => {
@@ -659,8 +662,152 @@ const PropriedadesPage: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Details Dialog */}
+      {selectedPropertyId && (
+        <PropertyDetailsDialog 
+          id={selectedPropertyId} 
+          open={isDetailsOpen} 
+          onOpenChange={setIsDetailsOpen}
+          canManage={canManage}
+        />
+      )}
     </div>
   );
 };
 
 export default PropriedadesPage;
+
+// ================================================
+// DETALHES DA PROPRIEDADE (Dialog)
+// ================================================
+
+interface PropertyDetailsDialogProps {
+  id: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  canManage: boolean;
+}
+
+const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ id, open, onOpenChange, canManage }) => {
+  const { property, isLoading, error } = usePropertyV3(id);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalhes da Propriedade</DialogTitle>
+          <DialogDescription>
+            Visualize todas as informações disponíveis deste imóvel.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="h-6 w-2/3 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse" />
+            <div className="h-48 w-full bg-gray-200 rounded animate-pulse" />
+          </div>
+        ) : error ? (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="text-red-600">
+                {error.message}
+              </div>
+            </CardContent>
+          </Card>
+        ) : property ? (
+          <div className="space-y-6">
+            {/* Cabeçalho */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">{property.title}</h2>
+                <p className="text-sm text-gray-500">
+                  {property.address} — {property.neighborhood} — {property.city}/{property.state}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {/* Exportações (implementação futura) */}
+                <Button variant="outline" size="sm" disabled>
+                  Exportar PDF
+                </Button>
+                <Button variant="outline" size="sm" disabled>
+                  Exportar XML
+                </Button>
+              </div>
+            </div>
+
+            {/* Imagens */}
+            {property.images && property.images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {property.images.map(img => (
+                  <img key={img.id} src={img.url} alt={property.title} className="w-full h-40 object-cover rounded" />
+                ))}
+              </div>
+            )}
+
+            {/* Informações básicas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div><span className="text-gray-500">Tipo:</span> {property.propertyType}</div>
+                  <div><span className="text-gray-500">Status:</span> {property.status}</div>
+                  <div><span className="text-gray-500">Finalidade:</span> {property.listingType}</div>
+                  <div><span className="text-gray-500">Área Total:</span> {property.totalArea ?? '-'} m²</div>
+                  <div><span className="text-gray-500">Quartos:</span> {property.bedrooms}</div>
+                  <div><span className="text-gray-500">Banheiros:</span> {property.bathrooms}</div>
+                  <div><span className="text-gray-500">Vagas:</span> {property.parkingSpaces}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Valores</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div><span className="text-gray-500">Venda:</span> {property.salePrice ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(property.salePrice) : '-'}</div>
+                  <div><span className="text-gray-500">Aluguel:</span> {property.rentPrice ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(property.rentPrice) : '-'}</div>
+                  <div><span className="text-gray-500">Condomínio:</span> {property.condominiumFee ?? '-'}</div>
+                  <div><span className="text-gray-500">IPTU:</span> {property.iptuPrice ?? '-'}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Características */}
+            {(property.features?.length || property.amenities?.length) ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Características</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2 text-xs">
+                  {(property.features || []).map((f, i) => (
+                    <Badge key={`f-${i}`} variant="outline">{f}</Badge>
+                  ))}
+                  {(property.amenities || []).map((a, i) => (
+                    <Badge key={`a-${i}`} variant="secondary">{a}</Badge>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {/* Ações administrativas (editar/excluir) - futuro */}
+            {canManage && (
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" disabled>
+                  Editar (em breve)
+                </Button>
+                <Button variant="destructive" disabled>
+                  Excluir (em breve)
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+};
