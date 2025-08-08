@@ -179,6 +179,53 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
   - `src/pages/Clientes.tsx`: adicionados `overflow-y-auto` em `Tabs` e `TabsContent`.
   - `src/components/clientes/ClientesList.tsx`: wrapper com `min-h-0 flex-1`; tabela com `table-fixed`; `TableBody` com `align-top`.
 - Coluna "Corretor" agora resolve o nome via lookup em `public."User"` de forma resiliente:
-  - Busca apenas IDs necessários; mapeia `name` → `fullName` → `email` → `id` (fallback).
-  - Tipagem ajustada para evitar erros quando colunas opcionais não existirem.
+  - Busca apenas IDs necessários; mapeia `name` → `email` → `id` (fallback).
+  - Tipagem ajustada evitando dependência de colunas opcionais.
 - Lint: sem erros após ajustes.
+
+#### 8.4) Integração simples com n8n — SDR de IA (WhatsApp) → Clientes
+- Objetivo: permitir que a automação (agente SDR de IA no WhatsApp) crie/atualize/mova clientes no módulo Clientes via webhooks seguros.
+- Estratégia recomendada (MVP):
+  - Endpoints via Supabase Edge Functions (Deno) expostos como webhooks HTTP para o n8n, usando o `service_role` APENAS no backend (nunca no front):
+    - `POST /functions/v1/n8n/clientes.create`
+    - `POST /functions/v1/n8n/clientes.update`
+    - `POST /functions/v1/n8n/clientes.move` (alterar `status` → suporta o drag-and-drop sem UI)
+  - Payloads (exemplos):
+    - create:
+      ```json
+      {
+        "nome": "Fulano de Tal",
+        "telefone": "+55 11 99999-0000",
+        "email": "fulano@example.com",
+        "interesse": "Apartamento 3q",
+        "funcionario": "<uuid-corretor>",
+        "companyId": "<uuid-empresa>"
+      }
+      ```
+    - update (parcial):
+      ```json
+      {
+        "id": 123,
+        "patch": { "telefone": "+55 11 98888-7777", "interesse": "Casa térrea" }
+      }
+      ```
+    - move (status):
+      ```json
+      { "id": 123, "status": "qualificados" }
+      ```
+  - Segurança:
+    - Assinar requisições do n8n com HMAC-SHA256 (`x-signature`) usando um segredo compartilhado (`N8N_WEBHOOK_SECRET`) salvo em variáveis protegidas do Supabase (Edge Config). Validar assinatura antes de processar.
+    - Aplicar schema Zod nos handlers para validar payloads; normalizar strings vazias → `null` quando necessário.
+    - Operações no banco usando `service_role` dentro das Edge Functions para bypass de RLS controlado, respeitando regras de negócio (ex.: só permitir `funcionario` com `role = 'AGENT'` e `same_company`).
+  - Mapeamento de corretor:
+    - Caso o payload forneça `funcionarioEmail` ou `funcionarioPhone` em vez do `id`, resolver para `User.id` via `public."User"` (preferência: email > telefone > id). Rejeitar se múltiplos matches.
+  - Observabilidade:
+    - Log estruturado (requestId, eventType, status) e retorno padronizado `{ ok: true, id }` ou `{ ok: false, code, message }`.
+  - Passos de teste (n8n):
+    1) Criar nó HTTP Request apontando para `clientes.create` com assinatura válida e payload mínimo.
+    2) Verificar criação no Supabase e refletir na UI (React Query invalida `dados_cliente`).
+    3) Rodar `clientes.update` para alterar telefone/interesse; confirmar atualização na UI.
+    4) Rodar `clientes.move` para mudar `status`; conferir mudança no Kanban e na lista.
+  - Próximos incrementos:
+    - Rate limit por `companyId` e proteção anti-replay (timestamp + nonce no cabeçalho).
+    - Fila (Retries) no n8n para cenários intermitentes.
