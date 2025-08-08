@@ -29,9 +29,7 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Plantao = lazy(() => import("./pages/Plantao"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
-const Contatos = lazy(() => import("./pages/Contatos"));
 const Clientes = lazy(() => import("./pages/Clientes"));
-const Pipeline = lazy(() => import("./pages/Pipeline"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Conexoes = lazy(() => import("./pages/Conexoes"));
 const Usuarios = lazy(() => import("./pages/Usuarios"));
@@ -246,17 +244,7 @@ const AppWithAuth = () => {
                 } 
               />
 
-              {/* Contatos - Acesso para todos */}
-              <Route 
-                path="contatos" 
-                element={
-                  <ProtectedRoute>
-                    <Contatos />
-                  </ProtectedRoute>
-                } 
-              />
-
-
+              
               {/* Clientes - Acesso para todos */}
               <Route 
                 path="clientes" 
@@ -267,15 +255,7 @@ const AppWithAuth = () => {
                 } 
               />
 
-              {/* Pipeline - Acesso para todos */}
-              <Route 
-                path="pipeline" 
-                element={
-                  <ProtectedRoute>
-                    <Pipeline />
-                  </ProtectedRoute>
-                } 
-              />
+              
 
 
               {/* Relatórios - Acesso para DEV_MASTER e Admin */}

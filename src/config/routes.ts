@@ -67,16 +67,7 @@ export const routeConfigs: RouteConfig[] = [
     category: 'management'
   },
 
-  // Gestão de Contatos
-  {
-    path: '/contatos',
-    name: 'contacts',
-    title: 'Contatos',
-    description: 'Gestão de contatos e leads',
-    showInSidebar: true,
-    icon: 'Users',
-    category: 'management'
-  },
+  
 
 
   // Clientes
@@ -90,16 +81,7 @@ export const routeConfigs: RouteConfig[] = [
     category: 'management'
   },
 
-  // Pipeline de Vendas
-  {
-    path: '/pipeline',
-    name: 'pipeline',
-    title: 'Pipeline',
-    description: 'Funil de vendas',
-    showInSidebar: true,
-    icon: 'TrendingUp',
-    category: 'sales'
-  },
+  
 
 
   // Relatórios - Apenas Admin e DEV_MASTER

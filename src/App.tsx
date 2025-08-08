@@ -12,9 +12,7 @@ import PageLoadingFallback from "./components/common/PageLoadingFallback";
 // Lazy loading das páginas para melhor performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Propriedades = lazy(() => import("./pages/Propriedades"));
-const Contatos = lazy(() => import("./pages/Contatos"));
 const Clientes = lazy(() => import("./pages/Clientes"));
-const Pipeline = lazy(() => import("./pages/Pipeline"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Conexoes = lazy(() => import("./pages/Conexoes"));
 const Usuarios = lazy(() => import("./pages/Usuarios"));
@@ -67,14 +65,7 @@ const App = () => (
                   </Suspense>
                 } 
               />
-              <Route 
-                path="contatos" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Contatos />
-                  </Suspense>
-                } 
-              />
+              
               <Route 
                 path="clientes" 
                 element={
@@ -83,14 +74,7 @@ const App = () => (
                   </Suspense>
                 } 
               />
-              <Route 
-                path="pipeline" 
-                element={
-                  <Suspense fallback={<PageLoadingFallback />}>
-                    <Pipeline />
-                  </Suspense>
-                } 
-              />
+              
               <Route 
                 path="relatorios" 
                 element={

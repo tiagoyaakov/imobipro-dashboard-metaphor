@@ -12,13 +12,13 @@ export { interesseImoveisService } from './interesseImoveis.service'
 // SERVIÇOS LEGADOS (DEPRECATED) - Para compatibilidade
 // ================================================================
 export { propertyService } from './property.service'
-export { contactService } from './contact.service'
-export { dealService } from './deal.service'
+// export { contactService } from './contact.service'
+// export { dealService } from './deal.service'
 
 // Exportar classes dos serviços legados (para testes e extensão)
 export { PropertyService } from './property.service'
-export { ContactService } from './contact.service'
-export { DealService } from './deal.service'
+// export { ContactService } from './contact.service'
+// export { DealService } from './deal.service'
 
 // ================================================================
 // TIPOS DOS SERVIÇOS MVP (6 TABELAS)

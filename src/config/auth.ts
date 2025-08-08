@@ -258,9 +258,7 @@ export const AUTH_ROUTES = {
 export const PROTECTED_ROUTES = {
   DASHBOARD: '/',
   PROPERTIES: '/propriedades',
-  CONTACTS: '/contatos',
   CLIENTS: '/clientes',
-  PIPELINE: '/pipeline',
   CRM: '/crm',
   REPORTS: '/relatorios',
   CONNECTIONS: '/conexoes',
@@ -273,7 +271,7 @@ export const PROTECTED_ROUTES = {
 export const ROLE_PERMISSIONS = {
   DEV_MASTER: ['all'],
   ADMIN: ['manage_users', 'view_reports', 'manage_crm', 'manage_settings'],
-  AGENT: ['manage_properties', 'manage_contacts', 'view_pipeline', 'use_chat'],
+  AGENT: ['manage_properties', 'use_chat'],
 } as const;
 
 export default authConfig; 

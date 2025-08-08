@@ -22,7 +22,7 @@ import {
 } from '@/services';
 
 // Services legados (para compatibilidade temporária)
-import { propertyService, contactService, dealService } from '@/services';
+import { imoveisVivaRealService, dadosClienteService, interesseImoveisService } from '@/services';
 import { EventBus, SystemEvents, useEventBus } from '@/lib/event-bus';
 import type { 
   DashboardStats, 

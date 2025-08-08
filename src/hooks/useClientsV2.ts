@@ -24,7 +24,7 @@ import {
   useOptimisticCache,
   useCacheBatchInvalidation
 } from '@/hooks/cache/useCache';
-import { contactService } from '@/services';
+// import { contactService } from '@/services';
 import { EventBus, SystemEvents } from '@/lib/event-bus';
 import { toast } from 'sonner';
 import { z } from 'zod';

@@ -46,14 +46,12 @@ function AppSidebarContent() {
       '/agenda': 3,     // Agenda
       '/clientes': 4,   // Clientes
       '/conexoes': 5,   // Conexões
-      '/contatos': 6,   // Contatos
-      '/lei-inquilino': 7, // Lei do Inquilino
-      '/pipeline': 8,   // Pipeline
-      '/propriedades': 9, // Propriedades
-      '/chats': 10,     // Chats
-      '/relatorios': 11, // Relatórios
-      '/usuarios': 12,  // Usuários
-      '/configuracoes': 13, // Configurações
+      '/lei-inquilino': 6, // Lei do Inquilino
+      '/propriedades': 7, // Propriedades
+      '/chats': 8,     // Chats
+      '/relatorios': 9, // Relatórios
+      '/usuarios': 10,  // Usuários
+      '/configuracoes': 11, // Configurações
     };
     return orderMap[path] || 999;
   };
