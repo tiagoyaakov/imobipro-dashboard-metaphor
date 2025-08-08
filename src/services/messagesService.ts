@@ -357,7 +357,7 @@ class MessagesService {
     limit: number = 50
   ): Promise<MessageWithSender[]> {
     try {
-      let query = supabase
+      const query = supabase
         .from('Message')
         .select(`
           *,

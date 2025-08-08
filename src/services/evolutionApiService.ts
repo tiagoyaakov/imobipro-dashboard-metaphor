@@ -69,10 +69,10 @@ class EvolutionApiService {
   constructor(config?: Partial<EvolutionAPIConfig>) {
     // Configuração padrão (pode ser sobrescrita via ENV)
     this.config = {
-      baseUrl: config?.baseUrl || process.env.EVOLUTION_API_URL || 'http://localhost:8080',
-      apiKey: config?.apiKey || process.env.EVOLUTION_API_KEY || '',
-      instance: config?.instance || process.env.EVOLUTION_INSTANCE || 'default',
-      webhookUrl: config?.webhookUrl || process.env.EVOLUTION_WEBHOOK_URL,
+      baseUrl: config?.baseUrl || import.meta.env.VITE_EVOLUTION_API_URL || 'http://localhost:8080',
+      apiKey: config?.apiKey || import.meta.env.VITE_EVOLUTION_API_KEY || '',
+      instance: config?.instance || import.meta.env.VITE_EVOLUTION_INSTANCE || 'default',
+      webhookUrl: config?.webhookUrl || import.meta.env.VITE_EVOLUTION_WEBHOOK_URL,
       timeout: config?.timeout || 30000
     };
 
@@ -470,7 +470,7 @@ class EvolutionApiService {
   // Utilitário para formatar número brasileiro
   static formatBrazilianNumber(number: string): string {
     // Remove caracteres não numéricos
-    let cleaned = number.replace(/\D/g, '');
+    const cleaned = number.replace(/\D/g, '');
     
     // Se começar com 55 (código do Brasil), mantém
     if (cleaned.startsWith('55') && cleaned.length === 13) {

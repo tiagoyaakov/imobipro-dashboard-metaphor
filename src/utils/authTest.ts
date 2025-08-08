@@ -13,7 +13,7 @@ export const testAuthConfig = () => {
   const validation = validateAuthConfig();
   
   console.log('Modo de autenticação:', authConfig.useRealAuth ? 'REAL' : 'MOCK');
-  console.log('Ambiente:', process.env.NODE_ENV);
+  console.log('Ambiente:', import.meta.env.MODE);
   console.log('Configuração válida:', validation.isValid);
   
   if (!validation.isValid) {
@@ -123,8 +123,9 @@ export const checkSystemIntegrity = () => {
     {
       name: 'Variáveis de Ambiente',
       test: () => {
-        const required = ['NODE_ENV'];
-        return required.every(key => process.env[key]);
+        // Em Vite, usar import.meta.env
+        const required = ['MODE'];
+        return required.every(key => (import.meta.env as any)[key] !== undefined);
       },
     },
     {
@@ -193,7 +194,7 @@ export const runAllTests = async () => {
 };
 
 // Executar testes automaticamente em desenvolvimento
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   // Executar após um pequeno delay para não interferir com o carregamento inicial
   setTimeout(() => {
     if (new URLSearchParams(window.location.search).get('test') === 'auth') {

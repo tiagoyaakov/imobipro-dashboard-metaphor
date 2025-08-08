@@ -10,7 +10,7 @@ interface N8nConfig {
 class N8nLegalService {
   private config: N8nConfig;
   private readonly DEFAULT_CONFIG: N8nConfig = {
-    webhookUrl: process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || 'https://your-n8n-instance.com/webhook/legal-assistant',
+    webhookUrl: import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://your-n8n-instance.com/webhook/legal-assistant',
     timeout: 30000,
     retryAttempts: 3
   };

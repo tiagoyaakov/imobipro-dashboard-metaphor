@@ -4,16 +4,16 @@ import { N8nWorkflowConfig, N8nExecutionLog, AppointmentExtended } from '@/types
 // 🔧 CONFIGURAR ESTAS VARIÁVEIS COM SUAS INFORMAÇÕES N8N
 const N8N_CONFIG = {
   // ⚠️ TODO: Substituir pela URL da sua instância n8n
-  baseUrl: process.env.VITE_N8N_BASE_URL || 'http://localhost:5678',
+  baseUrl: import.meta.env.VITE_N8N_BASE_URL || 'http://localhost:5678',
   
   // ⚠️ TODO: Substituir pela sua API Key do n8n
-  apiKey: process.env.VITE_N8N_API_KEY || 'your-n8n-api-key',
+  apiKey: import.meta.env.VITE_N8N_API_KEY || 'your-n8n-api-key',
   
   // ⚠️ TODO: Substituir pela URL base onde o ImobiPRO receberá webhooks
-  webhookBaseUrl: process.env.VITE_WEBHOOK_BASE_URL || 'https://seu-imobipro.com/api/webhooks',
+  webhookBaseUrl: import.meta.env.VITE_WEBHOOK_BASE_URL || 'https://seu-imobipro.com/api/webhooks',
   
   // ⚠️ TODO: Definir secret para validação de webhooks (recomendado)
-  webhookSecret: process.env.VITE_N8N_WEBHOOK_SECRET || 'your-webhook-secret',
+  webhookSecret: import.meta.env.VITE_N8N_WEBHOOK_SECRET || 'your-webhook-secret',
   
   // Timeout para requests (em ms)
   timeout: 30000,
