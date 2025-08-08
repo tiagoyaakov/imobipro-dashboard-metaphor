@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import type { User } from '../hooks/useUsers';
 import { authKeys, AUTH_ERROR_MESSAGES, LoginFormData } from '../schemas/auth';
 import { authConfig } from '../config/auth';

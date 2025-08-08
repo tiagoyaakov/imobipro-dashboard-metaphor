@@ -105,20 +105,31 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
       let comparison = 0;
       
       switch (sortBy) {
-        case 'nome':
+        case 'nome': {
           comparison = a.nome.localeCompare(b.nome);
           break;
-        case 'score_lead':
-          comparison = a.score_lead - b.score_lead;
+        }
+        case 'score_lead': {
+          const scoreA = a.score_lead;
+          const scoreB = b.score_lead;
+          comparison = scoreA - scoreB;
           break;
-        case 'created_at':
-          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        }
+        case 'created_at': {
+          const createdA = new Date(a.created_at).getTime();
+          const createdB = new Date(b.created_at).getTime();
+          comparison = createdA - createdB;
           break;
-        case 'ultima_interacao':
+        }
+        case 'ultima_interacao': {
           const dateA = a.ultima_interacao ? new Date(a.ultima_interacao).getTime() : 0;
           const dateB = b.ultima_interacao ? new Date(b.ultima_interacao).getTime() : 0;
           comparison = dateA - dateB;
           break;
+        }
+        default: {
+          comparison = 0;
+        }
       }
 
       return sortOrder === 'desc' ? -comparison : comparison;

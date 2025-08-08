@@ -1,183 +1,93 @@
-# 👥 MÓDULO 3: CLIENTES (✅ 95% CONCLUÍDO)
+### Módulo 3 — Clientes (Integração Front ↔ Back com RLS)
 
-## 🎯 Status Atual: IMPLEMENTAÇÃO CONCLUÍDA
+#### 1) O que já foi feito (resumo executivo)
+- Ajuste no Supabase (RLS) para destravar 403 no `public.dados_cliente` sem abrir excessos:
+  - Criada policy transitória de SELECT (`temp_select_dados_cliente_roles`) para `authenticated`:
+    - DEV_MASTER e ADMIN: leitura total.
+    - AGENT: leitura quando `funcionario = auth.uid()` ou `funcionario IS NULL` (fase de transição/atribuição futura).
+  - Mantidas as policies existentes (ALL) com checagens por papel baseadas em `public."User"`.
+- Verificação de ambiente:
+  - `.env` com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` corretos.
+  - Tabela `public.dados_cliente` confirmada e acessível (SELECT count OK).
 
-**Data de Conclusão:** Janeiro 2025  
-**Arquivos Implementados:** 15+ arquivos  
-**Funcionalidades:** 100% operacionais  
+Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD com RLS correta por usuário e ação, evoluindo do ajuste transitório para policies definitivas.
+#### 2) Plano de ações (curto prazo — viabilizar integração e testes CRUD)
 
-## ✅ Implementações Realizadas
+- Padronizar uso do Supabase Client no front-end
+  - Ação: usar apenas `@/lib/supabase-client` em hooks e services do módulo Clientes.
+  - Impacto: evita sessões duplicadas e comportamentos divergentes.
 
-### 1. Interface UX Otimizada ✅
-- **Arquivo Principal:** `src/pages/Clientes.tsx`
-- **Correções Implementadas:**
-  - ❌ **Removido:** 3 botões "add new lead" redundantes
-  - ✅ **Mantido:** 1 botão principal funcional next to "Clientes & Leads"
-  - ✅ **Adicionado:** Modal completo com NewLeadForm
-  - ✅ **Integrado:** Sistema de status em tempo real
-  - ✅ **Implementado:** Métricas compactas no dashboard
+- Provisionamento de usuário em `public."User"`
+  - Ação: garantir que todo usuário autenticado tenha linha correspondente em `public."User"` (on-login).
+  - Opções:
+    - Trigger/Function no banco (existe base no repo) ou Edge Function pós-login.
+  - Impacto: permite voltar às policies originais sem policy transitória.
 
-### 2. Sistema Híbrido de Criação de Leads ✅
-- **Arquivos Implementados:**
-  - `src/services/leadWebhookService.ts` - Serviço híbrido principal
-  - `src/services/n8nLeadsService.ts` - Integração n8n completa
-  - `src/hooks/useLeadCreation.ts` - React Query hooks
-  - `src/schemas/n8n-leads-schemas.ts` - Validação Zod completa
+- Garantir compatibilidade de schema
+  - Ação: alinhar valores de `status` no front com os persistidos em `dados_cliente` (ex.: `novos`, `contatados`, `qualificados`, ...). Evitar capitalização divergente.
+  - Ação: evitar uso de campos não existentes (mantendo hooks MVP atuais que usam apenas colunas reais).
 
-### 3. Integração N8N com Fallback Inteligente ✅
-- **Estratégia Multi-Camada:**
-  1. **Primário:** Supabase direto (mais rápido)
-  2. **Fallback:** Webhook n8n (mais robusto)
-  3. **Diagnóstico:** Sistema de monitoramento
+- Testes CRUD com RLS por papel
+  - Cenários mínimos:
+    - DEV_MASTER: CREATE/READ/UPDATE/DELETE livre (verificação de leitura de todos).
+    - ADMIN: leitura de todos e operações restritas à empresa (conforme policies existentes); checar ao menos READ e UPDATE.
+    - AGENT: apenas registros com `funcionario = auth.uid()`; checar READ/INSERT/UPDATE/DELETE.
+  - Critério de aceite: zero 403 inesperado; operações negadas apenas quando a policy exige.
 
-### 4. Correção Crítica de Permissões ✅
-- **Problema:** Erro 403 Forbidden na tabela Contact
-- **Solução:** Script SQL completo implementado
-- **Arquivo:** `migrations/fix_contact_permissions.sql`
-- **Funcionalidades:**
-  - ✅ RLS (Row Level Security) configurado
-  - ✅ Políticas de acesso por role
-  - ✅ Função SQL para criação de leads
-  - ✅ Índices de performance otimizados
+- Observabilidade e UX de erro
+  - Ação: exibir mensagens de autorização quando `error.code` indicar RLS (ex.: 42501/301) nos toasts do módulo.
 
-### 5. Sistema de Diagnóstico em Tempo Real ✅
-- **Componente:** `src/components/clients/LeadSystemStatus.tsx`
-- **Funcionalidades:**
-  - 🟢 Status Supabase (conectividade + permissões)
-  - 🟡 Status n8n (se configurado)
-  - 🔴 Indicadores de erro em tempo real
-  - 🧪 Botões de teste integrados
+- Segurança de variáveis
+  - Ação: remover `SUPABASE_SERVICE_ROLE_KEY` do `.env` do front; manter apenas em backend/Edge Functions.
 
-### 6. Documentação Técnica Completa ✅
-- **Arquivos de Documentação:**
-  - `docs/SUPABASE_PERMISSIONS_FIX.md` - Guia de correção
-  - `docs/N8N_INTEGRATION.md` - Manual de integração
-  - `.env.example` - Variáveis de ambiente atualizadas
+#### 3) Passo a passo dinâmico (ideal para começar a testar)
 
-## 🏗️ Arquitetura Técnica Implementada
+1. Ambiente e client
+   - Confirmar `.env` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_AUTH_REDIRECT_URL`.
+   - Unificar imports para `@/lib/supabase-client` no módulo Clientes (hooks/services).
 
-### Database Schema
+2. Provisionamento de `public."User"`
+   - Implementar (ou habilitar) rotina pós-login que garante um registro em `public."User"` com `id = auth.uid()` e `role`/`companyId` adequados.
+   - Verificar com query: `select count(*) from "public"."User" where id = auth.uid();`.
 
-Ver arquivo dedicado: `docs/database-schema.md` - Seção: Módulo 3 - Clientes
+3. Testes CRUD por papel (com usuários reais)
+   - AGENT:
+     - CREATE: inserir `dados_cliente` com `funcionario = auth.uid()`.
+     - READ: listar apenas seus registros e os sem `funcionario` (transitório).
+     - UPDATE/DELETE: operar apenas nos próprios.
+   - ADMIN:
+     - READ: ver todos (da empresa) — validar policies existentes.
+     - UPDATE: atualizar clientes da empresa.
+   - DEV_MASTER:
+     - CRUD completo, sem restrições.
 
-## 🚀 Funcionalidades Implementadas e Testadas
+4. Ajustes finos de filtros e status
+   - Consolidar enumerações de `status` no front (usar os valores efetivos do banco: `novos`, `contatados`, `qualificados`, `interessados`, `negociando`, `convertidos`, `perdidos`).
+   - Revisar componentes que calculam estatísticas e HEAD counts (já funcionam com a policy transitória).
 
-### 1. Interface Kanban Funcional ✅
-- **Componente:** `src/components/clients/LeadFunnelKanban.tsx`
-- **Funcionalidades:**
-  - ✅ Visualização em colunas por estágio (NEW, QUALIFIED, NEGOTIATING, CONVERTED)
-  - ✅ Drag & drop entre estágios (funcional)
-  - ✅ Contadores de leads por coluna
-  - ✅ Cards de lead com informações essenciais
-  - ✅ Hook personalizado `useFunnelKanban()` para gestão de estado
+5. Remoção controlada da policy transitória
+   - Após garantir provisionamento automático de `public."User"` e validação dos cenários acima, remover a policy `temp_select_dados_cliente_roles`.
+   - Critério de aceite: todos os testes CRUD passam sem a policy transitória.
 
-### 2. Sistema de Criação de Leads ✅
-- **Componente:** `src/components/clients/NewLeadForm.tsx`
-- **Funcionalidades:**
-  - ✅ Formulário completo com validação Zod
-  - ✅ Campos: nome, email, telefone, empresa, orçamento, fonte
-  - ✅ Integração com sistema híbrido (Supabase + n8n)
-  - ✅ Feedback visual de sucesso/erro
-  - ✅ Modal integrado na página principal
+6. Endurecimento opcional
+   - Habilitar RLS em `imoveisvivareal4` (Ativado ✅) e manter policies existentes.
+   - Removida a policy transitória `temp_select_dados_cliente_roles` de `dados_cliente` (✅).
+   - Otimizar policies para substituir `auth.*()` por `(SELECT auth.*())` quando aplicável (performance em escala).
 
-### 3. Sistema de Scoring Automático ✅
-- **Implementação:** `src/services/n8nLeadsService.ts`
-- **Algoritmo de Scoring:**
-  ```typescript
-  // ✅ Scoring baseado em múltiplos critérios
-  let score = 50; // Base inicial
-  
-  // Orçamento (peso alto)
-  if (budget > 500000) score += 20;
-  if (budget > 1000000) score += 30;
-  
-  // Fonte do lead (peso médio)
-  if (source === 'INDICACAO') score += 15;
-  if (source === 'SITE') score += 10;
-  
-  // Dados completos (peso baixo)
-  if (email && phone) score += 5;
-  ```
+#### 4) Critérios de aceite
+- Tela de Clientes carrega sem 403 para usuários autenticados.
+- AGENT consegue CRUD apenas nos próprios registros.
+- ADMIN consegue ler todos (da empresa) e atualizar registros de sua empresa.
+- DEV_MASTER consegue CRUD completo.
+- Erros de autorização exibem toast com mensagem clara.
 
-### 4. Atribuição Automática de Leads ✅
-- **Algoritmo:** Round-robin inteligente
-- **Funcionalidades:**
-  - ✅ Distribuição equitativa entre agentes ativos
-  - ✅ Considera carga de trabalho atual
-  - ✅ Fallback para usuário atual se sistema falhar
-  - ✅ Logs de atribuição para auditoria
+#### 5) Observações e riscos
+- Enquanto a policy transitória existir, registros sem `funcionario` serão visíveis a AGENT — usar apenas durante fase de transição. (Removida ✅)
+- Garanta o provisionamento consistente de `public."User"` para remover a policy transitória.
+- Evitar uso do client alternativo em `@/integrations/supabase/client` neste módulo.
 
-### 5. Monitoramento em Tempo Real ✅
-- **Dashboard de Métricas:**
-  - ✅ Total de leads ativos
-  - ✅ Leads convertidos com percentual
-  - ✅ Leads em negociação
-  - ✅ Top fonte de leads
-  - ✅ Atualização automática com React Query
-
-## 🔧 Correções Críticas Implementadas
-
-### Problema Inicial: UX Confusa
-- **Situação:** 3 botões "add new lead" com apenas 1 funcional
-- **Solução:** ✅ Removidos botões redundantes, mantido apenas o principal
-- **Resultado:** Interface limpa e intuitiva
-
-### Problema Crítico: Erro 403 Forbidden
-- **Situação:** Não conseguia criar leads (erro de permissão Supabase)
-- **Solução:** ✅ Script SQL completo para corrigir RLS
-- **Resultado:** Criação de leads funcionando perfeitamente
-
-### Problema de Integração: Dependência única do Supabase
-- **Situação:** Sistema falhava se Supabase tivesse problemas
-- **Solução:** ✅ Sistema híbrido com fallback automático para n8n
-- **Resultado:** Alta disponibilidade e robustez
-
-## 📊 Métricas de Performance Atingidas
-
-- **✅ Interface Responsiva:** < 1s de loading
-- **✅ Criação de Leads:** < 2s de processamento
-- **✅ Sincronização:** Tempo real com React Query
-- **✅ Fallback Automático:** < 5s para ativação
-- **✅ Taxa de Sucesso:** 99%+ na criação de leads
-
-## 🔮 Próximos Passos Recomendados
-
-### Fase 1: Otimizações Avançadas (Futuro)
-1. **Analytics Avançados:** Gráficos de conversão detalhados
-2. **Campanhas Automatizadas:** Templates de mensagens por estágio
-3. **IA para Scoring:** Machine learning para score mais preciso
-4. **Notificações Push:** Alertas em tempo real para novos leads
-
-### Fase 2: Integrações Avançadas (Futuro)
-1. **WhatsApp Business API:** Mensagens automáticas
-2. **Email Marketing:** Nurturing de leads
-3. **Integração CRM:** Sync com sistemas externos
-4. **Relatórios Avançados:** Dashboards executivos
-
-## ✅ Status Final: MÓDULO CLIENTES COMPLETO
-
-O módulo de Clientes está **100% funcional** e pronto para produção, com:
-
-- ✅ **Interface otimizada** e intuitiva
-- ✅ **Sistema híbrido robusto** com fallback automático
-- ✅ **Integração n8n completa** preparada para automações
-- ✅ **Correções de permissões** implementadas
-- ✅ **Documentação técnica** completa
-- ✅ **Monitoramento em tempo real** funcionando
-
-**Recomendação:** Prosseguir para o próximo módulo (CHATS ou CONEXÕES) mantendo a mesma qualidade de implementação.
-
-## 🏆 Diferenciais Competitivos Alcançados
-
-1. **Primeiro CRM imobiliário** com sistema híbrido de criação de leads
-2. **Fallback automático** para alta disponibilidade
-3. **Scoring inteligente** baseado em múltiplos critérios
-4. **Interface Kanban** moderna e intuitiva
-5. **Diagnóstico em tempo real** para troubleshooting
-6. **Integração n8n nativa** para automações futuras
-
----
-
-**Status Atual:** ✅ **MÓDULO 100% OPERACIONAL**  
-**Data de Conclusão:** Janeiro 2025  
-**Próxima Ação:** Módulo está completo e funcionando em produção
+#### 6) Próximos passos sugeridos
+- Padronizar client em todo o app.
+- Implementar/validar rotina de provisionamento de `public."User"` pós-login.
+- Consolidar e auditar status usados no front (alinhados ao banco ✅).
+- Registrar decisões e checagens no `docs/architecture.md` (SECURE-VIBE).
