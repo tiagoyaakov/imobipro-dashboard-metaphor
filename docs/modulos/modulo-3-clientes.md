@@ -10,44 +10,54 @@
   - `.env` com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` corretos.
   - Tabela `public.dados_cliente` confirmada e acessível (SELECT count OK).
 
+- Front-end do módulo Clientes (implementado):
+  - Padronização do client Supabase: uso único de `@/lib/supabase-client` em hooks e services do módulo (evita sessões duplicadas).
+  - Correção do erro 400 no Kanban: remoção da ordenação por campo inexistente `score_lead`; agora ordena por `created_at desc` no `useKanbanMVP`.
+  - Alinhamento da lista (aba Clientes) ao schema real: colunas reduzidas para Cliente, Status, Telefone, Email, Interesse, Corretor.
+  - Exibição do nome do corretor: lookup em `public."User"` para mostrar nome/`fullName`/email em vez do UUID do `funcionario`.
+  - Modal de Detalhes com CRUD: botão “ver” na tabela abre modal com visualizar/editar/excluir integrados diretamente à `public.dados_cliente` via mutations.
+  - Remoção de over-filtering no client: serviço `dadosCliente.service` não aplica mais filtros de RLS no cliente; confia 100% nas policies do banco.
+  - Instrumentação e robustez: logs no `useClientesMVP`/service para auditoria de payloads; mapeamentos tolerantes a `null` e inclusão de `interesse` no tipo do card.
+  - Provisionamento de usuário: otimizações no `AuthContext` para provisionar `public."User"` pós-login sem travar a UI e invalidar queries após eventos de auth.
+
 Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD com RLS correta por usuário e ação, evoluindo do ajuste transitório para policies definitivas.
 #### 2) Plano de ações (curto prazo — viabilizar integração e testes CRUD)
 
-- Padronizar uso do Supabase Client no front-end
+- Padronizar uso do Supabase Client no front-end — Status: ✅ Concluído
   - Ação: usar apenas `@/lib/supabase-client` em hooks e services do módulo Clientes.
   - Impacto: evita sessões duplicadas e comportamentos divergentes.
 
-- Provisionamento de usuário em `public."User"`
+- Provisionamento de usuário em `public."User"` — Status: ✅ Implementado no `AuthContext` (validação contínua)
   - Ação: garantir que todo usuário autenticado tenha linha correspondente em `public."User"` (on-login).
   - Opções:
     - Trigger/Function no banco (existe base no repo) ou Edge Function pós-login.
   - Impacto: permite voltar às policies originais sem policy transitória.
 
-- Garantir compatibilidade de schema
+- Garantir compatibilidade de schema — Status: ✅ Colunas reais apenas; UI e hooks ajustados
   - Ação: alinhar valores de `status` no front com os persistidos em `dados_cliente` (ex.: `novos`, `contatados`, `qualificados`, ...). Evitar capitalização divergente.
   - Ação: evitar uso de campos não existentes (mantendo hooks MVP atuais que usam apenas colunas reais).
 
-- Testes CRUD com RLS por papel
+- Testes CRUD com RLS por papel — Status: 🚧 Em andamento (CRUD na UI habilitado; validação por perfil em curso)
   - Cenários mínimos:
     - DEV_MASTER: CREATE/READ/UPDATE/DELETE livre (verificação de leitura de todos).
     - ADMIN: leitura de todos e operações restritas à empresa (conforme policies existentes); checar ao menos READ e UPDATE.
     - AGENT: apenas registros com `funcionario = auth.uid()`; checar READ/INSERT/UPDATE/DELETE.
   - Critério de aceite: zero 403 inesperado; operações negadas apenas quando a policy exige.
 
-- Observabilidade e UX de erro
+- Observabilidade e UX de erro — Status: ✅ Toasters e logs adicionados
   - Ação: exibir mensagens de autorização quando `error.code` indicar RLS (ex.: 42501/301) nos toasts do módulo.
 
-- Segurança de variáveis
+- Segurança de variáveis — Status: ✅ Sem `SERVICE_ROLE` no front
   - Ação: remover `SUPABASE_SERVICE_ROLE_KEY` do `.env` do front; manter apenas em backend/Edge Functions.
 
 #### 3) Passo a passo dinâmico (ideal para começar a testar)
 
 1. Ambiente e client
    - Confirmar `.env` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_AUTH_REDIRECT_URL`.
-   - Unificar imports para `@/lib/supabase-client` no módulo Clientes (hooks/services).
+   - Unificar imports para `@/lib/supabase-client` no módulo Clientes (hooks/services). ✅
 
 2. Provisionamento de `public."User"`
-   - Implementar (ou habilitar) rotina pós-login que garante um registro em `public."User"` com `id = auth.uid()` e `role`/`companyId` adequados.
+   - Implementar (ou habilitar) rotina pós-login que garante um registro em `public."User"` com `id = auth.uid()` e `role`/`companyId` adequados. ✅ (feito no `AuthContext` com invalidação de queries)
    - Verificar com query: `select count(*) from "public"."User" where id = auth.uid();`.
 
 3. Testes CRUD por papel (com usuários reais)
@@ -87,10 +97,16 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
 - Evitar uso do client alternativo em `@/integrations/supabase/client` neste módulo.
 
 #### 6) Próximos passos sugeridos
-- Padronizar client em todo o app.
-- Implementar/validar rotina de provisionamento de `public."User"` pós-login.
-- Consolidar e auditar status usados no front (alinhados ao banco ✅).
-- Registrar decisões e checagens no `docs/architecture.md` (SECURE-VIBE).
+- Saneamento dos dados de `funcionario` em `public.dados_cliente`:
+  - Garantir que todos os valores apontem para usuários com `role = 'CORRETOR'` em `public."User"`.
+  - Caso necessário, anular temporariamente os que apontam para não-CORRETOR e reatribuir conforme regra do negócio.
+- Filtro por corretor na aba Clientes (qualquer role com permissão pode filtrar por corretor específico).
+- Paginação/virtualização na lista para performance quando N > 200.
+- Refinar toasts de erro/sucesso com mais contexto (códigos Supabase, hints) em todas as operações CRUD.
+- Validar UPDATE/DELETE por role com usuários reais e registrar matriz de autorização.
+- Registrar decisões/checagens no `docs/architecture.md` (SECURE-VIBE) e manter histórico de versões.
+- Padronizar o client Supabase em todo o app (fora do módulo Clientes) e remover imports legados.
+- E2E: cenários básicos para CRUD por role e drag-and-drop do Kanban persistindo `status`.
 
 #### 7) Registro do que foi feito (auditoria incremental)
 - Lint (módulo Clientes):
@@ -116,6 +132,15 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
   - `src/pages/auth/LoginPage.tsx`: ADMIN/DEV_MASTER → `/`; AGENT → `/clientes`.
 - Teste CRUD automatizado (AGENT via login real):
   - Script `scripts/test-clientes-crud-login.mjs` criado e executado com sucesso (INSERT → SELECT → UPDATE → DELETE), respeitando RLS.
+
+- UI/Serviços (incremental recente):
+  - Kanban: ordenação alterada para `created_at desc` (remoção do `score_lead` inexistente) — fim do erro 400.
+  - Lista (Clientes): colunas reduzidas e alinhadas ao banco (Cliente, Status, Telefone, Email, Interesse, Corretor);
+    exibição do nome do corretor via lookup em `public."User"`.
+  - Modal de detalhes: visualização/edição/exclusão integradas à `public.dados_cliente` (via `useClientesMutationsMVP`).
+  - Serviço `dadosCliente.service`: sem filtros de RLS no client; ordenação padrão por `created_at desc`; logs de diagnóstico em `findAll`.
+  - Hook `useClientesMVP`: logs de auditoria (count/rows/sample); mapeamento robusto com defaults e inclusão de `interesse` no tipo do card.
+  - `AuthContext`: provisionamento de `public."User"` pós-login não bloqueante, com `invalidateQueries` após eventos de sessão.
 
 #### 8) Próxima ação — Análise do modal de criação de cliente (NovoClienteModal)
 - Contexto: usuário reporta que o modal não está criando cliente.
