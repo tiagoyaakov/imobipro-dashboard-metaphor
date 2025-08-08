@@ -91,3 +91,47 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
 - Implementar/validar rotina de provisionamento de `public."User"` pós-login.
 - Consolidar e auditar status usados no front (alinhados ao banco ✅).
 - Registrar decisões e checagens no `docs/architecture.md` (SECURE-VIBE).
+
+#### 7) Registro do que foi feito (auditoria incremental)
+- Lint (módulo Clientes):
+  - `src/components/clientes/ClientesList.tsx`: correção do `no-case-declarations` no switch de ordenação.
+  - `src/components/clientes/NovoClienteModal.tsx`: regex de telefone sem escapes desnecessários.
+- Padronização do client Supabase:
+  - Serviços/hooks do módulo Clientes usando `@/lib/supabase-client`.
+- Consolidação de status no front:
+  - `src/types/clientes.ts` centraliza `novos | contatados | qualificados | interessados | negociando | convertidos | perdidos`.
+  - Componentes/Hooks ajustados para usar o conjunto consolidado.
+- Policies e RLS (Supabase):
+  - Removida a policy transitória `temp_select_dados_cliente_roles` (SELECT) em `public.dados_cliente`.
+  - Habilitado RLS em `public.imoveisvivareal4` (mantidas policies ALL existentes).
+  - Refatoradas policies de `public.dados_cliente` para evitar recursão:
+    - `agent_own_dados_cliente`: ALL usando `funcionario = auth.uid()` (with check idem).
+    - `admin_company_dados_cliente`: ALL usando funções SECURITY DEFINER `public.is_admin()` + `public.same_company_as(funcionario)`.
+    - `dev_master_all_dados_cliente`: ALL usando `public.is_dev_master()`.
+  - Grants mínimos para o papel `authenticated`:
+    - `GRANT USAGE ON SCHEMA public TO authenticated`.
+    - `GRANT SELECT, INSERT, UPDATE, DELETE ON public.dados_cliente TO authenticated`.
+    - `GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO authenticated`.
+- Redirecionamento pós-login por role:
+  - `src/pages/auth/LoginPage.tsx`: ADMIN/DEV_MASTER → `/`; AGENT → `/clientes`.
+- Teste CRUD automatizado (AGENT via login real):
+  - Script `scripts/test-clientes-crud-login.mjs` criado e executado com sucesso (INSERT → SELECT → UPDATE → DELETE), respeitando RLS.
+
+#### 8) Próxima ação — Análise do modal de criação de cliente (NovoClienteModal)
+- Contexto: usuário reporta que o modal não está criando cliente.
+- Hipóteses principais:
+  - Para ADMIN/DEV_MASTER, `funcionario` pode estar ficando `null` quando nenhum corretor é selecionado → falha em RLS (`with check`) nas policies de INSERT.
+  - Possível erro de superfície/UX: erro do Supabase não propagado claramente ao usuário (toast). Verificar mensagens e `error.code`/`error.message` no `useClientesMutationsMVP`.
+  - Validações do formulário (Zod) impedindo submissão (telefone/nome), ou dados divergentes do schema (campos opcionais/string vazia vs null) causando erro no INSERT.
+- Plano de análise (passo a passo):
+  1) Instrumentação temporária de logs no `NovoClienteModal.tsx` (entrada → payload → resposta) e no `dadosCliente.service.ts` (pontos de erro em `create`).
+  2) Verificar fluxo de `funcionario` por role:
+     - AGENT: forçar `funcionario = auth.uid()` (já implementado).
+     - ADMIN/DEV_MASTER: exigir seleção de corretor (bloquear salvar se `funcionario` vazio) ou aplicar fallback seguro documentado.
+  3) Reproduzir com usuário AGENT e ADMIN/DEV_MASTER e coletar `error.code` e `error.message`.
+  4) Se confirmado `with check` por `funcionario` nulo para ADMIN/DEV_MASTER, implementar regra de UI: campo obrigatório (ou explicitar que sem corretor não é possível criar com RLS atual).
+  5) Validar novamente com o script e pela interface.
+- Critério de aceite para o modal:
+  - AGENT cria cliente sempre com `funcionario = auth.uid()`.
+  - ADMIN/DEV_MASTER criam cliente somente quando um corretor for selecionado (ou regra/fallback decidido), sem erro de RLS.
+  - Toast de sucesso/erro claros, exibindo mensagens amigáveis quando for RLS (código 42501/301) ou validação.
