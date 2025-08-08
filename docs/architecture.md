@@ -96,10 +96,10 @@ src/
 ```typescript
 / (Dashboard)            - Página principal com métricas
 /propriedades           - Gestão de imóveis
-/contatos              - Gestão de clientes/leads
+/contatos              - (Removido) migrado para módulo Clientes
 /agenda                - Agendamentos e calendário
 /clientes              - Gestão de clientes
-/pipeline              - Pipeline de vendas
+/pipeline              - (Removido) funil migrado para CRM dentro de Clientes
 /crm                   - CRM avançado
 /relatorios            - Relatórios e analytics
 /conexoes              - Integrações

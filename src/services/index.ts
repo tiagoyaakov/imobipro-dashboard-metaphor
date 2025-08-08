@@ -74,24 +74,9 @@ export type {
   PropertyStats 
 } from './property.service'
 
-export type { 
-  Contact, 
-  ContactInsert, 
-  ContactUpdate, 
-  ContactFilters,
-  ContactStats,
-  LeadActivity
-} from './contact.service'
+// Tipos de Contact removidos (service legacy eliminado)
 
-export type { 
-  Deal, 
-  DealInsert, 
-  DealUpdate, 
-  DealFilters,
-  DealStats,
-  StageHistory,
-  DealForecast
-} from './deal.service'
+// Tipos de Deal removidos (service legacy eliminado)
 
 // Exportar base service para extensão futura
 export { BaseService } from './base.service'
