@@ -33,6 +33,13 @@ export function useClientesMVP(options?: {
     queryKey: [QUERY_KEYS.clientes, options],
     queryFn: async () => {
       const result = await dadosClienteService.findAll(options);
+      // DEBUG: auditoria do payload
+      try {
+        console.log('[ClientesMVP] result.count:', result.count, 'rows:', Array.isArray(result.data) ? result.data.length : null);
+        if (Array.isArray(result.data)) {
+          console.log('[ClientesMVP] sample row 0:', result.data[0]);
+        }
+      } catch {}
       if (result.error) {
         throw result.error;
       }
@@ -65,6 +72,13 @@ export function useClientesMVP(options?: {
       updated_at: cliente.updated_at || cliente.created_at || new Date().toISOString(),
     };
   }) || [];
+
+  // DEBUG: tamanhos após mapeamento
+  if (import.meta && import.meta.env && !import.meta.env.PROD) {
+    try {
+      console.log('[ClientesMVP] mapped clientes length:', clientes.length);
+    } catch {}
+  }
 
   return {
     clientes,

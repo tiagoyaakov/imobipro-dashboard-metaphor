@@ -116,8 +116,7 @@ export class DadosClienteService {
         .from(this.tableName)
         .select('*', { count: 'exact' })
 
-      // Aplicar RLS
-      query = await this.applyRLS(query)
+      // NÃO aplicar filtros client-side para RLS; confiar nas policies
 
       // Aplicar filtros específicos
       if (options?.filters) {
@@ -155,6 +154,11 @@ export class DadosClienteService {
       const { data, error, count } = await query
 
       if (error) throw error
+
+      // DEBUG: log do payload vindo do banco
+      try {
+        console.log('[DadosClienteService.findAll] count:', count, 'rows:', Array.isArray(data) ? data.length : null)
+      } catch {}
 
       return { data, error: null, count: count || 0 }
     } catch (error) {
