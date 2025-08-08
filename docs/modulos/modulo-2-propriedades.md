@@ -42,6 +42,22 @@ O módulo Propriedades foi auditado e reestruturado para operar diretamente sobr
 ### Matching (n8n)
 - Ao inserir um imóvel, um evento será disparado (EventBus/Supabase trigger) → n8n processa matching contra `interesse_imoveis`
 
+#### Trigger Supabase → n8n
+- Arquivo: `supabase/migrations/20250808180000_property_matching_trigger.sql`
+- Requisitos: extensão `pg_net`
+- Comportamento: após `INSERT` em `imoveisvivareal4`, envia JSON para o webhook do n8n:
+  ```json
+  {
+    "event": "property.created",
+    "id": "<uuid>",
+    "title": "...",
+    "city": "...",
+    "price": 123456,
+    "created_at": "2025-08-08T18:00:00Z"
+  }
+  ```
+- Ajuste a URL do webhook no `CREATE TRIGGER` (última linha do arquivo). Em produção, recomendo parametrizar via variável de ambiente/secret na sua pipeline de migrations.
+
 ### Endpoints REST (para n8n e integrações)
 - `GET /api/properties` — lista paginada de imóveis
   - Query params: `page`, `limit`, `status`, `propertyType`, `city`, `minPrice`, `maxPrice`, `minBedrooms`, `maxBedrooms`, `isFeatured`, `search`
