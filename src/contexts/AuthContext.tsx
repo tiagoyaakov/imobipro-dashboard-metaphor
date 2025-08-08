@@ -473,9 +473,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('🔐 [Auth] Erro ao obter sessão inicial:', error);
       }
       
-      // Garantir provisionamento caso já exista sessão válida
+      // Garantir provisionamento caso já exista sessão válida (não bloquear UI)
       if (session?.user) {
-        await ensurePublicUserRecord(session.user);
+        // Fire-and-forget para não travar isLoading
+        ensurePublicUserRecord(session.user);
       }
 
       if (mounted) {
@@ -497,8 +498,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSupabaseUser(session?.user ?? null);
           
           if (event === 'SIGNED_IN') {
-            // Provisionar public."User" e só então atualizar dados
-            await ensurePublicUserRecord(session?.user ?? null);
+            // Provisionar public."User" sem bloquear UI
+            ensurePublicUserRecord(session?.user ?? null);
             // Invalidar cache para recarregar dados do usuário
             queryClient.invalidateQueries({ queryKey: authKeys.user() });
           }
