@@ -96,36 +96,10 @@ export class DadosClienteService {
 
   // Aplicar RLS baseado no usuário logado
   private async applyRLS(query: any) {
+    // Confiar nas policies de RLS no servidor; não aplicar filtros adicionais no client
+    // Mantemos apenas uma checagem leve de sessão
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
-
-    // Buscar perfil do usuário para aplicar RLS
-    const { data: profile } = await supabase
-      .from('User')
-      .select('id, role, companyId')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) throw new Error('User profile not found')
-
-    // Aplicar filtros baseados no role
-    if (profile.role === 'DEV_MASTER') {
-      // DEV_MASTER vê todos
-      return query
-    } else if (profile.role === 'ADMIN') {
-      // ADMIN vê todos da sua empresa
-      const { data: companyUsers } = await supabase
-        .from('User')
-        .select('id')
-        .eq('companyId', profile.companyId)
-      
-      const agentIds = companyUsers?.map(u => u.id) || []
-      return query.in('funcionario', agentIds)
-    } else if (profile.role === 'AGENT') {
-      // AGENT vê apenas próprios clientes
-      return query.eq('funcionario', profile.id)
-    }
-
     return query
   }
 

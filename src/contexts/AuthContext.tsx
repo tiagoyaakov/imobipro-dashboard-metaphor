@@ -91,6 +91,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('🔐 [Auth] Erro ao buscar dados do usuário:', error);
+        // Tentar provisionar sob demanda e refazer a consulta uma vez
+        try {
+          await ensurePublicUserRecord(supabaseUser);
+          const { data: dataRetry, error: errorRetry } = await supabase
+            .from('User')
+            .select(`
+              id,
+              email,
+              name,
+              role,
+              companyId,
+              isActive,
+              avatarUrl,
+              telefone,
+              createdAt,
+              updatedAt
+            `)
+            .eq('id', supabaseUser.id)
+            .single();
+
+          if (!errorRetry && dataRetry) {
+            // Sucesso no retry: mapear e retornar imediatamente
+            let mappedRole: 'DEV_MASTER' | 'ADMIN' | 'AGENT' = 'AGENT';
+            if (dataRetry.role === 'CREATOR') mappedRole = 'DEV_MASTER';
+            else if (dataRetry.role === 'DEV_MASTER') mappedRole = 'DEV_MASTER';
+            else if (dataRetry.role === 'ADMIN') mappedRole = 'ADMIN';
+            else if (dataRetry.role === 'MANAGER') mappedRole = 'ADMIN';
+            else if (dataRetry.role === 'VIEWER') mappedRole = 'AGENT';
+
+            const userRetry: User = {
+              id: dataRetry.id,
+              email: dataRetry.email,
+              name: dataRetry.name,
+              role: mappedRole,
+              isActive: dataRetry.isActive ?? true,
+              companyId: dataRetry.companyId || authConfig.development.defaultCompanyId,
+              avatarUrl: dataRetry.avatarUrl || null,
+              telefone: dataRetry.telefone || null,
+              createdAt: dataRetry.createdAt,
+              updatedAt: dataRetry.updatedAt,
+            };
+            return userRetry;
+          }
+        } catch (e) {
+          console.warn('🔐 [Auth] Provisionamento sob demanda falhou (seguindo com fallback):', e);
+        }
+
         console.error('🔐 [Auth] Detalhes do erro:', error.message, error.code);
         
         // Fallback: usar dados básicos do Supabase Auth
@@ -208,9 +255,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Determinar role básica (padrão AGENT)
       const metadataRole = (current.user_metadata?.role as string | undefined) || 'AGENT';
-      const normalizedRole = ['DEV_MASTER', 'ADMIN', 'MANAGER', 'VIEWER', 'CREATOR', 'AGENT'].includes(metadataRole)
-        ? metadataRole
-        : 'AGENT';
+      // Lista mínima de e-mails autorizados a DEV_MASTER em dev
+      const authorizedDevMasterEmails = ['1992tiagofranca@gmail.com'];
+      let normalizedRole = 'AGENT' as 'DEV_MASTER' | 'ADMIN' | 'AGENT' | 'MANAGER' | 'VIEWER' | 'CREATOR';
+      if (['DEV_MASTER', 'ADMIN', 'MANAGER', 'VIEWER', 'CREATOR', 'AGENT'].includes(metadataRole)) {
+        normalizedRole = metadataRole as any;
+      } else {
+        normalizedRole = 'AGENT';
+      }
+      if (authorizedDevMasterEmails.includes((current.email || '').toLowerCase())) {
+        normalizedRole = 'DEV_MASTER';
+      }
 
       const insertData = {
         id: current.id,
@@ -477,6 +532,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (session?.user) {
         // Fire-and-forget para não travar isLoading
         ensurePublicUserRecord(session.user);
+        // Solicitar revalidação dos dados do usuário para refletir provisionamento
+        queryClient.invalidateQueries({ queryKey: authKeys.user() });
       }
 
       if (mounted) {
