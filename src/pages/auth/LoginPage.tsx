@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 // -----------------------------------------------------------
 // Página de Login
@@ -12,8 +13,15 @@ export const LoginPage: React.FC = () => {
   /**
    * Redirecionar para dashboard após login bem-sucedido
    */
+  const { user } = useAuth();
+
   const handleLoginSuccess = () => {
-    navigate('/', { replace: true });
+    const role = user?.role;
+    if (role === 'DEV_MASTER' || role === 'ADMIN') {
+      navigate('/', { replace: true });
+    } else {
+      navigate('/clientes', { replace: true });
+    }
   };
 
   /**
