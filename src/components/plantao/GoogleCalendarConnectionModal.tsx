@@ -203,18 +203,18 @@ export function GoogleCalendarConnectionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="sm:max-w-[460px] max-h-[80vh] overflow-y-auto p-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Calendar className="h-5 w-5" />
             Google Calendar
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Conecte com o Google Calendar para sincronizar seus plantões automaticamente
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Status da Configuração */}
           {renderConfigurationStatus()}
 
@@ -223,14 +223,14 @@ export function GoogleCalendarConnectionModal({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
-                <span>{error}</span>
+                <span className="text-xs">{error}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={clearError}
-                  className="h-auto p-1"
+                  className="h-7 w-7"
                 >
-                  <XCircle className="h-3 w-3" />
+                  <XCircle className="h-3.5 w-3.5" />
                 </Button>
               </AlertDescription>
             </Alert>
@@ -238,11 +238,11 @@ export function GoogleCalendarConnectionModal({
 
           {/* Status da Conexão */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">Status da Conexão</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-medium text-sm">Status da Conexão</h3>
+                  <p className="text-xs text-muted-foreground">
                     {isConnected ? "Sincronização ativa" : "Sincronização desativada"}
                   </p>
                 </div>
@@ -256,14 +256,14 @@ export function GoogleCalendarConnectionModal({
 
           {/* Recursos da Sincronização */}
           <Card>
-            <CardHeader>
+            <CardHeader className="py-3">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Sync className="h-4 w-4" />
                 Recursos de Sincronização
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-1.5 text-xs">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-3 w-3 text-green-500" />
                   Sincronização bidirecional automática
@@ -288,11 +288,11 @@ export function GoogleCalendarConnectionModal({
           {renderDebugInfo()}
 
           {/* Botões de Ação */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2.5 pt-2">
             <Button
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 h-9"
             >
               Fechar
             </Button>
@@ -302,7 +302,7 @@ export function GoogleCalendarConnectionModal({
                 variant="destructive"
                 onClick={disconnectFromGoogle}
                 disabled={isConnecting}
-                className="flex-1"
+                className="flex-1 h-9"
               >
                 {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Desconectar
@@ -311,7 +311,7 @@ export function GoogleCalendarConnectionModal({
               <Button
                 onClick={connectToGoogle}
                 disabled={isConnecting || !isConfigured}
-                className="flex-1"
+                className="flex-1 h-9"
               >
                 {isConnecting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

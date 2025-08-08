@@ -83,17 +83,17 @@ export function PlantaoFilters({
   };
 
   return (
-    <div className="mb-6 space-y-4">
+    <div className="mb-3 space-y-2">
       {/* Linha superior - Navegação e Título */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Botões de navegação */}
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
               onClick={() => onNavigate("PREV")}
-              className="h-9 w-9"
+              className="h-8 w-8"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -101,7 +101,7 @@ export function PlantaoFilters({
               variant="outline"
               size="sm"
               onClick={() => onNavigate("TODAY")}
-              className="px-3"
+              className="px-2 h-8"
             >
               Hoje
             </Button>
@@ -109,42 +109,43 @@ export function PlantaoFilters({
               variant="outline"
               size="icon"
               onClick={() => onNavigate("NEXT")}
-              className="h-9 w-9"
+              className="h-8 w-8"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Título do período */}
-          <h2 className="text-xl font-semibold capitalize">
+          <h2 className="text-base sm:text-lg font-semibold capitalize">
             {getTitle()}
           </h2>
         </div>
 
         {/* Botão de novo evento */}
-        <Button onClick={onNewEvent} size="sm" className="gap-2">
+        <Button onClick={onNewEvent} size="sm" className="gap-2 h-8 px-3">
           <Calendar className="h-4 w-4" />
-          Novo Evento
+          <span className="hidden sm:inline">Novo Evento</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </div>
 
       {/* Linha inferior - Filtros e Views */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         {/* Filtro de corretor (apenas para admin) */}
         {isAdmin && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
             <Select 
               value={selectedCorretorId || "all"} 
               onValueChange={(value) => onCorretorChange(value === "all" ? undefined : value)}
             >
-              <SelectTrigger className="w-[250px]">
+              <SelectTrigger className="w-[220px] h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500" />
                     Todos os Corretores
                   </div>
                 </SelectItem>
@@ -154,7 +155,7 @@ export function PlantaoFilters({
                     <SelectItem key={corretor.id} value={corretor.id}>
                       <div className="flex items-center gap-2">
                         <div 
-                          className="w-3 h-3 rounded-full" 
+                          className="w-2.5 h-2.5 rounded-full" 
                           style={{ backgroundColor: corretor.color }}
                         />
                         {corretor.name}
@@ -167,25 +168,25 @@ export function PlantaoFilters({
             {selectedCorretorId && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => onCorretorChange(undefined)}
-                className="h-8 px-2"
+                className="h-8 w-8"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         )}
 
         {/* Seletor de visualização */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {(["month", "week", "day", "agenda"] as View[]).map((view) => (
             <Button
               key={view}
               variant={currentView === view ? "default" : "outline"}
               size="sm"
               onClick={() => onViewChange(view)}
-              className="gap-2"
+              className="gap-2 h-8 px-3"
             >
               {viewIcons[view]}
               <span className="hidden sm:inline">{viewLabels[view]}</span>
@@ -196,22 +197,22 @@ export function PlantaoFilters({
 
       {/* Legenda de cores para admin */}
       {isAdmin && !selectedCorretorId && (
-        <div className="flex items-center gap-4 pt-2">
-          <span className="text-sm text-muted-foreground">Legenda:</span>
-          <div className="flex flex-wrap gap-3">
+        <div className="flex items-center gap-3 pt-1">
+          <span className="text-xs text-muted-foreground">Legenda:</span>
+          <div className="flex flex-wrap gap-2.5">
             {corretores
               .filter(c => c.role === "AGENT")
               .map((corretor) => (
                 <Badge
                   key={corretor.id}
                   variant="outline"
-                  className="gap-2 px-3 py-1"
+                  className="gap-1.5 px-2.5 py-0.5 text-[11px]"
                 >
                   <div 
                     className="w-2 h-2 rounded-full" 
                     style={{ backgroundColor: corretor.color }}
                   />
-                  <span className="text-xs">{corretor.name}</span>
+                  <span>{corretor.name}</span>
                 </Badge>
               ))}
           </div>

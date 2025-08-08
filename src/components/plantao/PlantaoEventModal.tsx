@@ -148,13 +148,13 @@ export function PlantaoEventModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="sm:max-w-[520px] p-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Calendar className="h-5 w-5" />
             {event ? "Editar Evento" : "Novo Evento"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             {event 
               ? "Atualize as informações do evento de plantão"
               : "Preencha as informações para criar um novo evento de plantão"
@@ -163,17 +163,18 @@ export function PlantaoEventModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
             {/* Título */}
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Título do Evento</FormLabel>
+                  <FormLabel className="text-sm">Título do Evento</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Ex: Visita ao imóvel - Apt. Centro" 
+                      className="h-9"
                       {...field} 
                     />
                   </FormControl>
@@ -189,14 +190,14 @@ export function PlantaoEventModal({
                 name="corretorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Corretor Responsável</FormLabel>
+                    <FormLabel className="text-sm">Corretor Responsável</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                       value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue placeholder="Selecione o corretor" />
                         </SelectTrigger>
                       </FormControl>
@@ -207,7 +208,7 @@ export function PlantaoEventModal({
                             <SelectItem key={corretor.id} value={corretor.id}>
                               <div className="flex items-center gap-2">
                                 <div 
-                                  className="w-3 h-3 rounded-full" 
+                                  className="w-2.5 h-2.5 rounded-full" 
                                   style={{ backgroundColor: corretor.color }}
                                 />
                                 {corretor.name}
@@ -223,19 +224,20 @@ export function PlantaoEventModal({
             )}
 
             {/* Data/Hora Início e Fim */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="startDateTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4" />
                       Início
                     </FormLabel>
                     <FormControl>
                       <Input 
                         type="datetime-local" 
+                        className="h-9"
                         {...field} 
                       />
                     </FormControl>
@@ -249,13 +251,14 @@ export function PlantaoEventModal({
                 name="endDateTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4" />
                       Término
                     </FormLabel>
                     <FormControl>
                       <Input 
                         type="datetime-local" 
+                        className="h-9"
                         {...field} 
                       />
                     </FormControl>
@@ -271,13 +274,14 @@ export function PlantaoEventModal({
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
+                  <FormLabel className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4" />
                     Localização
                   </FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Ex: Rua das Flores, 123 - Centro" 
+                      className="h-9"
                       {...field} 
                     />
                   </FormControl>
@@ -292,17 +296,18 @@ export function PlantaoEventModal({
               name="attendees"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
+                  <FormLabel className="flex items-center gap-2 text-sm">
                     <Users className="h-4 w-4" />
                     Participantes
                   </FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Emails separados por vírgula" 
+                      className="h-9"
                       {...field} 
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs">
                     Adicione os emails dos participantes, separados por vírgula
                   </FormDescription>
                   <FormMessage />
@@ -316,7 +321,7 @@ export function PlantaoEventModal({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel className="text-sm">Descrição</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Adicione detalhes sobre o evento..."
@@ -331,23 +336,24 @@ export function PlantaoEventModal({
             />
 
             {/* Botões */}
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-2.5 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleClose}
                 disabled={isSubmitting}
+                className="h-9"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="h-9">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {event ? "Atualizar" : "Criar"} Evento
               </Button>
             </div>
           </form>
         </Form>
-      </DialogContent>
+      </DialogContent
     </Dialog>
   );
 }
