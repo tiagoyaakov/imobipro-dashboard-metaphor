@@ -166,6 +166,8 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
 
   const onSubmit = async (data: NovoClienteForm) => {
     try {
+      const tsStart = new Date().toISOString();
+      console.log('🔥 [MODAL][submit:start]', tsStart, { form: data, userId: user?.id, userRole: user?.role });
       // REGRAS DE NEGÓCIO PARA ATRIBUIÇÃO DE CORRETOR
       let funcionarioId: string | null = null;
 
@@ -180,6 +182,17 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         funcionarioId = user?.id || null;
       }
 
+      // Validação específica de UI para ADMIN/DEV_MASTER: exigir corretor selecionado
+      if ((user?.role === 'DEV_MASTER' || user?.role === 'ADMIN') && !funcionarioId) {
+        console.warn('🔥 [MODAL][submit:block] ADMIN/DEV_MASTER sem corretor selecionado');
+        toast({
+          title: 'Seleção obrigatória de corretor',
+          description: 'Para criar um cliente como ADMIN/DEV_MASTER, selecione um corretor responsável.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       // Preparar dados para inserção
       const clienteData: DadosClienteInsert = {
         nome: data.nome.trim(),
@@ -192,12 +205,12 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
         funcionario: funcionarioId,
       };
 
-      console.log('🔥 [MODAL] Dados a serem enviados:', clienteData);
-      console.log('🔥 [MODAL] Role do usuário:', user?.role);
-      console.log('🔥 [MODAL] Funcionario atribuído:', funcionarioId);
+      console.log('🔥 [MODAL][submit:payload]', { clienteData });
+      console.log('🔥 [MODAL][user]', { userRole: user?.role, funcionarioId });
 
       // Executar mutation
-      await mutations.create.mutateAsync(clienteData);
+      const created = await mutations.create.mutateAsync(clienteData);
+      console.log('🔥 [MODAL][submit:success]', { createdId: (created as any)?.id, created });
 
       // Sucesso - toast e callback
       const corretorNome = funcionarioId 
@@ -216,10 +229,18 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
       onClose?.();
 
     } catch (error) {
-      console.error('🔥 [MODAL] Erro ao criar cliente:', error);
+      const tsError = new Date().toISOString();
+      const err = error as any;
+      console.error('🔥 [MODAL][submit:error]', tsError, {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        stack: err?.stack
+      });
       toast({
         title: "Erro ao criar cliente",
-        description: "Ocorreu um erro ao salvar o cliente. Verifique o console para detalhes.",
+        description: err?.message || "Ocorreu um erro ao salvar o cliente. Verifique o console para detalhes.",
         variant: "destructive",
       });
     }
@@ -428,13 +449,14 @@ export const NovoClienteModal: React.FC<NovoClienteModalProps> = ({
                     onValueChange={(value) => setValue('funcionario', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um corretor ou deixe em branco" />
+                      <SelectValue placeholder="Selecione um corretor (obrigatório)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unassigned">
-                        <div className="flex items-center gap-2">
+                      {/* Opção de atribuição posterior desabilitada enquanto RLS exigir with check */}
+                      <SelectItem value="unassigned" disabled>
+                        <div className="flex items-center gap-2 opacity-60">
                           <div className="w-2 h-2 rounded-full bg-gray-400" />
-                          Atribuição posterior (n8n)
+                          Atribuição posterior (indisponível)
                         </div>
                       </SelectItem>
                       {loadingCorretores ? (

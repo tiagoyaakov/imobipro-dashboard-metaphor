@@ -213,7 +213,8 @@ export class DadosClienteService {
   // Criar novo cliente - VERSÃO SIMPLIFICADA SEM RLS
   async create(cliente: DadosClienteInsert) {
     try {
-      console.log('🔥 [DEBUG] Iniciando criação de cliente:', cliente);
+      const tsStart = new Date().toISOString();
+      console.log('🔥 [SERVICE][create:start]', tsStart, { input: cliente });
       
       // VERIFICAR USUÁRIO AUTENTICADO ANTES DA INSERÇÃO
       const { data: { user } } = await supabase.auth.getUser()
@@ -234,7 +235,7 @@ export class DadosClienteService {
         throw new Error('User profile not found');
       }
 
-      console.log('🔥 [DEBUG] Usuário autenticado:', profile);
+      console.log('🔥 [SERVICE][create:user]', { id: profile.id, role: profile.role, companyId: profile.companyId });
 
       // Preparar dados do cliente
       const clienteWithDefaults: DadosClienteInsert = {
@@ -248,7 +249,7 @@ export class DadosClienteService {
         interesse: cliente.interesse?.trim() || null
       }
 
-      console.log('🔥 [DEBUG] Cliente processado:', clienteWithDefaults);
+      console.log('🔥 [SERVICE][create:payload]', clienteWithDefaults);
 
       // INSERÇÃO COM VERIFICAÇÃO DE AUTENTICAÇÃO
       const { data, error } = await supabase
@@ -270,12 +271,17 @@ export class DadosClienteService {
         .single();
 
       if (error) {
-        console.error('🔥 [ERROR] Erro na inserção:', error);
-        console.error('🔥 [ERROR] Detalhes:', error.message, error.code, error.details);
-        throw new Error(`Falha ao criar cliente: ${error.message}`);
+        console.error('🔥 [SERVICE][create:error]', {
+          message: (error as any)?.message,
+          code: (error as any)?.code,
+          details: (error as any)?.details,
+          hint: (error as any)?.hint
+        });
+        // Propagar erro original para o modal exibir corretamente
+        throw error;
       }
 
-      console.log('🔥 [SUCCESS] Cliente criado com sucesso:', data);
+      console.log('🔥 [SERVICE][create:success]', { id: data?.id, funcionario: data?.funcionario, status: data?.status });
       
       // Emitir evento se possível
       try {
@@ -289,7 +295,12 @@ export class DadosClienteService {
 
       return { data, error: null };
     } catch (error) {
-      console.error('🔥 [FATAL] Erro fatal ao criar cliente:', error);
+      console.error('🔥 [SERVICE][create:fatal]', {
+        message: (error as any)?.message,
+        code: (error as any)?.code,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint
+      });
       return { data: null, error: error as Error };
     }
   }

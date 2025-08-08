@@ -651,6 +651,27 @@ jobs:
 
 ---
 
+## SECURE-VIBE — Registro (UTC-3)
+
+### 2025-08-08 — Módulo 3: Clientes — Item 8 (NovoClienteModal)
+- Objetivo: Analisar e corrigir falhas no modal de criação de cliente conforme `docs/modulos/modulo-3-clientes.md` item 8.
+- O que foi feito:
+  - Instrumentação de logs temporários no `src/components/clientes/NovoClienteModal.tsx` (submit:start, payload, success, error com code/details/hint) e no `src/services/dadosCliente.service.ts` (create:start, user, payload, success/erro, propagando erro original do Supabase).
+  - Regras de atribuição de `funcionario` por role auditadas:
+    - AGENT: `funcionario = auth.uid()` (mantido)
+    - ADMIN/DEV_MASTER: UI agora exige corretor selecionado; submit bloqueado quando vazio; opção "unassigned" desabilitada para alinhar com RLS (with check).
+  - UX de erro: toasts mostram `error.message` vindo do Supabase; logs trazem `error.code` (ex.: 42501/301) para diagnóstico.
+  - Teste de CRUD (AGENT via login real) executado com sucesso: `scripts/test-clientes-crud-login.mjs` (CREATE → READ → UPDATE → DELETE) respeitando RLS.
+- Impacto:
+  - Evita INSERT inválido por `funcionario` nulo em ADMIN/DEV_MASTER.
+  - Melhora visibilidade de falhas RLS/validação e reduz suporte.
+- Riscos/Observações:
+  - Logs são temporários e devem ser removidos após estabilização.
+  - Confirmar comportamento ADMIN/DEV_MASTER na UI com usuários reais.
+- Próximos passos:
+  - Validar manualmente criação como ADMIN/DEV_MASTER pela UI.
+  - Após estabilização, remover logs temporários e manter mensagens de erro amigáveis.
+
 **✅ Deploy Status: READY FOR PRODUCTION**
 
 O projeto está completamente configurado e otimizado para deploy na Vercel com performance de nível enterprise e segurança robusta.
