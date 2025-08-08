@@ -1,2 +1,2 @@
-// Re-export Supabase client from integrations
-export { supabase } from '@/integrations/supabase/client';
+// Re-export padronizado do Supabase client
+export { supabase } from '@/lib/supabase-client';

@@ -72,7 +72,13 @@ const Clientes = () => {
 
   const handleClienteCreateSuccess = () => {
     // Modal será fechado automaticamente pelo componente
-    // As queries serão invalidadas automaticamente pelo mutation
+    // As queries serão invalidadas automaticamente pelo mutation, mas forçamos refetch para feedback imediato
+    try {
+      listData.refetch?.();
+      kanbanData.refetch?.();
+    } catch (err) {
+      console.warn('Falha ao atualizar listas após criação do cliente (refetch opcional):', err);
+    }
     console.log('Cliente criado com sucesso!');
   };
 
