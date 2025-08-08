@@ -37,6 +37,7 @@ import { usePermissions } from '@/hooks/security/usePermissions';
 import { usePropertyV3 } from '@/hooks/usePropertiesV3';
 import PropertyForm from '@/components/properties/PropertyForm';
 import type { PropertyFormData } from '@/types/properties';
+import { usePropertyExport } from '@/hooks/usePropertyExport';
 
 // Types
 import type { 
@@ -768,6 +769,7 @@ interface PropertyDetailsDialogProps {
 
 const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ id, open, onOpenChange, canManage }) => {
   const { property, isLoading, error } = usePropertyV3(id);
+  const { exportPropertyPDF, exportPropertyXML } = usePropertyExport();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -805,11 +807,18 @@ const PropertyDetailsDialog: React.FC<PropertyDetailsDialogProps> = ({ id, open,
                 </p>
               </div>
               <div className="flex gap-2">
-                {/* Exportações (implementação futura) */}
-                <Button variant="outline" size="sm" disabled>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportPropertyPDF(property)}
+                >
                   Exportar PDF
                 </Button>
-                <Button variant="outline" size="sm" disabled>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportPropertyXML(property)}
+                >
                   Exportar XML
                 </Button>
               </div>
