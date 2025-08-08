@@ -16,67 +16,34 @@ import { QUERY_KEYS, getQueryConfig } from '@/lib/cache-manager';
 
 // Importar tipos do service novo
 import type { 
-  ImoveisVivaReal4, 
-  ImoveisVivaReal4Filters, 
-  ImoveisVivaReal4Stats,
-  ImoveisVivaReal4Insert,
-  ImoveisVivaReal4Update
+  ImoveisVivaReal as ImoveisVivaReal4, 
+  ImoveisVivaRealFilters as ImoveisVivaReal4Filters, 
+  ImoveisVivaRealStats as ImoveisVivaReal4Stats,
+  ImoveisVivaRealInsert as ImoveisVivaReal4Insert,
+  ImoveisVivaRealUpdate as ImoveisVivaReal4Update
 } from '@/services/imoveisVivaReal.service';
+
+// Tipos UI do módulo (contrato esperado pelos componentes)
+import type {
+  Property as UiProperty,
+  PropertyFilters as UiPropertyFilters,
+  PropertyListingType,
+  PropertyStatus,
+  PropertyType,
+  PropertyMetrics
+} from '@/types/properties';
 
 // ================================================================
 // MAPEAMENTO DE TIPOS - COMPATIBILIDADE COM INTERFACE ANTIGA
 // ================================================================
 
-// Interface Property antiga que preciso manter compatível
-export interface Property {
-  id: string;
-  title: string;
-  description?: string | null;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  price: number;
-  area: number;
-  bedrooms?: number | null;
-  bathrooms?: number | null;
-  type: 'APARTMENT' | 'HOUSE' | 'COMMERCIAL' | 'LAND' | 'OTHER';
-  status: 'AVAILABLE' | 'SOLD' | 'RESERVED';
-  characteristics?: Record<string, any> | null;
-  images: string[];
-  agentId: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Interface Property antiga interna removida; usamos `UiProperty` do módulo
 
 // Interface PropertyFilters antiga
-export interface PropertyFilters {
-  type?: Property['type'];
-  status?: Property['status'];
-  agentId?: string;
-  city?: string;
-  state?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  minArea?: number;
-  maxArea?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  search?: string;
-}
+// Usaremos `UiPropertyFilters` diretamente
 
 // Interface PropertyStats antiga
-export interface PropertyStats {
-  total: number;
-  byType: Record<string, number>;
-  byStatus: Record<string, number>;
-  byCity: Record<string, number>;
-  averagePrice: number;
-  averageArea: number;
-  totalValue: number;
-  mostExpensive?: Property;
-  mostRecent?: Property;
-}
+// Usaremos `PropertyMetrics` como retorno para dashboard
 
 // ================================================================
 // FUNÇÕES DE MAPEAMENTO ENTRE TIPOS ANTIGOS E NOVOS
@@ -85,33 +52,111 @@ export interface PropertyStats {
 /**
  * Mapear ImoveisVivaReal4 (novo) → Property (interface antiga)
  */
-function mapImoveisVivaRealToProperty(imovel: ImoveisVivaReal4): Property {
+function mapImoveisVivaRealToProperty(imovel: ImoveisVivaReal4): UiProperty {
+  // Mapear imagens string[] → PropertyImage[]
+  const images = (imovel.images || []).map((url, index) => ({
+    id: `${imovel.id}-${index}`,
+    propertyId: imovel.id,
+    url,
+    order: index,
+    isMain: index === 0,
+    isActive: true,
+    createdAt: imovel.created_at
+  }));
+
+  // Determinar listingType
+  const listingType: PropertyListingType = (imovel.listingType as PropertyListingType) || 'SALE';
+
+  // Preços
+  const salePrice = listingType === 'SALE' || listingType === 'BOTH' ? Number(imovel.price) || undefined : undefined;
+  const rentPrice = listingType === 'RENT' ? Number(imovel.price) || undefined : undefined;
+
+  // Fonte
+  const source = imovel.vivaRealId ? 'VIVA_REAL' : 'MANUAL';
+
   return {
     id: imovel.id,
+    companyId: '',
+    agentId: (imovel as any).corretor_responsavel || undefined,
+    ownerId: undefined,
+
     title: imovel.title || 'Imóvel sem título',
-    description: imovel.description || null,
+    description: imovel.description || undefined,
+    category: 'RESIDENTIAL',
+    propertyType: mapPropertyTypeToEnum(imovel.propertyType),
+    status: mapPropertyStatusToEnum(imovel.status),
+    listingType,
+    condition: undefined,
+
+    salePrice,
+    rentPrice,
+    condominiumFee: imovel.condominiumFee || undefined,
+    iptuPrice: imovel.iptuPrice || undefined,
+    currencySymbol: 'R$ ',
+
+    totalArea: imovel.area || undefined,
+    builtArea: undefined,
+    usefulArea: undefined,
+    bedrooms: imovel.bedrooms || 0,
+    bathrooms: imovel.bathrooms || 0,
+    suites: 0,
+    parkingSpaces: imovel.parkingSpaces || 0,
+    floors: 0,
+    floor: undefined,
+    units: 0,
+    yearBuilt: undefined,
+
     address: imovel.address || '',
+    number: undefined,
+    complement: undefined,
+    neighborhood: (imovel as any).neighborhood || '',
     city: imovel.city || '',
     state: imovel.state || '',
     zipCode: imovel.zipCode || '',
-    price: Number(imovel.price) || 0,
-    area: imovel.area || 0,
-    bedrooms: imovel.bedrooms || null,
-    bathrooms: imovel.bathrooms || null,
-    type: mapPropertyTypeToEnum(imovel.propertyType),
-    status: mapPropertyStatusToEnum(imovel.status),
-    characteristics: imovel.characteristics as Record<string, any> || null,
-    images: Array.isArray(imovel.images) ? imovel.images : [],
-    agentId: imovel.agentId || '',
+    country: 'BR',
+    latitude: imovel.latitude || undefined,
+    longitude: imovel.longitude || undefined,
+    geolocationPrecision: undefined,
+
+    vivaRealId: imovel.vivaRealId || undefined,
+    vivaRealListingId: (imovel as any).vivaRealListingId || undefined,
+    vivaRealUrl: (imovel as any).vivaRealUrl || undefined,
+    externalId: (imovel as any).externalId || undefined,
+    source: source as any,
+    isDevelopmentUnit: false,
+
+    features: imovel.features || [],
+    amenities: imovel.amenities || [],
+
+    isActive: imovel.isActive,
+    isFeatured: !!imovel.isFeatured,
+    viewCount: 0,
+    favoriteCount: 0,
+    lastSyncAt: undefined,
+    syncError: undefined,
+    notes: undefined,
+
     createdAt: imovel.created_at,
-    updatedAt: imovel.updated_at
-  };
+    updatedAt: imovel.updated_at,
+
+    owner: undefined,
+    agent: (imovel as any).agent
+      ? {
+          id: (imovel as any).agent.id,
+          name: (imovel as any).agent.name,
+          email: (imovel as any).agent.email,
+        }
+      : undefined,
+    images,
+    vivaRealData: undefined,
+    appointments: undefined,
+  } as UiProperty;
 }
 
 /**
  * Mapear Property (interface antiga) → ImoveisVivaReal4Insert (novo)
  */
-function mapPropertyToImoveisVivaRealInsert(property: Partial<Property>): ImoveisVivaReal4Insert {
+function mapPropertyToImoveisVivaRealInsert(property: Partial<UiProperty>): ImoveisVivaReal4Insert {
   return {
     id: property.id,
     title: property.title || '',
@@ -120,15 +165,13 @@ function mapPropertyToImoveisVivaRealInsert(property: Partial<Property>): Imovei
     city: property.city || '',
     state: property.state || '',
     zipCode: property.zipCode || '',
-    price: property.price ? String(property.price) : '0',
-    area: property.area || 0,
+    price: (property.salePrice || property.rentPrice || 0) as number,
+    area: property.totalArea || 0,
     bedrooms: property.bedrooms || null,
     bathrooms: property.bathrooms || null,
-    propertyType: mapEnumToPropertyType(property.type),
+    propertyType: mapEnumToPropertyType(property.propertyType),
     status: mapEnumToPropertyStatus(property.status),
-    characteristics: property.characteristics || null,
-    images: property.images || [],
-    agentId: property.agentId || '',
+    images: (property.images || []).map(img => img.url),
     created_at: property.createdAt,
     updated_at: property.updatedAt
   };
@@ -137,7 +180,7 @@ function mapPropertyToImoveisVivaRealInsert(property: Partial<Property>): Imovei
 /**
  * Mapear Property (interface antiga) → ImoveisVivaReal4Update (novo)
  */
-function mapPropertyToImoveisVivaRealUpdate(property: Partial<Property>): ImoveisVivaReal4Update {
+function mapPropertyToImoveisVivaRealUpdate(property: Partial<UiProperty>): ImoveisVivaReal4Update {
   const update: ImoveisVivaReal4Update = {};
   
   if (property.title !== undefined) update.title = property.title;
@@ -146,15 +189,15 @@ function mapPropertyToImoveisVivaRealUpdate(property: Partial<Property>): Imovei
   if (property.city !== undefined) update.city = property.city;
   if (property.state !== undefined) update.state = property.state;
   if (property.zipCode !== undefined) update.zipCode = property.zipCode;
-  if (property.price !== undefined) update.price = String(property.price);
-  if (property.area !== undefined) update.area = property.area;
+  if (property.salePrice !== undefined || property.rentPrice !== undefined) {
+    update.price = (property.salePrice || property.rentPrice || 0) as number;
+  }
+  if (property.totalArea !== undefined) update.area = property.totalArea;
   if (property.bedrooms !== undefined) update.bedrooms = property.bedrooms;
   if (property.bathrooms !== undefined) update.bathrooms = property.bathrooms;
-  if (property.type !== undefined) update.propertyType = mapEnumToPropertyType(property.type);
+  if (property.propertyType !== undefined) update.propertyType = mapEnumToPropertyType(property.propertyType);
   if (property.status !== undefined) update.status = mapEnumToPropertyStatus(property.status);
-  if (property.characteristics !== undefined) update.characteristics = property.characteristics;
-  if (property.images !== undefined) update.images = property.images;
-  if (property.agentId !== undefined) update.agentId = property.agentId;
+  if (property.images !== undefined) update.images = property.images.map(img => img.url);
   
   return update;
 }
@@ -162,23 +205,23 @@ function mapPropertyToImoveisVivaRealUpdate(property: Partial<Property>): Imovei
 /**
  * Mapear PropertyFilters (antigo) → ImoveisVivaReal4Filters (novo)
  */
-function mapPropertyFiltersToImoveisFilters(filters?: PropertyFilters): ImoveisVivaReal4Filters {
+function mapPropertyFiltersToImoveisFilters(filters?: UiPropertyFilters): ImoveisVivaReal4Filters {
   if (!filters) return {};
   
   const mapped: ImoveisVivaReal4Filters = {};
   
-  if (filters.type) mapped.propertyType = mapEnumToPropertyType(filters.type);
-  if (filters.status) mapped.status = mapEnumToPropertyStatus(filters.status);
-  if (filters.agentId) mapped.agentId = filters.agentId;
+  if (filters.propertyType && filters.propertyType.length > 0) mapped.propertyType = mapEnumToPropertyType(filters.propertyType[0]);
+  if (filters.status && filters.status.length > 0) mapped.status = mapEnumToPropertyStatus(filters.status[0]);
+  if (filters.agentId) (mapped as any).corretor_responsavel = filters.agentId;
   if (filters.city) mapped.city = filters.city;
   if (filters.state) mapped.state = filters.state;
-  if (filters.minPrice) mapped.minPrice = filters.minPrice;
-  if (filters.maxPrice) mapped.maxPrice = filters.maxPrice;
-  if (filters.minArea) mapped.minArea = filters.minArea;
-  if (filters.maxArea) mapped.maxArea = filters.maxArea;
-  if (filters.bedrooms) mapped.bedrooms = filters.bedrooms;
-  if (filters.bathrooms) mapped.bathrooms = filters.bathrooms;
-  if (filters.search) mapped.search = filters.search;
+  if (filters.minSalePrice) mapped.minPrice = filters.minSalePrice;
+  if (filters.maxSalePrice) mapped.maxPrice = filters.maxSalePrice;
+  if (filters.minTotalArea) mapped.minArea = filters.minTotalArea;
+  if (filters.maxTotalArea) mapped.maxArea = filters.maxTotalArea;
+  if (filters.minBedrooms) mapped.bedrooms = filters.minBedrooms;
+  if (filters.minBathrooms) mapped.bathrooms = filters.minBathrooms;
+  if ((filters.listingType && filters.listingType.length > 0)) mapped.listingType = filters.listingType[0] as any;
   
   return mapped;
 }
@@ -186,17 +229,38 @@ function mapPropertyFiltersToImoveisFilters(filters?: PropertyFilters): ImoveisV
 /**
  * Mapear ImoveisVivaReal4Stats (novo) → PropertyStats (antigo)
  */
-function mapImoveisStatsToPropertyStats(stats: ImoveisVivaReal4Stats, properties: Property[]): PropertyStats {
+function mapImoveisStatsToPropertyMetrics(stats: ImoveisVivaReal4Stats, properties: UiProperty[]): PropertyMetrics {
+  const salePrices = properties.map(p => p.salePrice || 0).filter(Boolean);
+  const rentPrices = properties.map(p => p.rentPrice || 0).filter(Boolean);
+  const avgSalePrice = salePrices.length ? salePrices.reduce((a, b) => a + b, 0) / salePrices.length : 0;
+  const avgRentPrice = rentPrices.length ? rentPrices.reduce((a, b) => a + b, 0) / rentPrices.length : 0;
+
+  // Converter byType para PropertyType keys quando possível
+  const propertiesByType: Record<any, number> = { ...stats.byType };
+
+  // status
+  const propertiesByStatus: Record<any, number> = {
+    AVAILABLE: stats.available,
+    SOLD: stats.sold,
+    RESERVED: stats.reserved,
+  };
+
   return {
-    total: stats.total,
-    byType: stats.byType,
-    byStatus: stats.byStatus,
-    byCity: stats.byCity,
-    averagePrice: stats.averagePrice,
-    averageArea: stats.averageArea,
-    totalValue: stats.totalValue,
-    mostExpensive: properties.find(p => p.price === Math.max(...properties.map(p => p.price))),
-    mostRecent: properties.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+    totalProperties: stats.total,
+    activeProperties: stats.available,
+    featuredProperties: stats.featured,
+    availableForSale: stats.total, // sem separação entre venda/aluguel no agregado atual
+    availableForRent: 0,
+    soldThisMonth: 0,
+    rentedThisMonth: 0,
+    averageSalePrice: avgSalePrice,
+    averageRentPrice: avgRentPrice,
+    totalViews: 0,
+    totalFavorites: 0,
+    propertiesByType: propertiesByType as any,
+    propertiesByStatus: propertiesByStatus as any,
+    propertiesByCity: stats.byCity,
+    recentActivity: [],
   };
 }
 
@@ -204,27 +268,27 @@ function mapImoveisStatsToPropertyStats(stats: ImoveisVivaReal4Stats, properties
 // FUNÇÕES HELPER PARA MAPEAMENTO DE ENUMS
 // ================================================================
 
-function mapPropertyTypeToEnum(type?: string): Property['type'] {
+function mapPropertyTypeToEnum(type?: string): PropertyType {
   switch (type?.toLowerCase()) {
     case 'apartment': case 'apartamento': return 'APARTMENT';
     case 'house': case 'casa': return 'HOUSE';
-    case 'commercial': case 'comercial': return 'COMMERCIAL';
+    case 'commercial': case 'comercial': return 'COMMERCIAL_BUILDING';
     case 'land': case 'terreno': return 'LAND';
     default: return 'OTHER';
   }
 }
 
-function mapEnumToPropertyType(type?: Property['type']): string {
+function mapEnumToPropertyType(type?: PropertyType): string {
   switch (type) {
-    case 'APARTMENT': return 'apartment';
-    case 'HOUSE': return 'house';
-    case 'COMMERCIAL': return 'commercial';
-    case 'LAND': return 'land';
-    default: return 'other';
+    case 'APARTMENT': return 'APARTMENT';
+    case 'HOUSE': return 'HOUSE';
+    case 'COMMERCIAL_BUILDING': return 'COMMERCIAL';
+    case 'LAND': return 'LAND';
+    default: return 'OTHER';
   }
 }
 
-function mapPropertyStatusToEnum(status?: string): Property['status'] {
+function mapPropertyStatusToEnum(status?: string): PropertyStatus {
   switch (status?.toLowerCase()) {
     case 'available': case 'disponivel': case 'ativo': return 'AVAILABLE';
     case 'sold': case 'vendido': return 'SOLD';
@@ -233,12 +297,12 @@ function mapPropertyStatusToEnum(status?: string): Property['status'] {
   }
 }
 
-function mapEnumToPropertyStatus(status?: Property['status']): string {
+function mapEnumToPropertyStatus(status?: PropertyStatus): string {
   switch (status) {
-    case 'AVAILABLE': return 'available';
-    case 'SOLD': return 'sold';
-    case 'RESERVED': return 'reserved';
-    default: return 'available';
+    case 'AVAILABLE': return 'AVAILABLE';
+    case 'SOLD': return 'SOLD';
+    case 'RESERVED': return 'RESERVED';
+    default: return 'AVAILABLE';
   }
 }
 
@@ -247,7 +311,7 @@ function mapEnumToPropertyStatus(status?: Property['status']): string {
 // ================================================================
 
 export interface UsePropertiesOptions {
-  filters?: PropertyFilters;
+  filters?: UiPropertyFilters;
   limit?: number;
   page?: number;
   enableRealtime?: boolean;
@@ -256,9 +320,9 @@ export interface UsePropertiesOptions {
 
 export interface UsePropertiesReturn {
   // Dados
-  properties: Property[] | undefined;
+  properties: UiProperty[] | undefined;
   totalCount: number;
-  stats: PropertyStats | undefined;
+  stats: PropertyMetrics | undefined;
   
   // Estados
   isLoading: boolean;
@@ -361,7 +425,7 @@ export function usePropertiesV3(options: UsePropertiesOptions = {}): UseProperti
   } = useSupabaseQuery(
     ['properties', 'stats', ...(filters ? [JSON.stringify(filters)] : [])],
     async () => {
-      const result = await imoveisVivaRealService.getStats(mappedFilters);
+      const result = await imoveisVivaRealService.getStats();
       
       if (result.error) {
         throw result.error;
@@ -377,7 +441,7 @@ export function usePropertiesV3(options: UsePropertiesOptions = {}): UseProperti
       
       const properties = (propertiesResult.data || []).map(mapImoveisVivaRealToProperty);
       
-      return mapImoveisStatsToPropertyStats(result.data!, properties);
+      return mapImoveisStatsToPropertyMetrics(result.data!, properties);
     },
     {
       cacheStrategy: CacheStrategy.DYNAMIC,
@@ -520,7 +584,7 @@ export function usePropertiesV3(options: UsePropertiesOptions = {}): UseProperti
   }, [uploadImagesMutation]);
 
   // Dados processados
-  const properties = useMemo(() => data?.items, [data]);
+  const properties = useMemo(() => data?.items as UiProperty[] | undefined, [data]);
   const totalCount = useMemo(() => data?.totalCount || 0, [data]);
   const totalPages = useMemo(() => data?.totalPages || 0, [data]);
 

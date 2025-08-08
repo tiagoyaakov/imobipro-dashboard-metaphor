@@ -1,183 +1,86 @@
-# 🏠 MÓDULO 2: PROPRIEDADES
+## Módulo 2 — Propriedades (Auditado e Reconstruído)
 
-## 📋 Status Atual
+### Visão Geral
+O módulo Propriedades foi auditado e reestruturado para operar diretamente sobre a tabela `imoveisvivareal4` (Supabase) com suporte a filtros, paginação, estatísticas de portfólio, permissões por papel (DEV_MASTER, ADMIN, CORRETOR) e atualizações em tempo real.
 
-**Status:** Em planejamento  
-**Prioridade:** Alta  
-**Dependências:** Módulo 1 (Banco de Dados)  
+### Stack e Componentes
+- **Dados/Infra**: Supabase (`imoveisvivareal4`, `interesse_imoveis`), Realtime, n8n (matching/automação)
+- **Frontend**: React 18, TypeScript 5.5, TanStack React Query 5, shadcn/ui, Tailwind CSS, React Router DOM 6
+- **Validação**: Zod (para formulários CRUD)
+- **Arquivos-chave**:
+  - `src/pages/Propriedades.tsx` — Página principal (lista vertical, grid/list toggle, filtros, dashboard básico)
+  - `src/hooks/usePropertiesV3.ts` — Hook principal (lista, detalhe, create/update/delete) integrado ao `imoveisVivaReal.service`
+  - `src/services/imoveisVivaReal.service.ts` — Service com queries tipadas para `imoveisvivareal4`
+  - `src/components/properties/PropertyCard.tsx` e `PropertyFilters.tsx` — UI
 
-## 🎯 Visão Geral
+### Permissões e Comportamento por Papel
+- **DEV_MASTER/ADMIN**: CRUD completo, upload/import, export, ver ações (Editar/Excluir), triggers n8n
+- **CORRETOR (AGENT)**: Apenas visualização e export
+- Implementação na UI via `usePermissions()` ocultando botões/ações e no service via aplicação de RLS por perfil
 
-Sistema completo de gestão de propriedades imobiliárias com integração avançada ao Viva Real API, permitindo extração automática de dados, gestão manual de imóveis e visualização em mapas interativos.
+### Listagem e Detalhes
+- Listagem vertical com cards (`variant="list"` disponível) exibindo: título, preço (venda/aluguel), tipo, status, localização, área, quartos/banheiros/vagas quando disponíveis, corretor e data
+- Clique abre a visualização detalhada (rota ou drawer; em progresso): exibe todos os campos disponíveis mapeados de `imoveisvivareal4`
 
-## 🚀 Requisitos Específicos
+### Filtros e Paginação
+- Filtros por tipo, status, finalidade, preço (venda/aluguel), cidade, bairro, características (quartos, banheiros, vagas), destaque
+- Paginação via `usePaginatedQuery` (limit/offset)
 
-- **Integração Viva Real API**: Extração em tempo real de dados de propriedades
-- **Armazenamento de imagens múltiplas**: Sistema de galeria com upload otimizado
-- **Integração Google Maps**: Geocodificação e visualização em mapas
-- **Gestão de proprietários**: Cadastro e relacionamento com imóveis
-- **Adição manual de imóveis**: Interface para inserção direta de propriedades
+### Realtime
+- Realtime via `useSupabaseQuery`/`usePaginatedQuery` + EventBus (invalidações), refletindo alterações imediatas no front
 
-## 🏗️ Database Schema
+### CRUD
+- Create/Update/Delete implementados no hook `usePropertiesV3` sobre o `imoveisVivaReal.service`
+- Formulários (em desenvolvimento) com React Hook Form + Zod para validação de campos
 
-Ver arquivo dedicado: `docs/database-schema.md` - Seção: Módulo 2 - Propriedades
+### Upload/Import (Viva Real)
+- Componente de import (`VivaRealImportDialog`) aceita JSON no padrão Viva Real e encaminha ao service (placeholder concluído; parser completo em implementação)
 
-## 🔌 Integrações Necessárias
+### Exportação (PDF/XML)
+- Hook de export (a implementar) para gerar PDF e XML a partir dos dados do imóvel seguindo padrão Viva Real
 
-### 1. Viva Real API
-- **Propósito:** Extração automática de dados de propriedades
-- **Documentação:** Viva Real Developer Portal
-- **Funcionalidades:** Busca de imóveis, sincronização de dados, import em lote
-- **Autenticação:** API Key
+### Matching (n8n)
+- Ao inserir um imóvel, um evento será disparado (EventBus/Supabase trigger) → n8n processa matching contra `interesse_imoveis`
 
-### 2. Google Maps API
-- **Propósito:** Geocodificação e visualização em mapas
-- **Documentação:** Google Maps Platform
-- **Funcionalidades:** Geocoding, Places API, Maps JavaScript API
-- **Autenticação:** API Key
+### Endpoints REST (para n8n e integrações)
+- `GET /api/properties` — lista paginada de imóveis
+  - Query params: `page`, `limit`, `status`, `propertyType`, `city`, `minPrice`, `maxPrice`, `minBedrooms`, `maxBedrooms`, `isFeatured`, `search`
+  - Resposta: `{ items: Property[], total: number, page: number, pages: number }`
 
-### 3. Supabase Storage
-- **Propósito:** Armazenamento seguro de imagens
-- **Funcionalidades:** Upload múltiplo, redimensionamento automático, CDN
-- **Autenticação:** Integrada com Supabase Auth
+- `GET /api/properties/:id` — detalhes
+  - Resposta: `Property`
 
-## 📱 Funcionalidades Específicas
+- `POST /api/properties` — cria
+  - Body: `ImoveisVivaRealInsert` (campos mínimos: `title`, `address`, `city`, `state`, `price`)
+  - Resposta: `Property`
 
-### Core Features
-- **Sincronização automática** com Viva Real
-- **Interface de adição manual** de imóveis
-- **Visualização em mapa** com marcadores interativos
-- **Galeria de imagens** com upload drag-and-drop
-- **Filtros avançados** por tipo, preço, localização, características
-- **Gestão de proprietários** com histórico de relacionamento
+- `PUT /api/properties/:id` — atualiza
+  - Body: `ImoveisVivaRealUpdate`
+  - Resposta: `Property`
 
-### Funcionalidades Avançadas
-- **Import em lote** via CSV/Excel
-- **Relatórios de propriedades** com métricas
-- **Histórico de mudanças** de preços e status
-- **Alertas de mercado** baseados em critérios
-- **Comparativo de propriedades** lado a lado
-- **Tours virtuais** (integração futura)
+- `DELETE /api/properties/:id` — exclui
+  - Resposta: `{ success: true }`
 
-## 🎨 Interface Planejada
+- `POST /api/matching/property` — matching para um imóvel
+  - Body: `{ id: string }`
+  - Resposta: `{ matches: InteresseImovel[] }`
 
-### Componentes Principais
-- **PropertyGrid**: Lista/grid de propriedades com filtros
-- **PropertyForm**: Formulário de cadastro/edição
-- **PropertyMap**: Visualização em mapa
-- **ImageGallery**: Galeria de imagens com upload
-- **PropertyDetails**: Página de detalhes completos
-- **OwnerManager**: Gestão de proprietários
+Observação: Implementação dos handlers será feita na pasta `api/` (Vercel Functions) em edits incrementais.
 
-### Design System
-- **Cards visuais** com imagens em destaque
-- **Filtros laterais** deslizantes
-- **Mapa interativo** integrado
-- **Upload visual** com preview instantâneo
-- **Badges de status** coloridos
+### Segurança e RLS
+- RLS aplicada no service: DEV_MASTER vê todos, ADMIN vê da empresa, AGENT vê próprios (`corretor_responsavel`)
+- UI oculta ações conforme papel (`usePermissions`)
 
-## 🔧 Arquitetura Técnica
+### Testes
+- Unitários (Vitest) para: mapeamento de tipos, parser de Viva Real (import), serviço de matching (mockado), exportação PDF/XML (mock)
+- Integração: smoke tests de endpoints `api/`
 
-### Estrutura de Dados
-```typescript
-interface Property {
-  id: string;
-  title: string;
-  description?: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  price: Decimal;
-  area: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  type: PropertyType;
-  status: PropertyStatus;
-  characteristics?: Json;
-  images: string[];
-  
-  // Viva Real Integration
-  vivaRealId?: string;
-  priceValue?: number;
-  siteUrl?: string;
-  // ... outros campos da API
-  
-  // Relacionamentos
-  ownerId?: string;
-  owner?: PropertyOwner;
-  propertyImages: PropertyImage[];
-}
-```
+### Próximos Passos (incremental)
+1. Detalhes: componente/rota de detalhes com todos os campos (com edição para ADMIN/DEV_MASTER)
+2. Export: hook `usePropertyExport` (PDF/XML)
+3. Upload inteligente: parser completo do JSON Viva Real e XML
+4. Endpoints `api/*` implementados e documentados (OpenAPI simples)
+5. Realtime: confirmar subscriptions por canal/tabela
+6. Testes unitários e de integração (≥ 80% cobertura no módulo)
 
-### Serviços Planejados
-- `vivaRealService.ts`: Integração com API do Viva Real
-- `propertyService.ts`: CRUD e business logic
-- `imageService.ts`: Upload e processamento de imagens
-- `mapService.ts`: Geocodificação e mapas
-- `ownerService.ts`: Gestão de proprietários
 
-## 🧪 Plano de Implementação
-
-### Fase 1: Estrutura Base (2 semanas)
-1. **Database schema** e migrações
-2. **CRUD básico** de propriedades
-3. **Interface inicial** com listagem
-
-### Fase 2: Integrações Core (2 semanas)
-1. **Viva Real API** integração
-2. **Google Maps** implementação
-3. **Upload de imagens** funcionando
-
-### Fase 3: Features Avançadas (2 semanas)
-1. **Filtros avançados** implementados
-2. **Gestão de proprietários** completa
-3. **Relatórios básicos** funcionando
-
-### Fase 4: Otimização (1 semana)
-1. **Performance** otimizada
-2. **Testes** implementados
-3. **Documentação** finalizada
-
-## 📊 Métricas de Sucesso
-
-### Técnicas
-- Tempo de carregamento < 2s para lista de propriedades
-- Upload de imagens < 5s para múltiplos arquivos
-- Sincronização Viva Real < 30s para 100 propriedades
-
-### Funcionais
-- Redução de 60% no tempo de cadastro de propriedades
-- Aumento de 40% na precisão de localização
-- Melhoria de 50% na experiência visual
-
-## ⚠️ Considerações Importantes
-
-### Desafios Técnicos
-- **Rate limiting** da API Viva Real
-- **Processamento de imagens** em lote
-- **Geocodificação** de endereços brasileiros
-- **Sincronização** de dados em tempo real
-
-### Requisitos de Performance
-- **Cache inteligente** para dados da API
-- **Lazy loading** para imagens
-- **Paginação** para grandes volumes
-- **Otimização** de consultas ao banco
-
-## 🔗 Integrações Futuras
-
-### Portais Imobiliários
-- ZAP Imóveis
-- OLX Imóveis
-- QuintoAndar (API Partners)
-
-### Serviços Complementares
-- Cartórios digitais
-- Avaliaçāo automatizada
-- Financiamento imobiliário
-- Seguros residenciais
-
----
-
-**Próximo passo recomendado**: Iniciar Fase 1 com implementação do database schema e CRUD básico, seguido da integração com Viva Real API.

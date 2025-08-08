@@ -33,6 +33,7 @@ import {
   usePropertiesDashboardV3 
 } from '@/hooks/usePropertiesV3';
 import { useImportFromVivaRealV3 } from '@/hooks/usePropertiesV3';
+import { usePermissions } from '@/hooks/security/usePermissions';
 
 // Types
 import type { 
@@ -278,6 +279,9 @@ const PropriedadesPage: React.FC = () => {
   // HOOKS
   // ================================================
   
+  const { isAdmin, isDevMaster } = usePermissions();
+  const canManage = isAdmin() || isDevMaster();
+
   const {
     properties,
     stats: metrics,
@@ -396,14 +400,16 @@ const PropriedadesPage: React.FC = () => {
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <VivaRealImportDialog />
-          
-          <Button onClick={handleCreateProperty} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Propriedade
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex items-center gap-3">
+            <VivaRealImportDialog />
+            
+            <Button onClick={handleCreateProperty} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Propriedade
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Dashboard e Tabs */}
@@ -457,11 +463,12 @@ const PropriedadesPage: React.FC = () => {
                 <div className="text-center py-8">
                   <p className="text-gray-500">Nenhuma propriedade encontrada</p>
                   <Button 
-                    onClick={handleCreateProperty} 
+                    onClick={handleCreateProperty}
                     variant="outline" 
                     className="mt-4"
+                    disabled={!canManage}
                   >
-                    Adicionar primeira propriedade
+                    {canManage ? 'Adicionar primeira propriedade' : 'Sem permissões para adicionar'}
                   </Button>
                 </div>
               ) : (
@@ -472,8 +479,9 @@ const PropriedadesPage: React.FC = () => {
                       property={property}
                       variant="compact"
                       onClick={handlePropertyClick}
-                      onEdit={handleEditProperty}
-                      onDelete={handleDeleteProperty}
+                      onEdit={canManage ? handleEditProperty : undefined}
+                      onDelete={canManage ? handleDeleteProperty : undefined}
+                      showActions={canManage}
                     />
                   ))}
                 </div>
@@ -582,9 +590,10 @@ const PropriedadesPage: React.FC = () => {
                   property={property}
                   variant={viewMode === 'list' ? 'list' : 'default'}
                   onClick={handlePropertyClick}
-                  onEdit={handleEditProperty}
-                  onDelete={handleDeleteProperty}
+                  onEdit={canManage ? handleEditProperty : undefined}
+                  onDelete={canManage ? handleDeleteProperty : undefined}
                   showStats={true}
+                  showActions={canManage}
                 />
               ))}
             </div>
