@@ -44,21 +44,27 @@ export function useClientesMVP(options?: {
   });
 
   // Converter DadosCliente[] para ClienteKanbanCard[]
-  const clientes: ClienteKanbanCard[] = query.data?.data?.map(cliente => ({
-    id: String(cliente.id),
-    nome: cliente.nome || 'Sem nome',
-    telefone: cliente.telefone || '',
-    email: cliente.email || null,
-    status: (cliente.status || 'novos') as StatusCliente,
-    funcionario: cliente.funcionario || null,
-    score_lead: 50, // Valor padrão enquanto campo não existe
-    origem_lead: 'site', // Valor padrão enquanto campo não existe
-    empresa: undefined, // Campo não existe ainda
-    ultima_interacao: cliente.updated_at || cliente.created_at || new Date().toISOString(),
-    proxima_acao: undefined, // Campo não existe ainda
-    created_at: cliente.created_at || new Date().toISOString(),
-    updated_at: cliente.updated_at || cliente.created_at || new Date().toISOString(),
-  })) || [];
+  const clientes: ClienteKanbanCard[] = query.data?.data?.map(cliente => {
+    const rawStatus = (cliente.status || 'novos').toString().toLowerCase();
+    const allowed: StatusCliente[] = ['novos','contatados','qualificados','interessados','negociando','convertidos','perdidos'];
+    const normalizedStatus = (allowed.includes(rawStatus as StatusCliente) ? rawStatus : 'novos') as StatusCliente;
+
+    return {
+      id: String(cliente.id),
+      nome: cliente.nome || 'Sem nome',
+      telefone: cliente.telefone || '',
+      email: cliente.email || null,
+      status: normalizedStatus,
+      funcionario: cliente.funcionario || null,
+      score_lead: 50,
+      origem_lead: 'site',
+      empresa: undefined,
+      ultima_interacao: cliente.updated_at || cliente.created_at || new Date().toISOString(),
+      proxima_acao: undefined,
+      created_at: cliente.created_at || new Date().toISOString(),
+      updated_at: cliente.updated_at || cliente.created_at || new Date().toISOString(),
+    };
+  }) || [];
 
   return {
     clientes,

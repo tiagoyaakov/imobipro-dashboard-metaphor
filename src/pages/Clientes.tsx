@@ -10,7 +10,7 @@
  * @version 2.0.0 - Reestruturação MVP
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +47,12 @@ const Clientes = () => {
   
   // Hook para Lista (aba Clientes)
   const listData = useClientesListMVP();
+  // Forçar um refetch inicial para garantir sincronização pós-auth/provisionamento
+  useEffect(() => {
+    listData.refetch?.();
+    kanbanData.refetch?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Fallback para stats em caso de erro
   const stats = statsData || { 
