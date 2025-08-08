@@ -68,6 +68,7 @@ export function useClientesMVP(options?: {
 
   return {
     clientes,
+    raw: (query.data?.data as unknown as DadosCliente[]) || [],
     totalCount: query.data?.count || 0,
     isLoading: query.isLoading,
     isError: query.isError,

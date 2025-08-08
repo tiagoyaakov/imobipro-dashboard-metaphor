@@ -238,6 +238,7 @@ const Clientes = () => {
             currentUserId={user?.id}
             filters={listData.filters}
             onFilterChange={listData.onFilterChange}
+            raw={listData.raw as any}
           />
         </TabsContent>
 
