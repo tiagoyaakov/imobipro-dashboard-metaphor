@@ -195,12 +195,10 @@ export class ImoveisVivaRealService {
     offset?: number
   }) {
     try {
+      // Remover join com tabela User para evitar 403 por RLS em produção
       let query = supabase
         .from(this.tableName)
-        .select(`
-          *,
-          agent:User!corretor_responsavel(id, name, email, avatarUrl)
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
 
       // Aplicar RLS
       query = await this.applyRLS(query)
@@ -263,10 +261,7 @@ export class ImoveisVivaRealService {
     try {
       let query = supabase
         .from(this.tableName)
-        .select(`
-          *,
-          agent:User!corretor_responsavel(id, name, email, avatarUrl)
-        `)
+        .select('*')
         .eq('id', id)
         .single()
 
