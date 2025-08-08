@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase-client'
 import { EventBus, SystemEvents } from '@/lib/event-bus'
+import { env } from '@/lib/utils'
 
 // ========================================
 // TIPOS PARA NOVA TABELA imoveisvivareal4
@@ -195,6 +196,32 @@ export class ImoveisVivaRealService {
     offset?: number
   }) {
     try {
+      const useProxy = (import.meta as any)?.env?.VITE_USE_API_PROPERTIES === 'true'
+        || (typeof window !== 'undefined' && window.location?.hostname?.includes('vercel.app'))
+
+      if (useProxy) {
+        const params = new URLSearchParams()
+        if (options?.filters?.status) params.set('status', String(options.filters.status))
+        if (options?.filters?.propertyType) params.set('propertyType', String(options.filters.propertyType))
+        if (options?.filters?.listingType) params.set('listingType', String(options.filters.listingType))
+        if (options?.filters?.city) params.set('city', String(options.filters.city))
+        if (options?.filters?.minPrice != null) params.set('minPrice', String(options.filters.minPrice))
+        if (options?.filters?.maxPrice != null) params.set('maxPrice', String(options.filters.maxPrice))
+        if (options?.filters?.bedrooms != null) params.set('minBedrooms', String(options.filters.bedrooms))
+        if (options?.filters?.search) params.set('search', String(options.filters.search))
+        const page = options?.offset && options?.limit ? Math.floor(options.offset / options.limit) + 1 : 1
+        params.set('page', String(page))
+        params.set('limit', String(options?.limit || 20))
+
+        const res = await fetch(`/api/properties?${params.toString()}`, { method: 'GET' })
+        if (!res.ok) {
+          const txt = await res.text()
+          throw new Error(`API /api/properties ${res.status}: ${txt}`)
+        }
+        const json = await res.json()
+        return { data: json.items, error: null, count: json.total }
+      }
+
       // Remover join com tabela User para evitar 403 por RLS em produção
       let query = supabase
         .from(this.tableName)
@@ -259,6 +286,19 @@ export class ImoveisVivaRealService {
   // Buscar por ID
   async findById(id: string) {
     try {
+      const useProxy = (import.meta as any)?.env?.VITE_USE_API_PROPERTIES === 'true'
+        || (typeof window !== 'undefined' && window.location?.hostname?.includes('vercel.app'))
+
+      if (useProxy) {
+        const res = await fetch(`/api/properties/${id}`, { method: 'GET' })
+        if (!res.ok) {
+          const txt = await res.text()
+          throw new Error(`API /api/properties/${id} ${res.status}: ${txt}`)
+        }
+        const json = await res.json()
+        return { data: json, error: null }
+      }
+
       let query = supabase
         .from(this.tableName)
         .select('*')
