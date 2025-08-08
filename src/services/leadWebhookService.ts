@@ -24,8 +24,8 @@ import type { CreateContactInput } from '@/types/clients';
 // ============================================================================
 
 const WEBHOOK_CONFIG = {
-  n8nWebhookUrl: process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || 'https://your-n8n-instance.com/webhook/lead-create',
-  useN8nPrimary: process.env.NEXT_PUBLIC_USE_N8N_PRIMARY === 'true',
+  n8nWebhookUrl: import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://your-n8n-instance.com/webhook/lead-create',
+  useN8nPrimary: import.meta.env.VITE_USE_N8N_PRIMARY === 'true',
   fallbackToSupabase: true,
   timeout: 10000, // 10 segundos
 };

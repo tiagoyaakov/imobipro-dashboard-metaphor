@@ -235,7 +235,7 @@ class ClientsService {
   async updateContact(id: string, input: UpdateContactInput): Promise<ContactWithDetails> {
     try {
       // Recalcular score se necessário
-      let updatedData = { ...input };
+      const updatedData = { ...input };
       
       if (input.leadStage || input.budget || input.timeline) {
         const currentContact = await this.getContactById(id);

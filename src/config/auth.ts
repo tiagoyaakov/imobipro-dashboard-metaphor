@@ -61,10 +61,10 @@ export const authConfig = {
     defaultCompanyId: import.meta.env.VITE_DEFAULT_COMPANY_ID || crypto.randomUUID(),
     
     // Se true, mostra logs detalhados de autenticação
-    enableDebugLogs: process.env.NODE_ENV === 'development',
+    enableDebugLogs: import.meta.env.DEV,
     
     // Se true, permite bypass de autenticação com query param ?dev=true
-    allowDevBypass: process.env.NODE_ENV === 'development',
+    allowDevBypass: import.meta.env.DEV,
   },
 
   /**
@@ -231,7 +231,7 @@ export const isFeatureEnabled = (feature: keyof typeof authConfig.features): boo
  * Obter configurações de desenvolvimento
  */
 export const getDevConfig = () => {
-  return process.env.NODE_ENV === 'development' ? authConfig.development : null;
+  return import.meta.env.DEV ? authConfig.development : null;
 };
 
 /**

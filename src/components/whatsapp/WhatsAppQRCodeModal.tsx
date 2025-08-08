@@ -233,7 +233,7 @@ export const WhatsAppQRCodeModal: React.FC<WhatsAppQRCodeModalProps> = ({
           )}
 
           {/* Simulação de conexão (desenvolvimento) */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <Card className="imobipro-card border-dashed border-orange-200">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

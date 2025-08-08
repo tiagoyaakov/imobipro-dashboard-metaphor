@@ -522,7 +522,7 @@ export class ChatMessagesMvpService {
                           (byType.localizacao || 0)
 
       // Média de mensagens por chat
-      let chatsQuery = supabase.from('chats').select('*', { count: 'exact', head: true })
+      const chatsQuery = supabase.from('chats').select('*', { count: 'exact', head: true })
       const { count: totalChats } = await chatsQuery
       const averagePerChat = totalChats ? (total || 0) / totalChats : 0
 
