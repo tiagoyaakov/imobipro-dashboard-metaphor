@@ -98,10 +98,15 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
         .select('id, name, fullName, email')
         .in('id', ids);
       if (!error && Array.isArray(data)) {
+        type RawRow = { [key: string]: unknown };
+        const rows: RawRow[] = (data ?? []) as unknown as RawRow[];
         const map: Record<string, string> = {};
-        for (const u of data as any[]) {
-          const id = (u as any)?.id as string;
-          const label = (u as any)?.name || (u as any)?.fullName || (u as any)?.email || id;
+        for (const u of rows) {
+          const id = typeof u.id === 'string' ? u.id : '';
+          const name = typeof u.name === 'string' ? (u.name as string) : null;
+          const fullName = typeof u['fullName'] === 'string' ? (u['fullName'] as string) : null;
+          const email = typeof u.email === 'string' ? (u.email as string) : null;
+          const label = name || fullName || email || id;
           if (id) map[id] = label;
         }
         setCorretoresMap(map);
@@ -227,7 +232,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 min-h-0 flex-1">
       {/* Header com estatísticas */}
       <Card>
         <CardHeader className="pb-3">
@@ -300,10 +305,10 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
       </Card>
 
       {/* Tabela de clientes (campos reais) */}
-      <Card>
+      <Card className="min-h-0">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead 
@@ -323,7 +328,7 @@ const ClientesList: React.FC<ClientesListViewProps> = ({
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="align-top">
                 {filteredClientes.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">

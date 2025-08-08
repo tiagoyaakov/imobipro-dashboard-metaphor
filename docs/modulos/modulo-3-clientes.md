@@ -166,3 +166,19 @@ Objetivo deste plano: integrar o front-end ao back-end e começar a testar CRUD 
 - Lista de corretores para ADMIN/DEV_MASTER filtrada apenas por `role = 'AGENT'` (evita atribuição a ADMIN).
 - Texto de ajuda atualizado para refletir a obrigatoriedade de seleção de corretor para ADMIN/DEV_MASTER.
 - Build executado com sucesso após as alterações (Vite OK).
+##### 8.2) Validação automática pós-correções (AGENT via login)
+- Resultado do script `scripts/test-clientes-crud-login.mjs`:
+  - ✅ Login AGENT ok
+  - ✅ CREATE ok (id retornado)
+  - ✅ READ próprio ok
+  - ✅ UPDATE ok (status → qualificados)
+  - ✅ DELETE ok
+  - 🎉 Todos os testes CRUD passaram com RLS
+##### 8.3) Ajustes de UI/UX — Layout e coluna Corretor
+- Layout das abas do módulo `Clientes` atualizado para evitar corte da tabela:
+  - `src/pages/Clientes.tsx`: adicionados `overflow-y-auto` em `Tabs` e `TabsContent`.
+  - `src/components/clientes/ClientesList.tsx`: wrapper com `min-h-0 flex-1`; tabela com `table-fixed`; `TableBody` com `align-top`.
+- Coluna "Corretor" agora resolve o nome via lookup em `public."User"` de forma resiliente:
+  - Busca apenas IDs necessários; mapeia `name` → `fullName` → `email` → `id` (fallback).
+  - Tipagem ajustada para evitar erros quando colunas opcionais não existirem.
+- Lint: sem erros após ajustes.

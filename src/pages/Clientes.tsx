@@ -214,7 +214,7 @@ const Clientes = () => {
       </div>
 
       {/* Abas principais: Clientes e CRM */}
-      <Tabs defaultValue="clientes" className="flex-1 flex flex-col min-h-0">
+      <Tabs defaultValue="clientes" className="flex-1 flex flex-col min-h-0 overflow-y-auto">
         <TabsList className="flex-shrink-0 grid w-full grid-cols-2 mb-3">
           <TabsTrigger value="clientes" className="flex items-center gap-2 text-sm">
             <List className="w-4 h-4" />
@@ -227,7 +227,7 @@ const Clientes = () => {
         </TabsList>
 
         {/* Aba Clientes - Lista Tabular */}
-        <TabsContent value="clientes" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="clientes" className="flex-1 min-h-0 mt-0 overflow-y-auto">
           <ClientesList
             clientes={listData.clientes}
             onEdit={listData.onEdit}
@@ -243,7 +243,7 @@ const Clientes = () => {
         </TabsContent>
 
         {/* Aba CRM - Kanban Board */}
-        <TabsContent value="crm" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="crm" className="flex-1 min-h-0 mt-0 overflow-y-auto">
           <KanbanBoard
             clientes={kanbanData.clientes}
             onStatusChange={kanbanData.onStatusChange}
